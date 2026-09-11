@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Check Symptoms - MediSense{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="fas fa-stethoscope"></i> Check Symptoms</h4>
+                </div>
+                <div class="card-body">
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        Describe your symptoms and the system will provide health information.
+                    </div>
+
+                    <!-- SEARCH FORM -->
+                    <form method="POST" action="{{ url_for('patient_symptoms') }}">
+                        <div class="mb-3">
+                            <label for="symptoms" class="form-label">Describe your symptoms</label>
+                            <textarea class="form-control" id="symptoms" name="symptoms" rows="4" placeholder="e.g., fever, headache, cough, tiredness">{{ symptoms_text }}</textarea>
+                            <small class="text-muted">Be as detailed as possible.</small>
+                        </div>
+                        <button type="submit" class="btn btn-info text-white">
+                            <i class="fas fa-search"></i> Analyze Symptoms
+                        </button>
+                    </form>
+
+                    <hr>
+
+                    <!-- RESULTS -->
+                    {% if result %}
+
+                        {% if result.found %}
+
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i> <strong>{{ result.summary }}</strong>
+                            </div>
+
+                            <!-- Diseases -->
+                            {% if result.diseases %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-diagnoses"></i> Possible Conditions</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% for disease in result.diseases %}
+                                    <h5 class="text-primary">{{ disease.name }}</h5>
+                                    {% if disease.description %}<p><strong>Description:</strong> {{ disease.description }}</p>{% endif %}
+                                    {% if disease.symptoms %}<p><strong>Symptoms:</strong> {{ disease.symptoms }}</p>{% endif %}
+                                    {% if disease.treatment %}<p><strong>Treatment:</strong> {{ disease.treatment }}</p>{% endif %}
+                                    {% if disease.prevention %}<p><strong>Prevention:</strong> {{ disease.prevention }}</p>{% endif %}
+                                    {% if disease.doctor %}<p><strong>Doctor:</strong> <span class="badge bg-info">{{ disease.doctor }}</span></p>{% endif %}
+                                    {% if disease.risk_level %}<p><strong>Risk Level:</strong> <span class="badge bg-warning">{{ disease.risk_level }}</span></p>{% endif %}
+                                    <small class="text-muted">Source: {{ disease.source }}</small>
+                                    {% if not loop.last %}<hr>{% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Symptoms Detected -->
+                            {% if result.symptoms %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0"><i class="fas fa-list-ul"></i> Symptoms Detected</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group">
+                                        {% for symptom in result.symptoms %}
+                                        <li class="list-group-item">{{ symptom }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Treatments -->
+                            {% if result.treatments %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0"><i class="fas fa-pills"></i> Recommended Treatments</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group">
+                                        {% for treatment in result.treatments %}
+                                        <li class="list-group-item">{{ treatment }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Prevention -->
+                            {% if result.preventions %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0"><i class="fas fa-shield-alt"></i> Prevention Tips</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group">
+                                        {% for prevention in result.preventions %}
+                                        <li class="list-group-item">{{ prevention }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Doctors -->
+                            {% if result.doctors %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0"><i class="fas fa-user-md"></i> Recommended Doctors</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group">
+                                        {% for doctor in result.doctors %}
+                                        <li class="list-group-item">{{ doctor }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Risk Levels -->
+                            {% if result.risk_levels %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Risk Levels</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group">
+                                        {% for risk in result.risk_levels %}
+                                        <li class="list-group-item">{{ risk }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Q&A -->
+                            {% if result.qa %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-question-circle"></i> Questions & Answers</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% for item in result.qa %}
+                                    <h6 class="text-primary">Q: {{ item.question }}</h6>
+                                    <p><strong>A:</strong> {{ item.answer }}</p>
+                                    <small class="text-muted">Source: {{ item.source }}</small>
+                                    {% if not loop.last %}<hr>{% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Precautions -->
+                            {% if result.precautions %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0"><i class="fas fa-shield-virus"></i> Precautions</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group">
+                                        {% for item in result.precautions %}
+                                        <li class="list-group-item">{{ item }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Disclaimer -->
+                            <div class="alert alert-warning">
+                                <i class="fas fa-phone-alt"></i> 
+                                <strong>Disclaimer:</strong> This information is for educational purposes only. 
+                                Always consult a healthcare professional for proper diagnosis and treatment.
+                            </div>
+
+                        {% else %}
+
+                            <!-- NO RESULTS -->
+                            <div class="text-center py-4">
+                                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                                <h5>No results found</h5>
+                                <p class="text-muted">Try a different search term or check your spelling.</p>
+                            </div>
+
+                        {% endif %}
+
+                    {% else %}
+
+                        <!-- NO SEARCH YET -->
+                        <div class="text-center py-4">
+                            <i class="fas fa-stethoscope fa-3x text-muted mb-3"></i>
+                            <h5>Describe Your Symptoms</h5>
+                            <p class="text-muted">Enter your symptoms above and click "Analyze Symptoms" for health information.</p>
+                        </div>
+
+                    {% endif %}
+
+                    <div class="mt-3">
+                        <a href="{{ url_for('patient_dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                        <a href="{{ url_for('patient_first_aid') }}" class="btn btn-danger">
+                            <i class="fas fa-first-aid"></i> First Aid Guide
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

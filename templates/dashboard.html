@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MediSense - Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
+        .header { background: #1a73e8; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .header .logo { font-size: 24px; font-weight: bold; }
+        .header a { color: white; text-decoration: none; padding: 8px 16px; background: rgba(255,255,255,0.2); border-radius: 5px; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card h2 { color: #333; margin-bottom: 15px; }
+        .welcome { font-size: 20px; color: #1a73e8; }
+        .menu-bar { display: flex; flex-wrap: wrap; gap: 10px; }
+        .menu-btn { background: #1a73e8; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 14px; }
+        .menu-btn:hover { background: #1557b0; }
+        .role-badge { padding: 4px 15px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #e8f5e9; color: #2e7d32; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span class="logo">MediSense</span>
+        <div>
+            <span style="margin-right:15px;">Welcome, {{ user.full_name }}</span>
+            <span class="role-badge">{{ user.role|upper }}</span>
+            <a href="/logout">Logout</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="card">
+            <h2>USSD Menu</h2>
+            <div class="menu-bar">
+                <a href="/ussd?text=" class="menu-btn">Main Menu</a>
+                <a href="/ussd?text=1" class="menu-btn">Book Appointment</a>
+                <a href="/ussd?text=2" class="menu-btn">Check Symptoms</a>
+                <a href="/ussd?text=3" class="menu-btn">My Appointments</a>
+                <a href="/ussd?text=4" class="menu-btn">Find Clinic</a>
+                <a href="/ussd?text=5" class="menu-btn">Health Info</a>
+                <a href="/ussd?text=6" class="menu-btn">Emergency</a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Welcome to MediSense</h2>
+            <p>You are logged in as <strong>{{ user.full_name }}</strong></p>
+            <p>Role: {{ user.role|upper }}</p>
+            <p>Email: {{ user.email }}</p>
+        </div>
+    </div>
+</body>
+</html>

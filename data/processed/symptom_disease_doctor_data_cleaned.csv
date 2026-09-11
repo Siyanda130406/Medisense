@@ -1,0 +1,100 @@
+disease,symptoms_list,cures_list,doctors_list,risk_category
+flu,"['fever', 'cough', 'sore throat', 'runny or stuffy nose', 'muscle aches', 'headache', 'fatigue']",Low,"['over-the-counter medications', 'rest', 'fluids']","['family doctor', 'urgent care']"
+bronchitis,"['cough', 'mucus production', 'shortness of breath', 'chest pain']",Low,"['antibiotics', 'over-the-counter medications', 'rest', 'fluids']","['family doctor', 'pulmonologist']"
+pneumonia,"['fever', 'cough', 'shortness of breath', 'chest pain', 'fatigue']",Moderate,"['antibiotics', 'over-the-counter medications', 'rest', 'fluids']","['family doctor', 'pulmonologist']"
+heart attack,"['chest pain', 'shortness of breath', 'nausea', 'vomiting', 'lightheadedness', 'sweating']",High,['emergency medical services'],['cardiologist']
+stroke,"['sudden weakness', 'numbness on one side of the body', 'confusion', 'difficulty speaking', 'trouble seeing in one eye', 'severe headache']",High,['emergency medical services'],['neurologist ']
+cancer,"['lump', 'unexplained weight loss', 'fatigue', 'changes in bowel', 'bladder habits', 'persistent cough', 'indigestion', 'unexplained bleeding or discharge']",Unknown,"['surgery', 'chemotherapy', 'radiation therapy ']",['oncologist']
+diabetes,"['increased thirst', 'frequent urination', 'unexplained weight loss', 'fatigue', 'blurred vision', 'cuts that are slow to heal']",High,"['diet', 'exercise', 'medication']",['endocrinologist']
+alzheimer's disease,"['memory loss', 'confusion', 'difficulty thinking', 'changes in personality or behavior']",High,"[""there is no cure for alzheimer's disease"", 'but there are treatments that can help manage the symptoms']",['neurologist']
+arthritis,"['pain', 'stiffness', 'swelling', 'inflammation in the joints']",Unknown,"['medication', 'physical therapy', 'lifestyle changes']",['rheumatologist']
+adenovirus,"['fever', 'sore throat', 'cough', 'conjunctivitis', 'rash', 'pink eye']",Low,"['antibiotics', 'over-the-counter medications', 'rest', 'fluids']","['family doctor', 'urgent care']"
+aflatoxicosis,"['vomiting', 'diarrhea', 'jaundice', 'liver damage', 'death']",High,"['there is no cure for aflatoxicosis', 'but treatment may include supportive care', 'liver transplantation']",['gastroenterologist']
+alcoholism,"['physical dependence on alcohol', 'tolerance to alcohol', 'withdrawal symptoms', 'impaired judgment', 'memory problems', 'liver damage', 'heart disease', 'cancer']",High,"['\xa0treatment for alcoholism may include counseling', 'medication', 'support groups']","['\xa0psychiatrist', 'addiction specialist']"
+allergic rhinitis,"['runny nose', 'sneezing', 'itchy eyes', 'itchy nose', 'throat', 'palate']",Low,"['over-the-counter medications', 'allergy shots']",['allergist']
+alzheimer's disease,"['memory loss', 'confusion', 'difficulty thinking', 'changes in personality or behavior']",High,"[""there is no cure for alzheimer's disease"", 'but there are treatments that can help manage the symptoms']",['neurologist']
+anemia,"['fatigue', 'shortness of breath', 'pale skin', 'lightheadedness', 'dizziness']",Unknown,[' '],['\xa0hematologist ']
+anxiety disorder,"['excessive worry', 'fear', 'anxiety that interfere with daily life']",Unknown,"['treatment for anxiety disorders may include therapy', 'medication', 'combination of both']","['psychologist', 'psychiatrist']"
+appendicitis,"['pain in the lower right abdomen', 'nausea', 'vomiting', 'fever']",High,['appendectomy'],['surgeon ']
+arthritis,"['pain', 'stiffness', 'swelling', 'inflammation in the joints']",Unknown,"['medication', 'physical therapy', 'lifestyle changes']",['rheumatologist']
+asperger syndrome,"['difficulty with social interaction', 'repetitive behaviors', 'restricted interests']",Unknown,"['there is no cure for asperger syndrome', 'but there are treatments that can help manage the symptoms']","['psychologist', 'psychiatrist']"
+asthma,"['wheezing', 'shortness of breath', 'coughing', 'chest tightness']",Unknown,"['treatment for asthmmay include medication', 'lifestyle changes', 'allergy shots']","['\xa0allergist', 'pulmonologist']"
+bacterial meningitis,"['fever', 'headache', 'stiff neck', 'nausea', 'vomiting', 'sensitivity to light']",High,['antibiotics'],"['neurologist', 'neurosurgeon']"
+bipolar disorder,"['extreme mood swings', 'from manito depression']",Unknown,"['treatment for bipolar disorder may include medication', 'therapy', 'combination of both']","['\xa0psychologist', 'psychiatrist']"
+bladder cancer,"['blood in the urine', 'pain or burning when urinating', 'frequent urination', 'urgency to urinate', 'incontinence']",High,"['surgery', 'chemotherapy', 'radiation therapy']",['urologist']
+blood clot,"['pain', 'swelling', 'redness', 'warmth', 'tenderness in the affected area', 'shortness of breath', 'chest pain', 'difficulty breathing', 'coughing up blood']",High,"['treatment for blood clot may include medication', 'surgery', 'combination of both']","['cardiologist', 'hematologist']"
+bronchitis,"['cough', 'mucus production', 'shortness of breath', 'chest pain']",Low,"['antibiotics', 'over-the-counter medications', 'rest', 'fluids']","['family doctor', 'pulmonologist']"
+bursitis,"['pain', 'swelling', 'inflammation in bursa', 'which is small sac of fluid that cushions joints']",Unknown,"['medication', 'rest', 'ice', 'compression', 'elevation']","['family doctor', 'orthopedist']"
+cancer,"['lump', 'unexplained weight loss', 'fatigue', 'changes in bowel', 'bladder habits', 'persistent cough', 'indigestion', 'unexplained bleeding or discharge']",Unknown,"['surgery', 'chemotherapy', 'radiation therapy']",['oncologist']
+cervical cancer,"['abnormal pap test results', 'abnormal vaginal bleeding', 'pain during sex']",High,"['surgery', 'chemotherapy', 'radiation therapy']",['gynecologist']
+chickenpox,"['rash', 'fever', 'headache', 'muscle aches', 'fatigue']",Low,"['antiviral medication', 'over-the-counter medications', 'rest', 'fluids']","['family doctor', 'urgent care']"
+chronic obstructive pulmonary disease (copd),"['chronic bronchitis', 'emphysema']",Unknown,"['treatment for copd may include medication', 'lifestyle changes', 'oxygen therapy']",['pulmonologist']
+cholesterol,['high levels of cholesterol in the blood'],Unknown,"['diet', 'exercise', 'medication']",['cardiologist']
+common cold,"['runny nose', 'sneezing', 'sore throat', 'cough', 'congestion']",Low,"['over-the-counter medications', 'rest', 'fluids']","['family doctor', 'urgent care']"
+conjunctivitis,"['red', 'itchy', 'watery eyes']",Low,"['over-the-counter medications', 'warm compresses']","['family doctor', 'ophthalmologist']"
+depression ,"['sadness', 'hopelessness', 'loss of interest in activities', 'changes in appetite', 'sleep', 'energy levels']",Unknown,"['treatment for depression may include medication', 'therapy', 'combination of both']","['psychologist', 'psychiatrist']"
+diabetes,"['increased thirst', 'frequent urination', 'unexplained weight loss', 'fatigue', 'blurred vision', 'cuts that are slow to heal']",High,"['diet', 'exercise', 'medication']",['endocrinologist']
+diarrhea,"['loose', 'watery stools']",Low,"['over-the-counter medications', 'rest', 'fluids']","['family doctor', 'urgent care']"
+eating disorder,['disturbance in eating behavior that can lead to serious health problems'],Unknown,"['treatment for eating disorders may include therapy', 'medication', 'support groups']","['psychologist', 'psychiatrist']"
+epilepsy,['seizures'],Unknown,"['medication', 'surgery']",['\xa0neurologist ']
+fever,['elevated body temperature '],Low,"['over-the-counter medications', 'rest', 'fluids']","['family doctor', 'urgent care']"
+food poisoning,"['nausea', 'vomiting', 'diarrhea', 'abdominal cramps']",Low,"['over-the-counter medications', 'rest', 'fluids']","['family doctor', 'urgent care']"
+gallstones,"['pain in the upper right abdomen', 'nausea', 'vomiting', 'fever']",High,['surgery'],['surgeon ']
+gonorrhea,"['sexually transmitted infection that can cause burning during urination', 'discharge from the penis or vagina', 'pain in the lower abdomen']",High,['antibiotics'],"['urologist', 'gynecologist']"
+heart disease,"['chest pain', 'shortness of breath', 'fatigue', 'dizziness', 'fainting']",High,"['treatment for heart disease may include medication', 'lifestyle changes', 'surgery']",['cardiologist']
+hepatitis,['inflammation of the liver'],Unknown,"['treatment for hepatitis may include medication', 'rest', 'lifestyle changes']",['gastroenterologist']
+herpes,"['sexually transmitted infection that can cause blisters on the genitals', 'mouth', 'other parts of the body']",High,"['there is no cure for herpes', 'but there are treatments that can help manage the symptoms']","['urologist', 'gynecologist']"
+influenza,"['fever', 'cough', 'sore throat', 'runny or stuffy nose', 'muscle aches', 'headache', 'fatigue']",Low,"['over-the-counter medications', 'rest', 'fluids']","['family doctor', 'urgent care']"
+irritable bowel syndrome (ibs),"['abdominal pain', 'bloating', 'constipation', 'diarrhea']",Unknown,"['treatment for ibs may include diet', 'lifestyle changes', 'medication']","['\xa0family doctor', 'gastroenterologist']"
+kidney stones ,"['pain in the lower back or side', 'nausea', 'vomiting', 'blood in the urine']",High,['surgery'],['urologist']
+lung cancer,"['cough that does not go away', 'shortness of breath', 'chest pain', 'unexplained weight loss', 'fatigue', 'blood in the sputum']",High,"['surgery', 'chemotherapy', 'radiation therapy']",['oncologist']
+malaria,"['fever', 'chills', 'sweating', 'headache', 'muscle aches', 'fatigue', 'vomiting', 'diarrhea']",High,['antimalarial drugs'],"['family doctor', 'urgent care']"
+measles,"['fever', 'cough', 'runny nose', 'red eyes', 'sore throat', 'rash']",High,['measles vaccine'],"['family doctor', 'urgent care']"
+meningitis,"['fever', 'headache', 'stiff neck', 'nausea', 'vomiting', 'sensitivity to light']",High,['antibiotics'],"['neurologist', 'neurosurgeon']"
+mononucleosis,"['fever', 'sore throat', 'fatigue', 'swollen lymph nodes', 'rash']",Low,"['there is no cure for mononucleosis', 'but symptoms can be treated with rest', 'fluids', 'over-the-counter medications']","['family doctor', 'urgent care']"
+pneumonia,"['fever', 'cough', 'shortness of breath', 'chest pain', 'fatigue']",Moderate,['antibiotics'],"['family doctor', 'pulmonologist']"
+rabies,"['fever', 'headache', 'muscle aches', 'tingling at the bite site', 'difficulty swallowing', 'hydrophobia', 'aerophobia']",High,['rabies vaccine'],"['doctor', 'urgent care']"
+salmonella,"['fever', 'diarrhea', 'abdominal cramps', 'nausea', 'vomiting']",Low,['antibiotics'],"['family doctor', 'urgent care ']"
+shingles,['painful rash that follows nerve path'],Low,['antiviral medication'],"['family doctor', 'dermatologist ']"
+tuberculosis (tb),"['cough that does not go away', 'fever', 'night sweats', 'weight loss', 'fatigue', 'chest pain']",High,['antibiotics'],"['family doctor', 'pulmonologist']"
+urinary tract infection (uti),"['painful urination', 'burning', 'frequent urination', 'urgency to urinate', 'blood in the urine']",Low,['antibiotics'],['urologist']
+varicose veins,"['swollen', 'twisted veins', 'usually in the legs']",Unknown,"['surgery', 'compression stockings', 'lifestyle changes']",['vascular surgeon']
+warts ,"['raised', 'rough growths on the skin']",Low,"['over-the-counter medications', 'prescription medications', 'cryotherapy', 'laser therapy']",['dermatologist']
+yeast infection,"['itching', 'burning', 'discharge from the vaginor penis']",Low,"['over-the-counter medications', 'prescription medications']","['urologist', 'gynecologist']"
+acanthamoebkeratitis,"['pain', 'redness', 'inflammation in the eye']",Low,"['antibiotics', 'antifungals', 'surgery']",['ophthalmologist ']
+acute appendicitis,"['pain in the lower right abdomen', 'nausea', 'vomiting', 'fever']",High,['appendectomy'],['surgeon']
+acute kidney injury (aki) ,['decreased kidney function'],Unknown,"['treatment for the underlying cause', 'such as dehydration', 'infection', 'medication side effect ']",['nephrologist ']
+alzheimer's disease,"['memory loss', 'confusion', 'difficulty thinking', 'changes in personality or behavior']",High,"[""there is no cure for alzheimer's disease"", 'but there are treatments that can help manage the symptoms ']",['neurologist']
+anemia,"['fatigue', 'shortness of breath', 'pale skin', 'lightheadedness', 'dizziness']",Unknown,"['treatment for anemidepends on the type of anemia', 'but may include medication', 'blood transfusions', 'surgery']",['hematologist']
+aortic aneurysm,"['bulge in the wall of the aorta', 'the largest artery in the body']",High,['surgery'],['vascular surgeon']
+bacterial meningitis ,"['fever', 'headache', 'stiff neck', 'nausea', 'vomiting', 'sensitivity to light']",High,['antibiotics'],"['neurologist', 'neurosurgeon']"
+bipolar disorder,"['extreme mood swings', 'from manito depression']",Unknown,"['treatment for bipolar disorder may include medication', 'therapy', 'combination of both']","['psychologist', 'psychiatrist']"
+cervical cancer ,"['abnormal pap test results', 'abnormal vaginal bleeding', 'pain during sex']",High,"['surgery', 'chemotherapy', 'radiation therapy']",['gynecologist ']
+colorectal cancer,"['change in bowel habits', 'such as diarrhea', 'constipation', 'narrowing of the stool', 'blood in the stool', 'abdominal pain', 'unexplained weight loss']",High,"['surgery', 'chemotherapy', 'radiation therapy']",['gastroenterologist']
+dementia,"['memory loss', 'confusion', 'difficulty thinking', 'changes in personality or behavior']",Unknown,"['there is no cure for dementia', 'but there are treatments that can help manage the symptoms']",['neurologist ']
+erectile dysfunction,"['difficulty getting', 'keeping an erection ']",Unknown,"['medication', 'lifestyle changes', 'surgery ']",['urologist']
+fibromyalgi,"['widespread pain', 'fatigue', 'tenderness']",Unknown,"['medication', 'lifestyle changes ']",['rheumatologist ']
+glaucoma,"['increased pressure in the eye that can damage the optic nerve', 'lead to vision loss']",Unknown,"['medication', 'surgery ']",['\xa0ophthalmologist']
+heart failure,['condition in which the heart cannot pump blood as well as it should'],High,"['medication', 'lifestyle changes', 'surgery']",['cardiologist']
+kidney disease,['damage to the kidneys that can lead to kidney failure'],Unknown,"['treatment for the underlying cause', 'such as high blood pressure', 'diabetes', 'an infection']",['nephrologist']
+lung disease,"['condition that affects the lungs', 'can make it difficult to breathe']",Unknown,"['treatment for the underlying cause', 'such as asthma', 'chronic obstructive pulmonary disease (copd)', 'pneumonia']",['pulmonologist']
+parkinson's disease,"['tremors', 'slow movement', 'stiffness', 'difficulty with balance', 'coordination ']",Unknown,"['\xa0medication', 'lifestyle changes']",['neurologist ']
+peptic ulcer disease ,"['pain in the upper abdomen', 'indigestion', 'nausea', 'vomiting']",Unknown,"['medication', 'lifestyle changes', 'surgery ']",['gastroenterologist']
+peripheral artery disease,"['pain', 'numbness', 'tingling in the arms or legs']",Unknown,"['medication', 'lifestyle changes', 'surgery']",['vascular surgeon']
+pneumonia,"['fever', 'cough', 'shortness of breath', 'chest pain', 'fatigue']",Moderate,['antibiotics'],"['family doctor', 'pulmonologist']"
+prostate cancer,"['difficulty urinating', 'blood in the urine', 'pain in the back or hips', 'erectile dysfunction']",High,"['\xa0surgery', 'radiation therapy', 'hormone therapy']",['urologist']
+rheumatoid arthritis,"['pain', 'swelling', 'stiffness in the joints']",Unknown,"['medication', 'lifestyle changes']",['rheumatologist']
+stroke,"['sudden weakness', 'numbness on one side of the body', 'difficulty speaking', 'confusion', 'trouble seeing in one eye', 'severe headache']",High,"['treatment for the underlying cause', 'such as clot-busting medication', 'surgery']","['neurologist', 'neurosurgeon']"
+stomach cancer,"['pain in the upper abdomen', 'indigestion', 'nausea', 'vomiting', 'weight loss']",High,"['surgery', 'chemotherapy', 'radiation therapy']",['gastroenterologist ']
+thyroid cancer,"['lump in the neck', 'hoarseness', 'fatigue', 'weight loss', 'unexplained heat intolerance', 'sensitivity to cold']",High,"['surgery', 'radiation therapy', 'hormone therapy']",['endocrinologist']
+ulcerative colitis,"['diarrhea', 'bloody stool', 'abdominal pain', 'weight loss']",Unknown,"['medication', 'surgery']",['gastroenterologist ']
+warts,"['raised', 'rough growths on the skin']",Low,"['over-the-counter medications', 'prescription medications', 'cryotherapy', 'laser therapy']",['\xa0dermatologist']
+atopic dermatitis,"['itchy', 'red', 'inflamed skin']",Unknown,"['medication', 'lifestyle changes']",['\xa0dermatologist']
+celiac disease,"['diarrhea', 'bloating', 'weight loss', 'fatigue', 'abdominal pain']",Unknown,['gluten-free diet'],['gastroenterologist']
+chronic kidney disease,"['fatigue', 'shortness of breath', 'swelling', 'high blood pressure', 'changes in urination']",Unknown,"['treatment for the underlying cause', 'such as high blood pressure', 'diabetes', 'an infection']",['nephrologist']
+crohn's disease,"['diarrhea', 'bloody stool', 'abdominal pain', 'weight loss']",Unknown,"['medication', 'surgery']",['gastroenterologist']
+epilepsy ,['seizures'],Unknown,"['medication', 'surgery']",['neurologist']
+fibromyalgia,"['widespread pain', 'fatigue', 'tenderness']",Unknown,"['medication', 'lifestyle changes']",['rheumatologist']
+graves' disease,"['hyperthyroidism', 'which is an overactive thyroid']",Unknown,"['medication', 'surgery']",['endocrinologist']
+hashimoto's thyroiditis ,"['hypothyroidism', 'which is an underactive thyroid ']",Unknown,['medication'],['endocrinologist']
+lupus,['chronic autoimmune disease that can affect any part of the body'],Unknown,"['medication', 'lifestyle changes']",['rheumatologist ']

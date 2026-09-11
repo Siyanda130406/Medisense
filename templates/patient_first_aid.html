@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+
+{% block title %}{{ translate_text('First Aid', lang) }} - MediSense{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-primary">
+                <i class="fas fa-briefcase-medical"></i> 
+                {{ translate_text('First Aid Guide', lang) }}
+            </h2>
+            <p class="text-muted">{{ translate_text('Quick reference for medical emergencies', lang) }}</p>
+        </div>
+    </div>
+
+    <!-- ===== SEARCH BAR ===== -->
+    <div class="row mb-4">
+        <div class="col-md-8 mx-auto">
+            <div class="input-group">
+                <input type="text" class="form-control" id="firstAidSearch" 
+                       placeholder="{{ translate_text('Search first aid...', lang) }}" 
+                       onkeyup="filterFirstAid()">
+                <button class="btn btn-primary" type="button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== CATEGORY FILTERS ===== -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="btn-group flex-wrap gap-2" role="group">
+                <button class="btn btn-outline-secondary active" data-filter="all" onclick="filterCategory('all', this)">
+                    {{ translate_text('All', lang) }}
+                </button>
+                <button class="btn btn-outline-danger" data-filter="danger" onclick="filterCategory('danger', this)">
+                    🔴 {{ translate_text('Emergency', lang) }}
+                </button>
+                <button class="btn btn-outline-warning" data-filter="warning" onclick="filterCategory('warning', this)">
+                    🟡 {{ translate_text('Urgent', lang) }}
+                </button>
+                <button class="btn btn-outline-info" data-filter="info" onclick="filterCategory('info', this)">
+                    🔵 {{ translate_text('Routine', lang) }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== FIRST AID CARDS ===== -->
+    <div class="row" id="firstAidGrid">
+        {% for category in first_aid_categories %}
+        <div class="col-lg-4 col-md-6 mb-4 first-aid-item" data-color="{{ category.color }}" data-title="{{ category.title }}" data-desc="{{ category.description }}">
+            <div class="card h-100 shadow-sm border-{{ category.color }} first-aid-card">
+                <div class="card-header bg-{{ category.color }} text-white">
+                    <div class="d-flex align-items-center">
+                        <span class="fs-2 me-2">{{ category.icon }}</span>
+                        <h5 class="mb-0">{{ translate_text(category.title, lang) }}</h5>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ translate_text(category.description, lang) }}</p>
+                    <span class="badge bg-{{ category.color }}">
+                        {% if category.color == 'danger' %}{{ translate_text('Emergency', lang) }}
+                        {% elif category.color == 'warning' %}{{ translate_text('Urgent', lang) }}
+                        {% else %}{{ translate_text('Routine', lang) }}{% endif %}
+                    </span>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <button class="btn btn-outline-{{ category.color }} w-100" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#firstAidModal{{ category.id }}">
+                        <i class="fas fa-book-open"></i> {{ translate_text('View Details', lang) }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== MODAL FOR EACH CATEGORY ===== -->
+        <div class="modal fade" id="firstAidModal{{ category.id }}" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-{{ category.color }} text-white">
+                        <h5 class="modal-title">
+                            {{ category.icon }} {{ translate_text(category.title, lang) }}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-12">
+                                <h6>{{ translate_text('What to do:', lang) }}</h6>
+                                <ul class="list-group list-group-flush">
+                                    {% set steps = {
+                                        'heart_attack': [
+                                            'Call emergency services immediately (10177)',
+                                            'Make the person sit down and rest',
+                                            'Loosen tight clothing',
+                                            'Give aspirin if available and not allergic',
+                                            'Stay with them until help arrives'
+                                        ],
+                                        'stroke': [
+                                            'Check FAST: Face drooping, Arm weakness, Speech difficulty',
+                                            'Call emergency services (10177) immediately',
+                                            'Note the time symptoms started',
+                                            'Keep the person calm and comfortable',
+                                            'Do not give food or drink'
+                                        ],
+                                        'choking': [
+                                            'Ask if they can speak or cough',
+                                            'If not, perform Heimlich maneuver',
+                                            'Stand behind them, make a fist above navel',
+                                            'Thrust inward and upward',
+                                            'If unconscious, start CPR'
+                                        ],
+                                        'severe_bleeding': [
+                                            'Apply direct pressure to the wound',
+                                            'Use a clean cloth or bandage',
+                                            'Elevate the wound above the heart if possible',
+                                            'Keep pressure until bleeding stops',
+                                            'Seek medical help immediately'
+                                        ],
+                                        'allergic_reaction': [
+                                            'Give epinephrine auto-injector if available',
+                                            'Call emergency services (10177)',
+                                            'Keep the person lying down with feet elevated',
+                                            'Loosen tight clothing',
+                                            'Monitor breathing and pulse'
+                                        ],
+                                        'seizure': [
+                                            'Clear the area of dangerous objects',
+                                            'Cushion the head with something soft',
+                                            'Do NOT restrain the person',
+                                            'Do NOT put anything in their mouth',
+                                            'Time the seizure, call 10177 if over 5 minutes'
+                                        ],
+                                        'poisoning': [
+                                            'Call Poison Control (0861 555 777)',
+                                            'Do NOT induce vomiting unless instructed',
+                                            'Check for signs of poisoning',
+                                            'Keep the person calm',
+                                            'Bring the poison container with you to hospital'
+                                        ],
+                                        'drowning': [
+                                            'Call for help immediately',
+                                            'If trained, start CPR',
+                                            'Check for breathing and pulse',
+                                            'Begin rescue breathing',
+                                            'Continue CPR until help arrives'
+                                        ],
+                                        'burns': [
+                                            'Cool the burn with running cool water for 10-15 minutes',
+                                            'Remove tight items before swelling starts',
+                                            'Cover with a sterile dressing',
+                                            'Do NOT break blisters',
+                                            'Seek medical help for severe burns'
+                                        ],
+                                        'fracture': [
+                                            'Do NOT move the person unless necessary',
+                                            'Immobilize the injured area',
+                                            'Apply cold pack to reduce swelling',
+                                            'Elevate if possible',
+                                            'Seek medical help'
+                                        ],
+                                        'heatstroke': [
+                                            'Move to a cool place out of the sun',
+                                            'Remove excess clothing',
+                                            'Apply cool water to skin',
+                                            'Fan the person',
+                                            'If conscious, give water to drink'
+                                        ],
+                                        'hypothermia': [
+                                            'Move to a warm place',
+                                            'Remove wet clothing',
+                                            'Wrap in blankets or dry clothing',
+                                            'Give warm drinks if conscious',
+                                            'Seek medical help'
+                                        ],
+                                        'diabetic_emergency': [
+                                            'Check if they have diabetes supplies',
+                                            'If conscious, give sugar/sweet drink',
+                                            'If unconscious, do NOT give anything by mouth',
+                                            'Call emergency services',
+                                            'Monitor breathing and consciousness'
+                                        ],
+                                        'asthma_attack': [
+                                            'Help them sit upright',
+                                            'Use their inhaler if available',
+                                            'Loosen tight clothing',
+                                            'If no improvement, call 10177',
+                                            'Stay calm and reassure them'
+                                        ],
+                                        'cuts_scrapes': [
+                                            'Wash hands before treating the wound',
+                                            'Clean with soap and water',
+                                            'Apply pressure to stop bleeding',
+                                            'Apply antibiotic ointment',
+                                            'Cover with sterile bandage'
+                                        ],
+                                        'insect_bites': [
+                                            'Remove the stinger if present',
+                                            'Wash the area with soap and water',
+                                            'Apply ice pack to reduce swelling',
+                                            'Use antihistamine if needed',
+                                            'Watch for allergic reaction'
+                                        ],
+                                        'nosebleed': [
+                                            'Sit forward, not backward',
+                                            'Pinch the soft part of the nose',
+                                            'Apply cold compress to nose bridge',
+                                            'Breathe through the mouth',
+                                            'Seek help if bleeding persists'
+                                        ],
+                                        'headache_migraine': [
+                                            'Rest in a quiet, dark room',
+                                            'Apply cold or warm compress',
+                                            'Drink water',
+                                            'Use pain relievers if needed',
+                                            'Avoid triggers like bright lights'
+                                        ],
+                                        'food_poisoning': [
+                                            'Drink plenty of fluids',
+                                            'Rest and avoid solid foods initially',
+                                            'Gradually return to eating bland foods',
+                                            'Monitor for severe symptoms',
+                                            'Seek medical help if severe'
+                                        ],
+                                        'fever_management': [
+                                            'Rest and stay hydrated',
+                                            'Take paracetamol for fever',
+                                            'Use lukewarm sponging',
+                                            'Remove excess clothing',
+                                            'Seek help if fever persists'
+                                        ]
+                                    } %}
+                                    {% for step in steps.get(category.id, ['Information coming soon...']) %}
+                                    <li class="list-group-item">{{ loop.index }}. {{ translate_text(step, lang) }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-{{ category.color }}" data-bs-dismiss="modal">
+                            {{ translate_text('Close', lang) }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- ===== EMPTY STATE ===== -->
+    <div class="row" id="noResults" style="display: none;">
+        <div class="col-12 text-center py-5">
+            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+            <h4>{{ translate_text('No first aid results found', lang) }}</h4>
+            <p class="text-muted">{{ translate_text('Try adjusting your search terms', lang) }}</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .first-aid-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border-top-width: 4px !important;
+        border-top-style: solid !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-bottom: none !important;
+    }
+
+    .first-aid-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .first-aid-card .card-header {
+        border-radius: 0 !important;
+    }
+
+    .first-aid-card .card-body {
+        min-height: 140px;
+    }
+
+    .btn-group-flex-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .btn-group-flex-wrap .btn {
+        border-radius: 25px !important;
+        padding: 8px 20px;
+        font-size: 0.9rem;
+        border: 2px solid transparent;
+    }
+
+    .btn-group-flex-wrap .btn.active {
+        border-color: #3498db;
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
+    }
+
+    .btn-outline-secondary.active {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-outline-danger.active {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-outline-warning.active {
+        background: #ffc107;
+        color: #212529;
+    }
+
+    .btn-outline-info.active {
+        background: #0dcaf0;
+        color: #212529;
+    }
+
+    .first-aid-item.hidden {
+        display: none;
+    }
+
+    .modal-body .list-group-item {
+        padding: 10px 15px;
+        border-left: 3px solid transparent;
+        transition: border-color 0.2s ease;
+    }
+
+    .modal-body .list-group-item:hover {
+        border-left-color: #3498db;
+        background: rgba(52, 152, 219, 0.05);
+    }
+
+    /* Colors */
+    .border-danger {
+        border-top-color: #dc3545 !important;
+    }
+    .border-warning {
+        border-top-color: #ffc107 !important;
+    }
+    .border-info {
+        border-top-color: #0dcaf0 !important;
+    }
+</style>
+
+<script>
+    // ===== FILTER BY SEARCH =====
+    function filterFirstAid() {
+        const searchInput = document.getElementById('firstAidSearch');
+        const query = searchInput.value.toLowerCase().trim();
+        const items = document.querySelectorAll('.first-aid-item');
+        let visibleCount = 0;
+
+        items.forEach(function(item) {
+            const title = item.dataset.title.toLowerCase();
+            const desc = item.dataset.desc.toLowerCase();
+            const matches = query === '' || title.includes(query) || desc.includes(query);
+            
+            // Also check category filter
+            const categoryFilter = document.querySelector('.btn-group .active[data-filter]');
+            const filter = categoryFilter ? categoryFilter.dataset.filter : 'all';
+            const color = item.dataset.color;
+            const categoryMatches = filter === 'all' || color === filter;
+
+            if (matches && categoryMatches) {
+                item.classList.remove('hidden');
+                visibleCount++;
+            } else {
+                item.classList.add('hidden');
+            }
+        });
+
+        // Show/hide no results
+        const noResults = document.getElementById('noResults');
+        if (visibleCount === 0) {
+            noResults.style.display = 'block';
+        } else {
+            noResults.style.display = 'none';
+        }
+    }
+
+    // ===== FILTER BY CATEGORY =====
+    function filterCategory(category, button) {
+        // Update active button
+        document.querySelectorAll('.btn-group .btn[data-filter]').forEach(function(btn) {
+            btn.classList.remove('active');
+        });
+        button.classList.add('active');
+
+        // Apply search + category filter
+        filterFirstAid();
+    }
+
+    // ===== INITIALIZE: Show all =====
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set all items visible initially
+        document.querySelectorAll('.first-aid-item').forEach(function(item) {
+            item.classList.remove('hidden');
+        });
+    });
+</script>
+{% endblock %}

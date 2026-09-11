@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}{{ translate_text('Terms Management', lang) }} - MediSense Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold text-primary"><i class="fas fa-file-contract me-2"></i>{{ translate_text('Terms & Conditions Management', lang) }}</h2>
+                    <p class="text-muted small">{{ translate_text('Manage the terms and conditions that all users must accept.', lang) }}</p>
+                </div>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> {{ translate_text('Back to Dashboard', lang) }}
+                </a>
+            </div>
+
+            <div class="row g-4">
+                <!-- Current Terms -->
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white border-bottom">
+                            <h6 class="mb-0 fw-semibold"><i class="fas fa-file-alt text-primary me-2"></i>{{ translate_text('Current Terms', lang) }}</h6>
+                        </div>
+                        <div class="card-body">
+                            {% if terms %}
+                                <p><strong>{{ translate_text('Version', lang) }}:</strong> {{ terms.version }}</p>
+                                <p><strong>{{ translate_text('Effective', lang) }}:</strong> {{ terms.effective_date }}</p>
+                                <div class="bg-light p-3 rounded" style="max-height: 350px; overflow-y: auto;">
+                                    {{ terms.content|safe }}
+                                </div>
+                            {% else %}
+                                <p class="text-muted">{{ translate_text('No terms set.', lang) }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Update Terms Form -->
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white border-bottom">
+                            <h6 class="mb-0 fw-semibold"><i class="fas fa-edit text-primary me-2"></i>{{ translate_text('Update Terms', lang) }}</h6>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('admin_terms') }}">
+                                <div class="mb-3">
+                                    <label for="version" class="form-label fw-semibold">{{ translate_text('Version', lang) }} *</label>
+                                    <input type="text" class="form-control" id="version" name="version" required 
+                                           value="{{ terms.version if terms else '1.1' }}" placeholder="e.g., 1.1, 2.0">
+                                    <small class="text-muted">{{ translate_text('Version number must be unique and increasing.', lang) }}</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="content" class="form-label fw-semibold">{{ translate_text('Terms Content (HTML)', lang) }} *</label>
+                                    <textarea class="form-control" id="content" name="content" rows="12" required>{{ terms.content if terms else default_content }}</textarea>
+                                    <small class="text-muted">{{ translate_text('Use HTML for formatting (h5, p, ul, li, strong, etc.)', lang) }}</small>
+                                </div>
+                                <button type="submit" name="action" value="update" class="btn btn-primary w-100">
+                                    <i class="fas fa-save me-1"></i> {{ translate_text('Update Terms', lang) }}
+                                </button>
+                                <div class="alert alert-warning mt-3 border-0">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    {{ translate_text('Updating terms will require all users to re-accept.', lang) }}
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version History -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-bottom">
+                            <h6 class="mb-0 fw-semibold"><i class="fas fa-history text-primary me-2"></i>{{ translate_text('Version History', lang) }}</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>{{ translate_text('Version', lang) }}</th>
+                                            <th>{{ translate_text('Effective Date', lang) }}</th>
+                                            <th>{{ translate_text('Status', lang) }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for v in versions %}
+                                        <tr>
+                                            <td class="fw-semibold">{{ v.version }}</td>
+                                            <td>{{ v.effective_date }}</td>
+                                            <td>
+                                                {% if v.is_active == 1 %}
+                                                <span class="badge bg-success">{{ translate_text('Active', lang) }}</span>
+                                                {% else %}
+                                                <span class="badge bg-secondary">{{ translate_text('Archived', lang) }}</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}{{ translate_text('Search Results', lang) }} - MediSense{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('staff_dashboard') }}">{{ translate_text('Dashboard', lang) }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ translate_text('Search Results', lang) }}</li>
+                </ol>
+            </nav>
+            
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 text-primary"><i class="fas fa-search"></i> {{ translate_text('Search Results', lang) }}</h5>
+                </div>
+                <div class="card-body">
+                    
+                    <!-- Search Form -->
+                    <form method="GET" action="{{ url_for('staff_search') }}" class="row g-2 mb-4">
+                        <div class="col-md-8">
+                            <input type="text" class="form-control form-control-lg" name="q" placeholder="{{ translate_text('Search patients by name, phone, or email...', lang) }}" value="{{ search_query }}">
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary w-100 btn-lg">
+                                <i class="fas fa-search"></i> {{ translate_text('Search', lang) }}
+                            </button>
+                        </div>
+                    </form>
+                    
+                    {% if search_performed %}
+                        {% if search_results %}
+                            <div class="alert alert-success border-0">
+                                <i class="fas fa-check-circle"></i> 
+                                {{ translate_text('Found', lang) }} <strong>{{ search_results|length }}</strong> 
+                                {{ translate_text('patient(s) matching', lang) }} "<strong>{{ search_query }}</strong>"
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>{{ translate_text('Patient Name', lang) }}</th>
+                                            <th>{{ translate_text('Gender', lang) }}</th>
+                                            <th>{{ translate_text('ID Number', lang) }}</th>
+                                            <th>{{ translate_text('Phone', lang) }}</th>
+                                            <th>{{ translate_text('Email', lang) }}</th>
+                                            <th>{{ translate_text('Age', lang) }}</th>
+                                            <th>{{ translate_text('Risk', lang) }}</th>
+                                            <th>{{ translate_text('Visits', lang) }}</th>
+                                            <th>{{ translate_text('Actions', lang) }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for patient in search_results %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ patient.full_name }}</strong>
+                                                <br>
+                                                <small class="text-muted">{{ patient.location }}</small>
+                                            </td>
+                                            <!-- ===== NEW: GENDER COLUMN ===== -->
+                                            <td>
+                                                <span class="badge bg-secondary">{{ patient.gender or 'N/A' }}</span>
+                                            </td>
+                                            <!-- ===== NEW: ID NUMBER COLUMN ===== -->
+                                            <td>
+                                                <span class="badge bg-info text-dark">{{ patient.id_number or 'N/A' }}</span>
+                                            </td>
+                                            <td>{{ patient.phone }}</td>
+                                            <td>{{ patient.email }}</td>
+                                            <td>{{ patient.age }}</td>
+                                            <td>
+                                                <span class="badge {% if patient.risk_category == 'Low' %}bg-success{% elif patient.risk_category == 'Medium' %}bg-warning{% elif patient.risk_category == 'High' %}bg-danger{% else %}bg-dark{% endif %}">
+                                                    {{ patient.risk_score }}% 
+                                                    <small>({{ translate_text(patient.risk_category, lang) }})</small>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">{{ patient.total_appointments }}</span>
+                                                <br>
+                                                <small class="text-muted">{{ patient.completed }} {{ translate_text('completed', lang) }}</small>
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('staff_patient_history', patient_id=patient.id) }}" class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-eye"></i> {{ translate_text('View Profile', lang) }}
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">{{ translate_text('No patients found matching', lang) }} "{{ search_query }}"</h5>
+                                <p class="text-muted small">{{ translate_text('Try a different search term or check spelling.', lang) }}</p>
+                                <a href="{{ url_for('staff_search') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left"></i> {{ translate_text('Clear Search', lang) }}
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">{{ translate_text('Search for patients', lang) }}</h5>
+                            <p class="text-muted small">{{ translate_text('Enter a patient name, phone number, or email above to find patient records.', lang) }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mt-3">
+                        <a href="{{ url_for('staff_dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> {{ translate_text('Back to Dashboard', lang) }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

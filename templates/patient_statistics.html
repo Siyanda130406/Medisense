@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}{{ translate_text('My Statistics', lang) }} - MediSense{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('patient_dashboard') }}">{{ translate_text('Dashboard', lang) }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ translate_text('My Statistics', lang) }}</li>
+                </ol>
+            </nav>
+            
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h4 class="mb-0 text-primary"><i class="fas fa-chart-bar"></i> {{ translate_text('My Statistics', lang) }}</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Summary Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="stat-card bg-secondary text-white p-3 rounded">
+                                <h6>{{ translate_text('Total Appointments', lang) }}</h6>
+                                <h3>{{ total }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card bg-success text-white p-3 rounded">
+                                <h6>{{ translate_text('Completed', lang) }}</h6>
+                                <h3>{{ completed }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card bg-danger text-white p-3 rounded">
+                                <h6>{{ translate_text('No-Shows', lang) }}</h6>
+                                <h3>{{ no_shows }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card bg-warning text-white p-3 rounded">
+                                <h6>{{ translate_text('Cancelled', lang) }}</h6>
+                                <h3>{{ cancelled }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Risk Assessment -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-white border-bottom">
+                                    <h6 class="mb-0">{{ translate_text('Risk Assessment', lang) }}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p><strong>{{ translate_text('Risk Score', lang) }}:</strong> {{ risk_score }}%</p>
+                                            <p><strong>{{ translate_text('Category', lang) }}:</strong> 
+                                                <span class="badge {% if risk_category == 'Low' %}bg-success{% elif risk_category == 'Medium' %}bg-warning{% elif risk_category == 'High' %}bg-danger{% else %}bg-dark{% endif %}">
+                                                    {{ translate_text(risk_category, lang) }}
+                                                </span>
+                                            </p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="progress" style="height: 30px;">
+                                                <div class="progress-bar {% if risk_score < 30 %}bg-success{% elif risk_score < 50 %}bg-warning{% elif risk_score < 70 %}bg-danger{% else %}bg-dark{% endif %}" 
+                                                     role="progressbar" 
+                                                     style="width: {{ risk_score }}%;" 
+                                                     aria-valuenow="{{ risk_score }}" 
+                                                     aria-valuemin="0" 
+                                                     aria-valuemax="100">
+                                                    {{ risk_score }}%
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-white border-bottom">
+                                    <h6 class="mb-0">{{ translate_text('Patient Information', lang) }}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>{{ translate_text('Age', lang) }}:</strong> {{ age }}</p>
+                                    <p><strong>{{ translate_text('Health Conditions', lang) }}:</strong> {{ health_conditions or translate_text('None reported', lang) }}</p>
+                                    <p><strong>{{ translate_text('No-Show Rate', lang) }}:</strong> {{ no_show_rate }}%</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-white border-bottom">
+                                    <h6 class="mb-0">{{ translate_text('Monthly Appointment Trend', lang) }}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="monthlyChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-white border-bottom">
+                                    <h6 class="mb-0">{{ translate_text('Clinic Distribution', lang) }}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="clinicChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Appointment History Table -->
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-white border-bottom">
+                                    <h6 class="mb-0">{{ translate_text('Appointment History', lang) }}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>{{ translate_text('Clinic', lang) }}</th>
+                                                    <th>{{ translate_text('Date', lang) }}</th>
+                                                    <th>{{ translate_text('Time', lang) }}</th>
+                                                    <th>{{ translate_text('Status', lang) }}</th>
+                                                    <th>{{ translate_text('Reason', lang) }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for appt in appointments[:10] %}
+                                                <tr>
+                                                    <td>{{ appt.clinic_name }}</td>
+                                                    <td>{{ appt.appointment_date }}</td>
+                                                    <td>{{ appt.appointment_time }}</td>
+                                                    <td>
+                                                        <span class="badge {% if appt.status == 'Completed' %}bg-success{% elif appt.status == 'Scheduled' %}bg-primary{% elif appt.status == 'Cancelled' %}bg-warning{% elif appt.status == 'No-Show' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                                            {{ translate_text(appt.status, lang) }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ appt.reason or 'N/A' }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <a href="{{ url_for('patient_dashboard') }}" class="btn btn-primary">
+                            <i class="fas fa-arrow-left"></i> {{ translate_text('Back to Dashboard', lang) }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Monthly Chart
+    const ctx1 = document.getElementById('monthlyChart').getContext('2d');
+    new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: {{ monthly_labels|safe }},
+            datasets: [
+                {
+                    label: '{{ translate_text("Total Appointments", lang) }}',
+                    data: {{ monthly_totals|safe }},
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    fill: true
+                },
+                {
+                    label: '{{ translate_text("Completed", lang) }}',
+                    data: {{ monthly_completed|safe }},
+                    borderColor: '#198754',
+                    backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                    fill: true
+                },
+                {
+                    label: '{{ translate_text("No-Shows", lang) }}',
+                    data: {{ monthly_no_shows|safe }},
+                    borderColor: '#dc3545',
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            }
+        }
+    });
+    
+    // Clinic Chart
+    const ctx2 = document.getElementById('clinicChart').getContext('2d');
+    new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+            labels: {{ clinic_labels|safe }},
+            datasets: [{
+                data: {{ clinic_counts|safe }},
+                backgroundColor: [
+                    'rgba(13, 110, 253, 0.8)',
+                    'rgba(25, 135, 84, 0.8)',
+                    'rgba(255, 193, 7, 0.8)',
+                    'rgba(220, 53, 69, 0.8)',
+                    'rgba(108, 117, 125, 0.8)',
+                    'rgba(13, 202, 240, 0.8)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            }
+        }
+    });
+});
+</script>
+
+<style>
+.stat-card {
+    transition: transform 0.2s;
+}
+.stat-card:hover {
+    transform: scale(1.05);
+}
+</style>
+{% endblock %}

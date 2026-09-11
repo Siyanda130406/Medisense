@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+venv/
+env/
+.venv/
+
+# Database
+*.db
+*.sqlite3
+
+# Models (large files)
+*.pkl
+*.h5
+*.zip
+*.tar.gz
+
+# Backups (large files)
+backup_20260727_145032/
+backup_20260727_161335/
+legacy/
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}{{ translate_text('System Settings', lang) }} - MediSense Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <!-- Header -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold text-primary"><i class="fas fa-cog me-2"></i>{{ translate_text('System Settings', lang) }}</h2>
+                    <p class="text-muted small">{{ translate_text('Configure system settings for MediSense.', lang) }}</p>
+                </div>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> {{ translate_text('Back to Dashboard', lang) }}
+                </a>
+            </div>
+
+            <!-- Settings Form -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ translate_text('System Name', lang) }}</label>
+                            <input type="text" class="form-control bg-light" value="MediSense" readonly>
+                            <small class="text-muted">{{ translate_text('System name cannot be changed.', lang) }}</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ translate_text('System Version', lang) }}</label>
+                            <input type="text" class="form-control bg-light" value="1.0.0" readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ translate_text('Default Language', lang) }}</label>
+                            <select class="form-select">
+                                <option value="en">English</option>
+                                <option value="zu">isiZulu</option>
+                            </select>
+                            <small class="text-muted">{{ translate_text('Select the default language for the system.', lang) }}</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ translate_text('Appointment Reminder (Hours before)', lang) }}</label>
+                            <input type="number" class="form-control" value="24" min="1" max="72">
+                            <small class="text-muted">{{ translate_text('How many hours before an appointment to send reminders.', lang) }}</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ translate_text('Maximum Appointments per Day', lang) }}</label>
+                            <input type="number" class="form-control" value="50" min="1" max="200">
+                            <small class="text-muted">{{ translate_text('Maximum number of appointments allowed per day per clinic.', lang) }}</small>
+                        </div>
+
+                        <hr>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> {{ translate_text('Save Settings', lang) }}
+                            </button>
+                            <button type="reset" class="btn btn-outline-secondary">
+                                <i class="fas fa-undo me-1"></i> {{ translate_text('Reset', lang) }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

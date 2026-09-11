@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+
+{% block title %}{{ translate_text('Dashboard', lang) }} - MediSense Admin{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .stat-card {
+        background: var(--bg-card);
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+    .stat-card:hover {
+        border-color: #0d6efd;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .stat-card .number {
+        font-size: 32px;
+        font-weight: 700;
+        color: #0d6efd;
+    }
+    .stat-card .label {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-top: 4px;
+    }
+    .stat-card .sub-label {
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+    .stat-card .trend-up { color: #2ecc71; }
+    .stat-card .trend-down { color: #e74c3c; }
+    
+    .menu-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+    .menu-item {
+        background: var(--bg-body);
+        padding: 24px 20px;
+        border-radius: 10px;
+        text-align: center;
+        text-decoration: none;
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        transition: all 0.25s ease;
+    }
+    .menu-item:hover {
+        background: rgba(13, 110, 253, 0.08);
+        border-color: #0d6efd;
+        transform: translateY(-3px);
+        box-shadow: 0 4px 16px rgba(13, 110, 253, 0.10);
+        text-decoration: none;
+        color: #0d6efd;
+    }
+    .menu-item .icon {
+        font-size: 28px;
+        display: block;
+        margin-bottom: 8px;
+        color: #0d6efd;
+    }
+    .menu-item .label {
+        font-size: 14px;
+        font-weight: 600;
+    }
+    .menu-item .desc {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 4px;
+    }
+    .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    /* Real-time indicator */
+    .live-indicator {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        background: #2ecc71;
+        border-radius: 50%;
+        animation: livePulse 1.5s ease-in-out infinite;
+        margin-right: 6px;
+    }
+    @keyframes livePulse {
+        0% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(0.8); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+    
+    @media (max-width: 992px) {
+        .stats-grid { grid-template-columns: repeat(3, 1fr); }
+        .menu-grid { grid-template-columns: repeat(2, 1fr); }
+        .two-col { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 576px) {
+        .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        .menu-grid { grid-template-columns: 1fr; }
+        .stat-card .number { font-size: 24px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <!-- Welcome Card -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body py-4">
+            <div class="d-flex align-items-center flex-wrap">
+                <div>
+                    <h4 class="mb-1 text-primary"><i class="fas fa-user-shield me-2"></i>{{ translate_text('Welcome', lang) }}, {{ user.full_name }}</h4>
+                    <p class="text-muted small mb-0">
+                        <span class="live-indicator"></span> {{ translate_text('Live Dashboard - Real-time updates', lang) }}
+                    </p>
+                </div>
+                <div class="ms-auto mt-2 mt-sm-0">
+                    <span class="badge bg-primary py-2 px-3">{{ translate_text('Admin', lang) }}</span>
+                    <span class="badge bg-success py-2 px-3 ms-1">{{ translate_text('Online', lang) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="number">{{ total_users }}</div>
+            <div class="label">{{ translate_text('Total Users', lang) }}</div>
+            <div class="sub-label">{{ translate_text('Active', lang) }}: {{ active_users }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">{{ total_patients or 0 }}</div>
+            <div class="label">{{ translate_text('Patients', lang) }}</div>
+            <div class="sub-label">{{ translate_text('Registered', lang) }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">{{ total_staff or 0 }}</div>
+            <div class="label">{{ translate_text('Staff', lang) }}</div>
+            <div class="sub-label">{{ translate_text('Nurses & Admins', lang) }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">{{ total_appointments }}</div>
+            <div class="label">{{ translate_text('Appointments', lang) }}</div>
+            <div class="sub-label">{{ translate_text('Total booked', lang) }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">{{ today_appointments or 0 }}</div>
+            <div class="label">{{ translate_text('Today', lang) }}</div>
+            <div class="sub-label">
+                <span class="trend-{{ 'up' if today_appointments > 0 else 'down' }}">
+                    {{ today_appointments }} {{ translate_text('today', lang) }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="two-col mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-semibold"><i class="fas fa-chart-bar text-primary me-2"></i>{{ translate_text('Appointments by Day', lang) }}</h6>
+                <span class="badge bg-primary">{{ translate_text('Last 7 days', lang) }}</span>
+            </div>
+            <div class="card-body">
+                <canvas id="appointmentsChart" height="200"></canvas>
+            </div>
+        </div>
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-semibold"><i class="fas fa-chart-pie text-primary me-2"></i>{{ translate_text('Appointment Status', lang) }}</h6>
+                <span class="badge bg-secondary">{{ translate_text('Distribution', lang) }}</span>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom">
+            <h6 class="mb-0 fw-semibold"><i class="fas fa-bolt text-primary me-2"></i>{{ translate_text('Quick Actions', lang) }}</h6>
+        </div>
+        <div class="card-body">
+            <div class="menu-grid">
+                <a href="{{ url_for('admin_users') }}" class="menu-item">
+                    <span class="icon"><i class="fas fa-users"></i></span>
+                    <span class="label">{{ translate_text('Manage Users', lang) }}</span>
+                    <span class="desc">{{ translate_text('Add, edit, delete users', lang) }}</span>
+                </a>
+                <a href="{{ url_for('admin_clinics') }}" class="menu-item">
+                    <span class="icon"><i class="fas fa-hospital"></i></span>
+                    <span class="label">{{ translate_text('Manage Clinics', lang) }}</span>
+                    <span class="desc">{{ translate_text('Add, edit, delete clinics', lang) }}</span>
+                </a>
+                <a href="{{ url_for('admin_appointments') }}" class="menu-item">
+                    <span class="icon"><i class="fas fa-calendar-check"></i></span>
+                    <span class="label">{{ translate_text('All Appointments', lang) }}</span>
+                    <span class="desc">{{ translate_text('View all appointments', lang) }}</span>
+                </a>
+                <a href="{{ url_for('admin_staff') }}" class="menu-item">
+                    <span class="icon"><i class="fas fa-user-nurse"></i></span>
+                    <span class="label">{{ translate_text('Staff Management', lang) }}</span>
+                    <span class="desc">{{ translate_text('Verify and manage staff', lang) }}</span>
+                </a>
+                <a href="{{ url_for('admin_reports') }}" class="menu-item">
+                    <span class="icon"><i class="fas fa-file-alt"></i></span>
+                    <span class="label">{{ translate_text('Reports', lang) }}</span>
+                    <span class="desc">{{ translate_text('View system reports', lang) }}</span>
+                </a>
+                <a href="{{ url_for('admin_settings') }}" class="menu-item">
+                    <span class="icon"><i class="fas fa-cog"></i></span>
+                    <span class="label">{{ translate_text('System Settings', lang) }}</span>
+                    <span class="desc">{{ translate_text('Configure system', lang) }}</span>
+                </a>
+                <a href="{{ url_for('admin_terms') }}" class="menu-item">
+                    <span class="icon"><i class="fas fa-file-contract"></i></span>
+                    <span class="label">{{ translate_text('Terms Management', lang) }}</span>
+                    <span class="desc">{{ translate_text('Manage terms and conditions', lang) }}</span>
+                </a>
+                <a href="{{ url_for('admin_activity') }}" class="menu-item">
+                    <span class="icon"><i class="fas fa-clock"></i></span>
+                    <span class="label">{{ translate_text('Activity Log', lang) }}</span>
+                    <span class="desc">{{ translate_text('View system activity', lang) }}</span>
+                </a>
+                <a href="{{ url_for('admin_check_no_shows') }}" class="menu-item">
+                    <span class="icon"><i class="fas fa-exclamation-triangle"></i></span>
+                    <span class="label">{{ translate_text('Check No-Shows', lang) }}</span>
+                    <span class="desc">{{ translate_text('Mark expired appointments', lang) }}</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Users & System Info -->
+    <div class="two-col">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h6 class="mb-0 fw-semibold"><i class="fas fa-users text-primary me-2"></i>{{ translate_text('Recent Users', lang) }}</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>{{ translate_text('Name', lang) }}</th>
+                                <th>{{ translate_text('Email', lang) }}</th>
+                                <th>{{ translate_text('Role', lang) }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for u in recent_users %}
+                            <tr>
+                                <td class="fw-semibold">{{ u.full_name }}</td>
+                                <td>{{ u.email }}</td>
+                                <td><span class="badge bg-secondary">{{ u.role }}</span></td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-3">{{ translate_text('No recent users', lang) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h6 class="mb-0 fw-semibold"><i class="fas fa-info-circle text-primary me-2"></i>{{ translate_text('System Information', lang) }}</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <p><strong>{{ translate_text('System', lang) }}:</strong> MediSense v2.0</p>
+                        <p><strong>{{ translate_text('Status', lang) }}:</strong> <span class="text-success"><span class="live-indicator"></span> {{ translate_text('Online', lang) }}</span></p>
+                        <p><strong>{{ translate_text('Database', lang) }}:</strong> SQLite</p>
+                    </div>
+                    <div class="col-6">
+                        <p><strong>{{ translate_text('Users', lang) }}:</strong> {{ total_users }}</p>
+                        <p><strong>{{ translate_text('Appointments', lang) }}:</strong> {{ total_appointments }}</p>
+                        <p><strong>{{ translate_text('Clinics', lang) }}:</strong> {{ total_clinics or 0 }}</p>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-6">
+                        <p><strong>{{ translate_text('Admin', lang) }}:</strong> {{ user.full_name }}</p>
+                    </div>
+                    <div class="col-6">
+                        <p><strong>{{ translate_text('Email', lang) }}:</strong> {{ user.email }}</p>
+                    </div>
+                </div>
+                
+                <!-- No-Show Rate -->
+                <div class="mt-2">
+                    <p class="mb-1"><strong>{{ translate_text('No-Show Rate', lang) }}:</strong> {{ no_show_rate }}%</p>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar {% if no_show_rate < 10 %}bg-success{% elif no_show_rate < 25 %}bg-warning{% else %}bg-danger{% endif %}" 
+                             style="width: {{ no_show_rate }}%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ===== APPOINTMENTS CHART =====
+    const ctx1 = document.getElementById('appointmentsChart').getContext('2d');
+    new Chart(ctx1, {
+        type: 'bar',
+        data: {
+            labels: {{ daily_labels|safe }},
+            datasets: [{
+                label: '{{ translate_text("Appointments", lang) }}',
+                data: {{ daily_counts|safe }},
+                backgroundColor: ['#0d6efd', '#0d6efd', '#0d6efd', '#0d6efd', '#0d6efd', '#0d6efd', '#0d6efd'],
+                borderRadius: 4,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y + ' appointments';
+                        }
+                    }
+                }
+            },
+            scales: { 
+                y: { 
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 }
+                } 
+            }
+        }
+    });
+
+    // ===== STATUS CHART =====
+    const ctx2 = document.getElementById('statusChart').getContext('2d');
+    new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+            labels: [
+                '{{ translate_text("Scheduled", lang) }}',
+                '{{ translate_text("Completed", lang) }}',
+                '{{ translate_text("Cancelled", lang) }}',
+                '{{ translate_text("No-Show", lang) }}'
+            ],
+            datasets: [{
+                data: {{ status_counts|safe }},
+                backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#dc3545'],
+                borderWidth: 2,
+                borderColor: 'var(--bg-card)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { 
+                    position: 'bottom',
+                    labels: { color: 'var(--text-primary)' }
+                } 
+            },
+            cutout: '65%'
+        }
+    });
+});
+
+// ===== REAL-TIME UPDATES (simulated) =====
+setInterval(function() {
+    // Update the live indicator
+    const indicator = document.querySelector('.live-indicator');
+    if (indicator) {
+        indicator.style.animation = 'none';
+        setTimeout(() => {
+            indicator.style.animation = 'livePulse 1.5s ease-in-out infinite';
+        }, 10);
+    }
+}, 5000);
+</script>
+{% endblock %}

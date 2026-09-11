@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}{{ translate_text('Edit Clinic', lang) }} - MediSense Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold text-primary"><i class="fas fa-hospital me-2"></i>{{ translate_text('Edit Clinic', lang) }}</h2>
+                <a href="{{ url_for('admin_clinics') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> {{ translate_text('Back', lang) }}
+                </a>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>{{ translate_text('Clinic ID', lang) }}:</strong> {{ clinic.Clinic_ID }}
+                    </div>
+
+                    <p class="text-muted">{{ translate_text('Update the details of the clinic.', lang) }}</p>
+
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ translate_text('Clinic Name', lang) }} *</label>
+                            <input type="text" class="form-control" name="clinic_name" value="{{ clinic.Clinic_Name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ translate_text('City', lang) }} *</label>
+                            <input type="text" class="form-control" name="city" value="{{ clinic.City }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ translate_text('Area', lang) }}</label>
+                            <input type="text" class="form-control" name="area" value="{{ clinic.Area }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ translate_text('Province', lang) }}</label>
+                            <select class="form-select" name="province">
+                                <option value="">{{ translate_text('-- Select Province --', lang) }}</option>
+                                <option value="Gauteng" {% if clinic.Province == 'Gauteng' %}selected{% endif %}>Gauteng</option>
+                                <option value="Western Cape" {% if clinic.Province == 'Western Cape' %}selected{% endif %}>Western Cape</option>
+                                <option value="KwaZulu-Natal" {% if clinic.Province == 'KwaZulu-Natal' %}selected{% endif %}>KwaZulu-Natal</option>
+                                <option value="Eastern Cape" {% if clinic.Province == 'Eastern Cape' %}selected{% endif %}>Eastern Cape</option>
+                                <option value="Limpopo" {% if clinic.Province == 'Limpopo' %}selected{% endif %}>Limpopo</option>
+                                <option value="Mpumalanga" {% if clinic.Province == 'Mpumalanga' %}selected{% endif %}>Mpumalanga</option>
+                                <option value="North West" {% if clinic.Province == 'North West' %}selected{% endif %}>North West</option>
+                                <option value="Free State" {% if clinic.Province == 'Free State' %}selected{% endif %}>Free State</option>
+                                <option value="Northern Cape" {% if clinic.Province == 'Northern Cape' %}selected{% endif %}>Northern Cape</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ translate_text('Phone Number', lang) }}</label>
+                            <input type="tel" class="form-control" name="phone" value="{{ clinic.Phone }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ translate_text('Services Offered', lang) }}</label>
+                            <textarea class="form-control" name="services" rows="3">{{ clinic.Services }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i> {{ translate_text('Save Changes', lang) }}
+                        </button>
+                        <a href="{{ url_for('admin_clinics') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i> {{ translate_text('Cancel', lang) }}
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

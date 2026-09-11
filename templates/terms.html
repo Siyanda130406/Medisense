@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Terms and Conditions - MediSense{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h4><i class="fas fa-file-contract"></i> Terms and Conditions</h4>
+            <small>Version {{ version }} | Effective: {{ effective_date }}</small>
+        </div>
+        <div class="card-body">
+            <div class="terms-content" style="max-height: 400px; overflow-y: auto; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                {{ content|safe }}
+            </div>
+            
+            {% if not terms_accepted %}
+            <form method="POST" action="{{ url_for('accept_terms') }}" class="mt-4">
+                <div class="form-check mb-3">
+                    <input type="checkbox" class="form-check-input" id="terms_agree" name="terms_agree" required>
+                    <label class="form-check-label" for="terms_agree">
+                        I have read and agree to the Terms and Conditions
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-check"></i> Accept Terms
+                </button>
+                <a href="{{ url_for('logout') }}" class="btn btn-danger">Decline & Logout</a>
+            </form>
+            {% else %}
+            <div class="alert alert-success mt-3">
+                <i class="fas fa-check-circle"></i> You accepted these terms on {{ accepted_at }}
+            </div>
+            <a href="{{ url_for('home') }}" class="btn btn-primary">Return to Dashboard</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}{{ translate_text('User Management', lang) }} - MediSense Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary"><i class="fas fa-users me-2"></i>{{ translate_text('User Management', lang) }}</h2>
+        <a href="{{ url_for('admin_user_add') }}" class="btn btn-primary">
+            <i class="fas fa-user-plus me-1"></i> {{ translate_text('Add User', lang) }}
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>{{ translate_text('Name', lang) }}</th>
+                            <th>{{ translate_text('Email', lang) }}</th>
+                            <th>{{ translate_text('Phone', lang) }}</th>
+                            <th>{{ translate_text('Gender', lang) }}</th>
+                            <th>{{ translate_text('ID Number', lang) }}</th>
+                            <th>{{ translate_text('Role', lang) }}</th>
+                            <th>{{ translate_text('Status', lang) }}</th>
+                            <th>{{ translate_text('Verified', lang) }}</th>
+                            <th>{{ translate_text('Actions', lang) }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>
+                                <strong>{{ user.full_name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ user.created_at[:10] if user.created_at else 'N/A' }}</small>
+                            </td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.phone or 'N/A' }}</td>
+                            <!-- ===== NEW: GENDER COLUMN ===== -->
+                            <td>
+                                <span class="badge bg-secondary">{{ user.gender or 'N/A' }}</span>
+                            </td>
+                            <!-- ===== NEW: ID NUMBER COLUMN ===== -->
+                            <td>
+                                <span class="badge bg-info text-dark">{{ user.id_number or 'N/A' }}</span>
+                            </td>
+                            <td>
+                                <span class="badge {% if user.role == 'admin' %}bg-danger{% elif user.role == 'nurse' %}bg-primary{% elif user.role == 'staff' %}bg-info{% else %}bg-secondary{% endif %}">
+                                    {{ translate_text(user.role|capitalize, lang) }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {% if user.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                    {% if user.is_active %}{{ translate_text('Active', lang) }}{% else %}{{ translate_text('Inactive', lang) }}{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {% if user.is_verified %}bg-success{% else %}bg-warning{% endif %}">
+                                    {% if user.is_verified %}{{ translate_text('Verified', lang) }}{% else %}{{ translate_text('Pending', lang) }}{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <a href="{{ url_for('admin_user_edit', user_id=user.id) }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form action="{{ url_for('admin_user_toggle', user_id=user.id) }}" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn btn-sm {% if user.is_active %}btn-warning{% else %}btn-success{% endif %}" 
+                                                onclick="return confirm('{{ translate_text('Toggle user status?', lang) }}')">
+                                            <i class="fas {% if user.is_active %}fa-pause{% else %}fa-play{% endif %}"></i>
+                                        </button>
+                                    </form>
+                                    {% if user.id != session.user_id %}
+                                    <form action="{{ url_for('admin_user_delete', user_id=user.id) }}" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn btn-sm btn-danger" 
+                                                onclick="return confirm('{{ translate_text('Delete this user? This action cannot be undone.', lang) }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if not users %}
+            <div class="text-center py-5">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <p class="text-muted">{{ translate_text('No users found', lang) }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}{{ translate_text('Activity Log', lang) }} - MediSense Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold text-primary"><i class="fas fa-clock me-2"></i>{{ translate_text('Activity Log', lang) }}</h2>
+                    <p class="text-muted small">{{ translate_text('View system activity and user actions.', lang) }}</p>
+                </div>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> {{ translate_text('Back to Dashboard', lang) }}
+                </a>
+            </div>
+
+            <!-- Activity Table -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{{ translate_text('Time', lang) }}</th>
+                                    <th>{{ translate_text('User', lang) }}</th>
+                                    <th>{{ translate_text('Action', lang) }}</th>
+                                    <th>{{ translate_text('Details', lang) }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for activity in activities %}
+                                <tr>
+                                    <td class="text-muted small">{{ activity.time }}</td>
+                                    <td>{{ activity.user }}</td>
+                                    <td>{{ activity.action }}</td>
+                                    <td>{{ activity.details }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {% if activities|length == 0 %}
+            <div class="text-center py-5">
+                <i class="fas fa-clock fa-3x text-muted mb-3 d-block"></i>
+                <p class="text-muted">{{ translate_text('No activity recorded yet.', lang) }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

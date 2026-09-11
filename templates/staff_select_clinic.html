@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}{{ translate_text('Select Clinic', lang) }} - MediSense{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-hospital"></i> {{ translate_text('Select Your Clinic', lang) }}</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">{{ translate_text('Choose the clinic you are working at today.', lang) }}</p>
+                    
+                    {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                    {% endif %}
+                    
+                    <div class="user-info bg-light p-3 rounded mb-3">
+                        <p><strong>{{ translate_text('Staff', lang) }}:</strong> {{ user.full_name }}</p>
+                        <p><strong>{{ translate_text('Role', lang) }}:</strong> {{ user.role|upper }}</p>
+                    </div>
+                    
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="staff_clinic" class="form-label fw-semibold">{{ translate_text('Clinic', lang) }}</label>
+                            <select class="form-select" id="staff_clinic" name="staff_clinic" required>
+                                <option value="">-- {{ translate_text('Select Clinic', lang) }} --</option>
+                                {% for clinic in clinics %}
+                                <option value="{{ clinic }}">{{ clinic }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-arrow-right"></i> {{ translate_text('Continue to Dashboard', lang) }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

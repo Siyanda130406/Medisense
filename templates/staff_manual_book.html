@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}{{ translate_text('Manual Booking', lang) }} - MediSense{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('staff_dashboard') }}">{{ translate_text('Dashboard', lang) }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ translate_text('Manual Booking', lang) }}</li>
+                </ol>
+            </nav>
+            
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h4 class="mb-0 text-primary"><i class="fas fa-user-plus"></i> {{ translate_text('Manual Booking', lang) }}</h4>
+                    <p class="text-muted small mb-0">{{ translate_text('Book an appointment for a walk-in patient', lang) }}</p>
+                </div>
+                <div class="card-body">
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show border-0">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form method="POST" action="{{ url_for('staff_manual_book') }}">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="patient_name" class="form-label fw-semibold">{{ translate_text('Patient Name', lang) }} *</label>
+                                    <input type="text" class="form-control" id="patient_name" name="patient_name" required placeholder="{{ translate_text('Enter patient\'s full name', lang) }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="patient_phone" class="form-label fw-semibold">{{ translate_text('Patient Phone', lang) }} *</label>
+                                    <input type="tel" class="form-control" id="patient_phone" name="patient_phone" required placeholder="{{ translate_text('Enter patient\'s phone number', lang) }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="clinic" class="form-label fw-semibold">{{ translate_text('Clinic', lang) }}</label>
+                                    <select class="form-select" id="clinic" name="clinic">
+                                        <option value="{{ staff_clinic }}" selected>{{ staff_clinic }}</option>
+                                        {% for clinic in clinics %}
+                                            {% if clinic != staff_clinic %}
+                                            <option value="{{ clinic }}">{{ clinic }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                    <small class="text-muted">{{ translate_text('Your assigned clinic is selected by default', lang) }}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="appointment_date" class="form-label fw-semibold">{{ translate_text('Appointment Date', lang) }} *</label>
+                                    <input type="date" class="form-control" id="appointment_date" name="appointment_date" min="{{ today }}" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="appointment_time" class="form-label fw-semibold">{{ translate_text('Appointment Time', lang) }} *</label>
+                                    <select class="form-select" id="appointment_time" name="appointment_time" required>
+                                        <option value="">-- {{ translate_text('Select time', lang) }} --</option>
+                                        <option value="08:00">08:00</option>
+                                        <option value="08:30">08:30</option>
+                                        <option value="09:00">09:00</option>
+                                        <option value="09:30">09:30</option>
+                                        <option value="10:00">10:00</option>
+                                        <option value="10:30">10:30</option>
+                                        <option value="11:00">11:00</option>
+                                        <option value="11:30">11:30</option>
+                                        <option value="12:00">12:00</option>
+                                        <option value="12:30">12:30</option>
+                                        <option value="13:00">13:00</option>
+                                        <option value="13:30">13:30</option>
+                                        <option value="14:00">14:00</option>
+                                        <option value="14:30">14:30</option>
+                                        <option value="15:00">15:00</option>
+                                        <option value="15:30">15:30</option>
+                                        <option value="16:00">16:00</option>
+                                        <option value="16:30">16:30</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="reason" class="form-label fw-semibold">{{ translate_text('Reason', lang) }} ({{ translate_text('Optional', lang) }})</label>
+                                    <input type="text" class="form-control" id="reason" name="reason" placeholder="{{ translate_text('e.g., General checkup, Follow-up', lang) }}" value="{{ translate_text('Walk-in appointment', lang) }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check"></i> {{ translate_text('Book Appointment', lang) }}
+                            </button>
+                            <a href="{{ url_for('staff_dashboard') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> {{ translate_text('Back to Dashboard', lang) }}
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}{{ translate_text('Edit User', lang) }} - MediSense Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold text-primary"><i class="fas fa-user-edit me-2"></i>{{ translate_text('Edit User', lang) }}</h2>
+                <a href="{{ url_for('admin_users') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> {{ translate_text('Back', lang) }}
+                </a>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>{{ translate_text('Email', lang) }}:</strong> {{ edit_user.email }} ({{ translate_text('cannot be changed', lang) }})
+                    </div>
+
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ translate_text('Full Name', lang) }} *</label>
+                            <input type="text" class="form-control" name="full_name" value="{{ edit_user.full_name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ translate_text('Phone', lang) }}</label>
+                            <input type="tel" class="form-control" name="phone" value="{{ edit_user.phone or '' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ translate_text('Role', lang) }}</label>
+                            <select class="form-select" name="role">
+                                <option value="patient" {% if edit_user.role == 'patient' %}selected{% endif %}>{{ translate_text('Patient', lang) }}</option>
+                                <option value="nurse" {% if edit_user.role == 'nurse' %}selected{% endif %}>{{ translate_text('Nurse/Staff', lang) }}</option>
+                                <option value="admin" {% if edit_user.role == 'admin' %}selected{% endif %}>{{ translate_text('Admin', lang) }}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ translate_text('Status', lang) }}</label>
+                            <select class="form-select" name="is_active">
+                                <option value="1" {% if edit_user.is_active == 1 %}selected{% endif %}>{{ translate_text('Active', lang) }}</option>
+                                <option value="0" {% if edit_user.is_active == 0 %}selected{% endif %}>{{ translate_text('Inactive', lang) }}</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i> {{ translate_text('Save Changes', lang) }}
+                        </button>
+                        <a href="{{ url_for('admin_users') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i> {{ translate_text('Cancel', lang) }}
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

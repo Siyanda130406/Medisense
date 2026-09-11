@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}{{ translate_text('Staff Dashboard', lang) }} - MediSense{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('staff_dashboard') }}">{{ translate_text('Dashboard', lang) }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ translate_text("Today's Patients", lang) }}</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-user-md text-primary"></i> {{ translate_text('Welcome', lang) }}, {{ user.full_name }}</h5>
+                            <p class="text-muted small">{{ translate_text('Clinic', lang) }}: <strong>{{ staff_clinic or translate_text('Not assigned', lang) }}</strong></p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <a href="{{ url_for('staff_export') }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-file-export"></i> {{ translate_text('Export Data', lang) }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="row mb-4">
+                <div class="col-md-3 col-6 mb-2">
+                    <a href="{{ url_for('staff_manual_book') }}" class="text-decoration-none">
+                        <div class="card shadow-sm text-center p-3 action-card border-0">
+                            <i class="fas fa-user-plus fa-2x text-primary"></i>
+                            <span class="d-block mt-2 small fw-bold">{{ translate_text('Manual Booking', lang) }}</span>
+                            <small class="text-muted">{{ translate_text('Walk-in patients', lang) }}</small>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3 col-6 mb-2">
+                    <a href="{{ url_for('staff_manage_slots') }}" class="text-decoration-none">
+                        <div class="card shadow-sm text-center p-3 action-card border-0">
+                            <i class="fas fa-clock fa-2x text-warning"></i>
+                            <span class="d-block mt-2 small fw-bold">{{ translate_text('Manage Slots', lang) }}</span>
+                            <small class="text-muted">{{ translate_text('Block/unblock times', lang) }}</small>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3 col-6 mb-2">
+                    <a href="{{ url_for('staff_search') }}" class="text-decoration-none">
+                        <div class="card shadow-sm text-center p-3 action-card border-0">
+                            <i class="fas fa-search fa-2x text-info"></i>
+                            <span class="d-block mt-2 small fw-bold">{{ translate_text('Search Patients', lang) }}</span>
+                            <small class="text-muted">{{ translate_text('Find patient records', lang) }}</small>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3 col-6 mb-2">
+                    <a href="{{ url_for('staff_export') }}" class="text-decoration-none">
+                        <div class="card shadow-sm text-center p-3 action-card border-0">
+                            <i class="fas fa-file-export fa-2x text-secondary"></i>
+                            <span class="d-block mt-2 small fw-bold">{{ translate_text('Export Data', lang) }}</span>
+                            <small class="text-muted">{{ translate_text('Download CSV', lang) }}</small>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card shadow-sm text-center p-3 border-0">
+                        <h3 class="text-primary">{{ today_count }}</h3>
+                        <small class="text-muted">{{ translate_text('Total Patients', lang) }}</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card shadow-sm text-center p-3 border-0">
+                        <h3 class="text-warning">{{ waiting }}</h3>
+                        <small class="text-muted">{{ translate_text('Waiting', lang) }}</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card shadow-sm text-center p-3 border-0">
+                        <h3 class="text-success">{{ completed }}</h3>
+                        <small class="text-muted">{{ translate_text('Completed', lang) }}</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card shadow-sm text-center p-3 border-0">
+                        <h3 class="text-danger">{{ no_shows }}</h3>
+                        <small class="text-muted">{{ translate_text('No-Shows', lang) }}</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- High Risk Alert -->
+            {% if high_risk_count > 0 %}
+            <div class="alert alert-warning alert-dismissible fade show border-0">
+                <i class="fas fa-exclamation-triangle text-warning"></i>
+                <strong>{{ high_risk_count }} {{ translate_text('patient(s) flagged as HIGH RISK!', lang) }}</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <ul class="mt-2 mb-0">
+                    {% for patient in high_risk_patients %}
+                    <li>{{ patient.patient_name }} - {{ translate_text('Risk', lang) }}: {{ patient.risk }}% ({{ patient.appointment_time }})</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- Search Form -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('staff_search') }}" class="row g-2">
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" name="q" placeholder="{{ translate_text('Search patients by name or phone...', lang) }}" value="{{ search_query }}">
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-search"></i> {{ translate_text('Search', lang) }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Appointments Table -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 text-primary"><i class="fas fa-list"></i> {{ translate_text("Today's Patients", lang) }}</h5>
+                    <small class="text-muted">{{ translate_text('Appointments for', lang) }} {{ staff_clinic }}</small>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{{ translate_text('Patient Name', lang) }}</th>
+                                    <th>{{ translate_text('Phone', lang) }}</th>
+                                    <th>{{ translate_text('Time', lang) }}</th>
+                                    <th>{{ translate_text('Status', lang) }}</th>
+                                    <th>{{ translate_text('Actions', lang) }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if appointments %}
+                                {% for appt in appointments %}
+                                <tr>
+                                    <td><strong>{{ appt.patient_name }}</strong></td>
+                                    <td>{{ appt.patient_phone or translate_text('No phone', lang) }}</td>
+                                    <td><strong>{{ appt.appointment_time }}</strong></td>
+                                    <td>
+                                        {% if appt.status == 'Scheduled' %}
+                                        <span class="badge bg-primary">{{ translate_text('Scheduled', lang) }}</span>
+                                        {% elif appt.status == 'Checked-in' %}
+                                        <span class="badge bg-warning text-dark">{{ translate_text('Checked-in', lang) }}</span>
+                                        {% elif appt.status == 'Completed' %}
+                                        <span class="badge bg-success">{{ translate_text('Completed', lang) }}</span>
+                                        {% elif appt.status == 'No-Show' %}
+                                        <span class="badge bg-danger">{{ translate_text('No-Show', lang) }}</span>
+                                        {% elif appt.status == 'Cancelled' %}
+                                        <span class="badge bg-secondary">{{ translate_text('Cancelled', lang) }}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ appt.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            {% if appt.status == 'Scheduled' %}
+                                            <form method="POST" action="{{ url_for('staff_checkin', appt_id=appt.id) }}" style="display:inline;">
+                                                <button type="submit" class="btn btn-outline-warning btn-sm">{{ translate_text('Check-in', lang) }}</button>
+                                            </form>
+                                            {% endif %}
+                                            {% if appt.status == 'Checked-in' %}
+                                            <form method="POST" action="{{ url_for('staff_checkout', appt_id=appt.id) }}" style="display:inline;">
+                                                <button type="submit" class="btn btn-outline-success btn-sm">{{ translate_text('Complete', lang) }}</button>
+                                            </form>
+                                            {% endif %}
+                                            <form method="POST" action="{{ url_for('staff_noshow', appt_id=appt.id) }}" style="display:inline;">
+                                                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('{{ translate_text('Mark as No-Show?', lang) }}')">{{ translate_text('No-Show', lang) }}</button>
+                                            </form>
+                                            <form method="POST" action="{{ url_for('staff_send_reminder', appt_id=appt.id) }}" style="display:inline;">
+                                                <button type="submit" class="btn btn-outline-info btn-sm">{{ translate_text('Remind', lang) }}</button>
+                                            </form>
+                                            <button class="btn btn-outline-secondary btn-sm" onclick="alert('{{ translate_text('Patient', lang) }}: {{ appt.patient_name }}\n{{ translate_text('Phone', lang) }}: {{ appt.patient_phone }}\n{{ translate_text('Status', lang) }}: {{ appt.status }}')">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">
+                                        <i class="fas fa-calendar-empty fa-2x d-block mb-2"></i>
+                                        {{ translate_text('No appointments today for this clinic.', lang) }}
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.action-card {
+    transition: all 0.2s ease;
+    border: 1px solid #e9ecef;
+    background: #ffffff;
+}
+.action-card:hover {
+    border-color: #0d6efd;
+    background-color: #f8f9fa;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+.action-card i {
+    transition: all 0.2s ease;
+}
+.action-card:hover i {
+    transform: scale(1.05);
+}
+.table td, .table th {
+    vertical-align: middle;
+    padding: 0.75rem;
+}
+</style>
+{% endblock %}

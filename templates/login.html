@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block title %}Login - MediSense{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <!-- WHITE CARD REMOVED - Form floats directly on background -->
+            <div class="login-form">
+                <h4 class="text-center mb-4 text-white">
+                    <i class="fas fa-sign-in-alt"></i> {{ translate_text('Login', lang) }}
+                </h4>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="mb-3">
+                        <label for="email" class="form-label text-white fw-bold">{{ translate_text('Email', lang) }}</label>
+                        <input type="email" class="form-control transparent-input" id="email" name="email" required placeholder="{{ translate_text('Email', lang) }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label text-white fw-bold">{{ translate_text('Password', lang) }}</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control transparent-input" id="password" name="password" required placeholder="{{ translate_text('Password', lang) }}">
+                            <button class="btn btn-outline-light transparent-btn" type="button" id="togglePassword" title="{{ translate_text('Show/Hide Password', lang) }}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 btn-glass">
+                        <i class="fas fa-sign-in-alt"></i> {{ translate_text('Login', lang) }}
+                    </button>
+                </form>
+
+                <hr class="hr-light">
+                <div class="text-center">
+                    <p><a href="{{ url_for('forgot_password') }}" class="text-white fw-bold text-shadow">{{ translate_text('Forgot password?', lang) }}</a></p>
+                    <p class="text-white text-shadow">{{ translate_text("Don't have an account?", lang) }} <a href="{{ url_for('signup') }}" class="text-white fw-bold text-shadow">{{ translate_text('Sign Up', lang) }}</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ===== BACKGROUND ===== */
+    body {
+        background: url("{{ url_for('static', filename='images/health-background.jpg') }}") no-repeat center center fixed;
+        background-size: cover;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+    }
+
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: 0;
+    }
+
+    .container {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* ===== FORM CONTAINER - NO WHITE CARD ===== */
+    .login-form {
+        padding: 30px 25px;
+        border-radius: 20px;
+        background: transparent !important;
+        /* NO white background - completely transparent */
+    }
+
+    /* ===== TRANSPARENT INPUTS ===== */
+    .transparent-input {
+        background: rgba(255, 255, 255, 0.15) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        color: #ffffff !important;
+        border-radius: 10px;
+        padding: 12px 15px;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+    }
+
+    .transparent-input::placeholder {
+        color: rgba(255, 255, 255, 0.6) !important;
+    }
+
+    .transparent-input:focus {
+        background: rgba(255, 255, 255, 0.25) !important;
+        border-color: #3498db !important;
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.4) !important;
+        color: #ffffff !important;
+    }
+
+    .transparent-input:-webkit-autofill {
+        -webkit-box-shadow: 0 0 0 30px rgba(20, 30, 50, 0.8) inset !important;
+        -webkit-text-fill-color: #ffffff !important;
+    }
+
+    /* ===== TRANSPARENT BUTTON ===== */
+    .transparent-btn {
+        background: rgba(255, 255, 255, 0.15) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        color: #ffffff !important;
+        border-radius: 0 10px 10px 0;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+    }
+
+    .transparent-btn:hover {
+        background: rgba(255, 255, 255, 0.3) !important;
+        color: #ffffff !important;
+    }
+
+    /* ===== GLASS BUTTON ===== */
+    .btn-glass {
+        background: rgba(52, 152, 219, 0.8) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        padding: 12px;
+        font-weight: 600;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        color: #ffffff !important;
+    }
+
+    .btn-glass:hover {
+        background: rgba(52, 152, 219, 1) !important;
+        transform: scale(1.02);
+        box-shadow: 0 0 20px rgba(52, 152, 219, 0.4);
+    }
+
+    /* ===== TEXT STYLING ===== */
+    .text-shadow {
+        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9);
+    }
+
+    .text-white {
+        color: #ffffff !important;
+    }
+
+    .form-label {
+        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9);
+    }
+
+    /* ===== HR ===== */
+    .hr-light {
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        margin: 20px 0;
+    }
+
+    /* ===== ALERTS ===== */
+    .alert {
+        border-radius: 10px;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+    }
+
+    .alert-danger {
+        background: rgba(220, 53, 69, 0.8) !important;
+        border-color: rgba(220, 53, 69, 0.3);
+        color: #ffffff !important;
+    }
+
+    .alert-success {
+        background: rgba(40, 167, 69, 0.8) !important;
+        border-color: rgba(40, 167, 69, 0.3);
+        color: #ffffff !important;
+    }
+
+    .alert-info {
+        background: rgba(23, 162, 184, 0.8) !important;
+        border-color: rgba(23, 162, 184, 0.3);
+        color: #ffffff !important;
+    }
+
+    .alert-warning {
+        background: rgba(255, 193, 7, 0.8) !important;
+        border-color: rgba(255, 193, 7, 0.3);
+        color: #212529 !important;
+    }
+
+    .alert .btn-close {
+        filter: brightness(0) invert(1);
+    }
+
+    /* ===== LINKS ===== */
+    a.text-white {
+        color: #ffffff !important;
+        text-decoration: none;
+        font-weight: 600;
+        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9);
+    }
+
+    a.text-white:hover {
+        text-decoration: underline;
+        color: #8ec9f5 !important;
+    }
+
+    /* ===== HIDE BASE.HTML WHITE BACKGROUND ===== */
+    .content {
+        background: transparent !important;
+    }
+
+    /* ===== ANIMATION ===== */
+    body {
+        animation: zoomIn 25s ease-in-out infinite alternate;
+    }
+
+    @keyframes zoomIn {
+        0% { transform: scale(1); }
+        100% { transform: scale(1.05); }
+    }
+</style>
+
+<script>
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('password');
+        const icon = this.querySelector('i');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    });
+</script>
+{% endblock %}

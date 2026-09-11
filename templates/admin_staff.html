@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}{{ translate_text('Staff Management', lang) }} - MediSense Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold text-primary"><i class="fas fa-user-nurse me-2"></i>{{ translate_text('Staff Management', lang) }}</h2>
+                    <p class="text-muted small">{{ translate_text('Verify and manage staff members.', lang) }}</p>
+                </div>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> {{ translate_text('Back to Dashboard', lang) }}
+                </a>
+            </div>
+
+            <!-- Staff Table -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>{{ translate_text('Name', lang) }}</th>
+                                    <th>{{ translate_text('Email', lang) }}</th>
+                                    <th>{{ translate_text('Role', lang) }}</th>
+                                    <th>{{ translate_text('Staff Code', lang) }}</th>
+                                    <th>{{ translate_text('Verified', lang) }}</th>
+                                    <th>{{ translate_text('Status', lang) }}</th>
+                                    <th class="text-center">{{ translate_text('Action', lang) }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for staff in staff_members %}
+                                <tr>
+                                    <td class="fw-semibold">{{ staff.id }}</td>
+                                    <td>{{ staff.full_name }}</td>
+                                    <td>{{ staff.email }}</td>
+                                    <td><span class="badge bg-secondary">{{ staff.role|title }}</span></td>
+                                    <td>{{ staff.staff_code or 'N/A' }}</td>
+                                    <td>
+                                        {% if staff.is_verified == 1 %}
+                                        <span class="badge bg-success">{{ translate_text('Verified', lang) }}</span>
+                                        {% else %}
+                                        <span class="badge bg-warning">{{ translate_text('Pending', lang) }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if staff.is_active == 1 %}
+                                        <span class="badge bg-success">{{ translate_text('Active', lang) }}</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">{{ translate_text('Inactive', lang) }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if staff.is_verified == 0 %}
+                                        <form method="POST" action="{{ url_for('admin_staff_verify', user_id=staff.id) }}" style="display:inline;">
+                                            <button type="submit" class="btn btn-sm btn-success">
+                                                <i class="fas fa-check me-1"></i> {{ translate_text('Verify', lang) }}
+                                            </button>
+                                        </form>
+                                        {% else %}
+                                        <span class="text-muted small"><i class="fas fa-check-circle text-success me-1"></i>{{ translate_text('Verified', lang) }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {% if staff_members|length == 0 %}
+            <div class="text-center py-5">
+                <i class="fas fa-user-nurse fa-3x text-muted mb-3 d-block"></i>
+                <p class="text-muted">{{ translate_text('No staff members found.', lang) }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

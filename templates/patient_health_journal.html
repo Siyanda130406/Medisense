@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}{{ translate_text('Health Journal', lang) }} - MediSense{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h4 class="mb-0 text-primary"><i class="fas fa-book-medical"></i> {{ translate_text('Health Journal', lang) }}</h4>
+                    <p class="text-muted small mb-0">{{ translate_text('Track your symptoms over time', lang) }}</p>
+                </div>
+                <div class="card-body">
+                    
+                    <form method="POST" action="{{ url_for('patient_health_journal') }}">
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <input type="text" class="form-control" name="symptom" placeholder="{{ translate_text('Symptom name...', lang) }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" name="severity">
+                                    <option value="1">{{ translate_text('Mild', lang) }}</option>
+                                    <option value="2">{{ translate_text('Moderate', lang) }}</option>
+                                    <option value="3">{{ translate_text('Severe', lang) }}</option>
+                                    <option value="4">{{ translate_text('Very Severe', lang) }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="text" class="form-control" name="notes" placeholder="{{ translate_text('Notes...', lang) }}">
+                            </div>
+                            <div class="col-md-1">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <hr>
+
+                    {% if journal_entries %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th><i class="fas fa-calendar-alt"></i> {{ translate_text('Date', lang) }}</th>
+                                    <th><i class="fas fa-notes-medical"></i> {{ translate_text('Symptom', lang) }}</th>
+                                    <th><i class="fas fa-chart-bar"></i> {{ translate_text('Severity', lang) }}</th>
+                                    <th><i class="fas fa-pencil-alt"></i> {{ translate_text('Notes', lang) }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in journal_entries %}
+                                <tr>
+                                    <td>{{ entry.recorded_at[:16] }}</td>
+                                    <td><strong>{{ entry.symptom }}</strong></td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if entry.severity == 1 %}bg-success
+                                            {% elif entry.severity == 2 %}bg-warning
+                                            {% elif entry.severity == 3 %}bg-danger
+                                            {% else %}bg-dark{% endif %}">
+                                            {{ [translate_text('Mild', lang), translate_text('Moderate', lang), translate_text('Severe', lang), translate_text('Very Severe', lang)][entry.severity-1] }}
+                                        </span>
+                                    </td>
+                                    <td>{{ entry.notes or '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted"><i class="fas fa-book-open"></i> {{ translate_text('No journal entries yet. Start tracking your symptoms.', lang) }}</p>
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-3">
+                        <a href="{{ url_for('patient_health_symptoms') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> {{ translate_text('Back to Health & Symptoms', lang) }}
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
