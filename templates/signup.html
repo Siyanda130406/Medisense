@@ -5,8 +5,7 @@
 {% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <!-- NO WHITE CARD - Form floats directly on background -->
+        <div class="col-11 col-sm-11 col-md-8 col-lg-6">
             <div class="signup-form">
                 <h4 class="text-center mb-4 text-white">
                     <i class="fas fa-user-plus"></i> {{ translate_text('Create Account', lang) }}
@@ -70,13 +69,11 @@
                         </div>
                     </div>
 
-                    <!-- ===== TERMS CHECKBOX - FULLY CLICKABLE ===== -->
                     <div class="terms-wrapper mb-3">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input transparent-check" id="terms" name="terms" required>
                             <label class="form-check-label terms-label" for="terms">
                                 {{ translate_text('I agree to the', lang) }}
-                                <!-- ===== TERMS LINK - OPENS MODAL ===== -->
                                 <a href="#" class="terms-link" data-bs-toggle="modal" data-bs-target="#termsModal" onclick="event.preventDefault();">
                                     {{ translate_text('Terms and Conditions', lang) }}
                                 </a>
@@ -98,7 +95,6 @@
                 </div>
             </div>
 
-            <!-- ===== TERMS MODAL ===== -->
             <div class="modal fade" id="termsModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-scrollable">
                     <div class="modal-content glass-modal">
@@ -136,7 +132,6 @@
 </div>
 
 <style>
-    /* ===== BACKGROUND ===== */
     body {
         background: url("{{ url_for('static', filename='images/health-background.jpg') }}") no-repeat center center fixed;
         background-size: cover;
@@ -156,19 +151,14 @@
         z-index: 0;
     }
 
-    .container {
-        position: relative;
-        z-index: 1;
-    }
+    .container { position: relative; z-index: 1; }
 
-    /* ===== FORM CONTAINER - NO WHITE CARD ===== */
     .signup-form {
         padding: 30px 25px;
         border-radius: 20px;
         background: transparent !important;
     }
 
-    /* ===== TRANSPARENT INPUTS ===== */
     .transparent-input {
         background: rgba(255, 255, 255, 0.15) !important;
         border: 1px solid rgba(255, 255, 255, 0.3) !important;
@@ -179,9 +169,7 @@
         -webkit-backdrop-filter: blur(5px);
     }
 
-    .transparent-input::placeholder {
-        color: rgba(255, 255, 255, 0.6) !important;
-    }
+    .transparent-input::placeholder { color: rgba(255, 255, 255, 0.6) !important; }
 
     .transparent-input:focus {
         background: rgba(255, 255, 255, 0.25) !important;
@@ -190,17 +178,13 @@
         color: #ffffff !important;
     }
 
-    .transparent-input option {
-        color: #212529;
-        background: #ffffff;
-    }
+    .transparent-input option { color: #212529; background: #ffffff; }
 
     .transparent-input:-webkit-autofill {
         -webkit-box-shadow: 0 0 0 30px rgba(20, 30, 50, 0.8) inset !important;
         -webkit-text-fill-color: #ffffff !important;
     }
 
-    /* ===== TRANSPARENT BUTTON ===== */
     .transparent-btn {
         background: rgba(255, 255, 255, 0.15) !important;
         border: 1px solid rgba(255, 255, 255, 0.3) !important;
@@ -210,12 +194,8 @@
         -webkit-backdrop-filter: blur(5px);
     }
 
-    .transparent-btn:hover {
-        background: rgba(255, 255, 255, 0.3) !important;
-        color: #ffffff !important;
-    }
+    .transparent-btn:hover { background: rgba(255, 255, 255, 0.3) !important; color: #ffffff !important; }
 
-    /* ===== GLASS BUTTON ===== */
     .btn-glass {
         background: rgba(52, 152, 219, 0.8) !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -234,24 +214,11 @@
         box-shadow: 0 0 20px rgba(52, 152, 219, 0.4);
     }
 
-    /* ===== TEXT STYLING ===== */
-    .text-shadow {
-        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9);
-    }
+    .text-shadow { text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9); }
+    .text-white { color: #ffffff !important; }
+    .text-white-50 { color: rgba(255, 255, 255, 0.7) !important; }
+    .form-label { text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9); }
 
-    .text-white {
-        color: #ffffff !important;
-    }
-
-    .text-white-50 {
-        color: rgba(255, 255, 255, 0.7) !important;
-    }
-
-    .form-label {
-        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9);
-    }
-
-    /* ===== STAFF CODE SECTION ===== */
     #staff_code_section {
         background: rgba(0, 0, 0, 0.2) !important;
         padding: 15px;
@@ -261,7 +228,6 @@
         -webkit-backdrop-filter: blur(5px);
     }
 
-    /* ===== TERMS WRAPPER - CLICKABLE ===== */
     .terms-wrapper {
         padding: 12px 15px;
         background: rgba(0, 0, 0, 0.25) !important;
@@ -300,14 +266,8 @@
         border-radius: 5px !important;
     }
 
-    .transparent-check:checked {
-        background-color: #3498db !important;
-        border-color: #3498db !important;
-    }
-
-    .transparent-check:focus {
-        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.4) !important;
-    }
+    .transparent-check:checked { background-color: #3498db !important; border-color: #3498db !important; }
+    .transparent-check:focus { box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.4) !important; }
 
     .terms-label {
         color: #ffffff !important;
@@ -334,12 +294,8 @@
         padding: 0 2px;
     }
 
-    .terms-label a.terms-link:hover {
-        color: #8ec9f5 !important;
-        text-decoration: underline;
-    }
+    .terms-label a.terms-link:hover { color: #8ec9f5 !important; text-decoration: underline; }
 
-    /* ===== INVALID FEEDBACK ===== */
     .invalid-feedback {
         display: none;
         color: #ff6b6b !important;
@@ -349,52 +305,22 @@
         font-size: 0.9rem;
     }
 
-    .invalid-feedback.show {
-        display: block;
-    }
+    .invalid-feedback.show { display: block; }
 
-    /* ===== HR ===== */
-    .hr-light {
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
-        margin: 20px 0;
-    }
+    .hr-light { border-top: 1px solid rgba(255, 255, 255, 0.2); margin: 20px 0; }
 
-    /* ===== ALERTS ===== */
     .alert {
         border-radius: 10px;
         backdrop-filter: blur(5px);
         -webkit-backdrop-filter: blur(5px);
     }
 
-    .alert-danger {
-        background: rgba(220, 53, 69, 0.8) !important;
-        border-color: rgba(220, 53, 69, 0.3);
-        color: #ffffff !important;
-    }
+    .alert-danger { background: rgba(220, 53, 69, 0.8) !important; border-color: rgba(220, 53, 69, 0.3); color: #ffffff !important; }
+    .alert-success { background: rgba(40, 167, 69, 0.8) !important; border-color: rgba(40, 167, 69, 0.3); color: #ffffff !important; }
+    .alert-info { background: rgba(23, 162, 184, 0.8) !important; border-color: rgba(23, 162, 184, 0.3); color: #ffffff !important; }
+    .alert-warning { background: rgba(255, 193, 7, 0.8) !important; border-color: rgba(255, 193, 7, 0.3); color: #212529 !important; }
+    .alert .btn-close { filter: brightness(0) invert(1); }
 
-    .alert-success {
-        background: rgba(40, 167, 69, 0.8) !important;
-        border-color: rgba(40, 167, 69, 0.3);
-        color: #ffffff !important;
-    }
-
-    .alert-info {
-        background: rgba(23, 162, 184, 0.8) !important;
-        border-color: rgba(23, 162, 184, 0.3);
-        color: #ffffff !important;
-    }
-
-    .alert-warning {
-        background: rgba(255, 193, 7, 0.8) !important;
-        border-color: rgba(255, 193, 7, 0.3);
-        color: #212529 !important;
-    }
-
-    .alert .btn-close {
-        filter: brightness(0) invert(1);
-    }
-
-    /* ===== LINKS ===== */
     a.text-white {
         color: #ffffff !important;
         text-decoration: none;
@@ -402,20 +328,10 @@
         text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9);
     }
 
-    a.text-white:hover {
-        text-decoration: underline;
-        color: #8ec9f5 !important;
-    }
+    a.text-white:hover { text-decoration: underline; color: #8ec9f5 !important; }
 
-    /* ===== MODAL ===== */
-    .modal.fade .modal-dialog {
-        transform: scale(0.9);
-        transition: transform 0.3s ease;
-    }
-
-    .modal.show .modal-dialog {
-        transform: scale(1);
-    }
+    .modal.fade .modal-dialog { transform: scale(0.9); transition: transform 0.3s ease; }
+    .modal.show .modal-dialog { transform: scale(1); }
 
     .glass-modal {
         background: rgba(255, 255, 255, 0.98) !important;
@@ -426,72 +342,27 @@
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     }
 
-    .glass-modal .modal-header {
-        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-        padding: 20px 25px;
-    }
+    .glass-modal .modal-header { border-bottom: 1px solid rgba(0, 0, 0, 0.1); padding: 20px 25px; }
+    .glass-modal .modal-body { padding: 25px; max-height: 60vh; overflow-y: auto; }
+    .glass-modal .modal-body h6 { color: #2c3e50; font-weight: 700; margin-top: 15px; margin-bottom: 8px; }
+    .glass-modal .modal-body p { color: #4a5568; line-height: 1.6; }
+    .glass-modal .modal-footer { border-top: 1px solid rgba(0, 0, 0, 0.1); padding: 15px 25px; }
+    .glass-modal .modal-footer .btn-primary { background: #3498db; border: none; padding: 10px 30px; border-radius: 10px; font-weight: 600; }
+    .glass-modal .modal-footer .btn-primary:hover { background: #2980b9; }
 
-    .glass-modal .modal-body {
-        padding: 25px;
-        max-height: 60vh;
-        overflow-y: auto;
-    }
+    .content { background: transparent !important; }
 
-    .glass-modal .modal-body h6 {
-        color: #2c3e50;
-        font-weight: 700;
-        margin-top: 15px;
-        margin-bottom: 8px;
-    }
+    body { animation: zoomIn 25s ease-in-out infinite alternate; }
+    @keyframes zoomIn { 0% { transform: scale(1); } 100% { transform: scale(1.05); } }
 
-    .glass-modal .modal-body p {
-        color: #4a5568;
-        line-height: 1.6;
-    }
-
-    .glass-modal .modal-footer {
-        border-top: 1px solid rgba(0, 0, 0, 0.1);
-        padding: 15px 25px;
-    }
-
-    .glass-modal .modal-footer .btn-primary {
-        background: #3498db;
-        border: none;
-        padding: 10px 30px;
-        border-radius: 10px;
-        font-weight: 600;
-    }
-
-    .glass-modal .modal-footer .btn-primary:hover {
-        background: #2980b9;
-    }
-
-    /* ===== HIDE BASE.HTML WHITE BACKGROUND ===== */
-    .content {
-        background: transparent !important;
-    }
-
-    /* ===== ANIMATION ===== */
-    body {
-        animation: zoomIn 25s ease-in-out infinite alternate;
-    }
-
-    @keyframes zoomIn {
-        0% { transform: scale(1); }
-        100% { transform: scale(1.05); }
-    }
-
-    /* ===== RESPONSIVE ===== */
+    /* ===== MOBILE RESPONSIVE FIX ===== */
     @media (max-width: 576px) {
-        .signup-form {
-            padding: 20px 15px;
-        }
-        .col-md-6 {
-            padding: 0 10px;
-        }
-        .glass-modal .modal-body {
-            padding: 15px;
-        }
+        .signup-form { padding: 20px 14px; }
+        .container { padding-left: 10px; padding-right: 10px; }
+        h4 { font-size: 1.2rem !important; }
+        .transparent-input { padding: 10px 12px; font-size: 0.95rem; }
+        .glass-modal .modal-body { padding: 15px; }
+        .terms-label { font-size: 0.9rem; }
     }
 </style>
 
@@ -509,7 +380,6 @@
         }
     }
 
-    // Password toggle for main password
     document.getElementById('togglePassword').addEventListener('click', function() {
         const passwordInput = document.getElementById('password');
         const icon = this.querySelector('i');
@@ -524,7 +394,6 @@
         }
     });
 
-    // Password toggle for confirm password
     document.getElementById('toggleConfirmPassword').addEventListener('click', function() {
         const passwordInput = document.getElementById('confirm_password');
         const icon = this.querySelector('i');
@@ -539,7 +408,6 @@
         }
     });
 
-    // ===== TERMS VALIDATION =====
     document.getElementById('signupForm').addEventListener('submit', function(e) {
         const termsCheckbox = document.getElementById('terms');
         const feedback = document.getElementById('termsFeedback');
@@ -548,7 +416,6 @@
             e.preventDefault();
             feedback.classList.add('show');
             termsCheckbox.classList.add('is-invalid');
-            // Remove error after 3 seconds
             setTimeout(function() {
                 feedback.classList.remove('show');
                 termsCheckbox.classList.remove('is-invalid');
@@ -559,7 +426,6 @@
         }
     });
 
-    // Clear error when checkbox is checked
     document.getElementById('terms').addEventListener('change', function() {
         const feedback = document.getElementById('termsFeedback');
         if (this.checked) {
@@ -568,7 +434,6 @@
         }
     });
 
-    // ===== TERMS LINK - MANUAL MODAL TRIGGER (FALLBACK) =====
     document.querySelector('.terms-link').addEventListener('click', function(e) {
         e.preventDefault();
         var modal = new bootstrap.Modal(document.getElementById('termsModal'));

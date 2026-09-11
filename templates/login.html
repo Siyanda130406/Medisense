@@ -5,8 +5,7 @@
 {% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-5">
-            <!-- WHITE CARD REMOVED - Form floats directly on background -->
+        <div class="col-11 col-sm-10 col-md-7 col-lg-5 col-xl-4">
             <div class="login-form">
                 <h4 class="text-center mb-4 text-white">
                     <i class="fas fa-sign-in-alt"></i> {{ translate_text('Login', lang) }}
@@ -53,7 +52,6 @@
 </div>
 
 <style>
-    /* ===== BACKGROUND ===== */
     body {
         background: url("{{ url_for('static', filename='images/health-background.jpg') }}") no-repeat center center fixed;
         background-size: cover;
@@ -78,15 +76,12 @@
         z-index: 1;
     }
 
-    /* ===== FORM CONTAINER - NO WHITE CARD ===== */
     .login-form {
         padding: 30px 25px;
         border-radius: 20px;
         background: transparent !important;
-        /* NO white background - completely transparent */
     }
 
-    /* ===== TRANSPARENT INPUTS ===== */
     .transparent-input {
         background: rgba(255, 255, 255, 0.15) !important;
         border: 1px solid rgba(255, 255, 255, 0.3) !important;
@@ -113,7 +108,6 @@
         -webkit-text-fill-color: #ffffff !important;
     }
 
-    /* ===== TRANSPARENT BUTTON ===== */
     .transparent-btn {
         background: rgba(255, 255, 255, 0.15) !important;
         border: 1px solid rgba(255, 255, 255, 0.3) !important;
@@ -128,7 +122,6 @@
         color: #ffffff !important;
     }
 
-    /* ===== GLASS BUTTON ===== */
     .btn-glass {
         background: rgba(52, 152, 219, 0.8) !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -147,7 +140,6 @@
         box-shadow: 0 0 20px rgba(52, 152, 219, 0.4);
     }
 
-    /* ===== TEXT STYLING ===== */
     .text-shadow {
         text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9);
     }
@@ -160,13 +152,11 @@
         text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9);
     }
 
-    /* ===== HR ===== */
     .hr-light {
         border-top: 1px solid rgba(255, 255, 255, 0.2);
         margin: 20px 0;
     }
 
-    /* ===== ALERTS ===== */
     .alert {
         border-radius: 10px;
         backdrop-filter: blur(5px);
@@ -179,29 +169,10 @@
         color: #ffffff !important;
     }
 
-    .alert-success {
-        background: rgba(40, 167, 69, 0.8) !important;
-        border-color: rgba(40, 167, 69, 0.3);
-        color: #ffffff !important;
-    }
-
-    .alert-info {
-        background: rgba(23, 162, 184, 0.8) !important;
-        border-color: rgba(23, 162, 184, 0.3);
-        color: #ffffff !important;
-    }
-
-    .alert-warning {
-        background: rgba(255, 193, 7, 0.8) !important;
-        border-color: rgba(255, 193, 7, 0.3);
-        color: #212529 !important;
-    }
-
     .alert .btn-close {
         filter: brightness(0) invert(1);
     }
 
-    /* ===== LINKS ===== */
     a.text-white {
         color: #ffffff !important;
         text-decoration: none;
@@ -214,12 +185,10 @@
         color: #8ec9f5 !important;
     }
 
-    /* ===== HIDE BASE.HTML WHITE BACKGROUND ===== */
     .content {
         background: transparent !important;
     }
 
-    /* ===== ANIMATION ===== */
     body {
         animation: zoomIn 25s ease-in-out infinite alternate;
     }
@@ -227,6 +196,26 @@
     @keyframes zoomIn {
         0% { transform: scale(1); }
         100% { transform: scale(1.05); }
+    }
+
+    /* ===== MOBILE RESPONSIVE FIX ===== */
+    @media (max-width: 576px) {
+        .login-form {
+            padding: 20px 14px;
+        }
+        .container {
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+        h4 { font-size: 1.2rem !important; }
+        .transparent-input {
+            padding: 10px 12px;
+            font-size: 0.95rem;
+        }
+        .btn-glass {
+            padding: 12px;
+            font-size: 0.95rem;
+        }
     }
 </style>
 

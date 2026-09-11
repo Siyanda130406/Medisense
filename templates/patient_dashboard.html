@@ -83,7 +83,6 @@
                 
                 <!-- ===== LEFT: APPOINTMENTS & CALENDAR ===== -->
                 <div class="col-lg-8">
-                    <!-- Appointments Table -->
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
                             <h6 class="mb-0"><i class="fas fa-calendar-check text-primary" aria-hidden="true"></i> {{ translate_text('My Appointments', lang) }}</h6>
@@ -154,7 +153,6 @@
                         </div>
                     </div>
                     
-                    <!-- ===== ACTIVITY FEED ===== -->
                     <div class="card shadow-sm border-0 mt-3">
                         <div class="card-header bg-white border-bottom">
                             <h6 class="mb-0"><i class="fas fa-clock text-primary" aria-hidden="true"></i> {{ translate_text('Recent Activity', lang) }}</h6>
@@ -189,7 +187,6 @@
                 <!-- ===== RIGHT: HEALTH PROFILE ===== -->
                 <div class="col-lg-4">
                     
-                    <!-- Health Stats -->
                     <div class="card shadow-sm border-0 mb-3">
                         <div class="card-header bg-white border-bottom">
                             <h6 class="mb-0"><i class="fas fa-user-md text-primary" aria-hidden="true"></i> {{ translate_text('My Health Profile', lang) }}</h6>
@@ -217,7 +214,6 @@
                             
                             <hr>
                             
-                            <!-- Risk Assessment -->
                             <div class="text-center">
                                 <p class="small mb-1 text-muted">{{ translate_text('No-Show Risk Assessment', lang) }}</p>
                                 <h5 class="mb-0 
@@ -240,7 +236,6 @@
                         </div>
                     </div>
                     
-                    <!-- Nearest Clinic -->
                     <div class="card shadow-sm border-0 mb-3">
                         <div class="card-header bg-white border-bottom">
                             <h6 class="mb-0"><i class="fas fa-map-pin text-primary" aria-hidden="true"></i> {{ translate_text('Nearest Clinic', lang) }}</h6>
@@ -255,7 +250,6 @@
                         </div>
                     </div>
                     
-                    <!-- Emergency Contacts -->
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-white border-bottom">
                             <h6 class="mb-0"><i class="fas fa-phone-alt text-danger" aria-hidden="true"></i> {{ translate_text('Emergency Contacts', lang) }}</h6>
@@ -310,15 +304,9 @@
     transform: translateY(-2px);
     box-shadow: var(--shadow-hover) !important;
 }
-.action-card i {
-    transition: all 0.2s ease;
-}
-.action-card:hover i {
-    transform: scale(1.05);
-}
-.timeline {
-    padding: 0;
-}
+.action-card i { transition: all 0.2s ease; }
+.action-card:hover i { transform: scale(1.05); }
+.timeline { padding: 0; }
 .timeline .badge {
     width: 32px;
     height: 32px;
@@ -326,6 +314,24 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
+}
+
+/* ===== MOBILE RESPONSIVE FIX ===== */
+@media (max-width: 768px) {
+    .action-card { padding: 12px !important; }
+    .action-card i { font-size: 1.5rem !important; }
+    .action-card span { font-size: 0.75rem !important; }
+    .timeline .badge { width: 28px !important; height: 28px !important; }
+    .table-responsive { font-size: 0.75rem !important; }
+}
+
+@media (max-width: 576px) {
+    .col-6 { padding-left: 6px !important; padding-right: 6px !important; }
+    .card-body { padding: 12px !important; }
+    .row.text-center .col-4 { padding: 4px !important; }
+    .row.text-center h5 { font-size: 1rem !important; }
+    .row.text-center small { font-size: 0.7rem !important; }
+    .d-flex.justify-content-center.gap-4 { gap: 1rem !important; }
 }
 </style>
 {% endblock %}

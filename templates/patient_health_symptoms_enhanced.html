@@ -509,10 +509,84 @@
 .more-symptoms:hover {
     background-color: #e9ecef !important;
 }
+
+/* ============================================================ */
+/* MOBILE RESPONSIVENESS FIX */
+/* ============================================================ */
+@media (max-width: 768px) {
+    .container-fluid.px-4 {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+    .card-body.px-4 {
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+    }
+    .input-group .form-control {
+        font-size: 0.9rem !important;
+        padding: 10px 12px !important;
+    }
+    .input-group .btn {
+        padding: 10px 14px !important;
+        font-size: 0.85rem !important;
+    }
+    h5.fw-light {
+        font-size: 1rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .container-fluid.px-4 {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+    .card-body.px-4.pb-4 {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        padding-bottom: 16px !important;
+    }
+    .row.g-0.align-items-center > .col-md-9,
+    .row.g-0.align-items-center > .col-md-3 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .row.g-0.align-items-center > .col-md-3 {
+        margin-top: 12px !important;
+        text-align: left !important;
+    }
+    .row.g-0.align-items-center > .col-md-3 .d-flex {
+        justify-content: flex-start !important;
+    }
+    .input-group .form-control {
+        font-size: 0.85rem !important;
+        padding: 10px 8px !important;
+    }
+    .input-group .btn-dark {
+        padding: 10px 12px !important;
+        font-size: 0.8rem !important;
+    }
+    .input-group .btn-dark span {
+        display: none;
+    }
+    .col-md-6, .col-lg-4, .col-md-4 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .card-body {
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+    }
+    h5.fw-light {
+        font-size: 0.95rem !important;
+    }
+    .badge {
+        font-size: 0.65rem !important;
+        padding: 3px 6px !important;
+    }
+}
 </style>
 
 <script>
-// ===== Q&A VIEW MORE TOGGLE =====
 document.querySelectorAll('.qa-toggle-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
         const container = this.closest('.qa-answer-container');
@@ -534,7 +608,6 @@ document.querySelectorAll('.qa-toggle-btn').forEach(function(btn) {
     });
 });
 
-// ===== MORE SYMPTOMS TOGGLE (Click +N to expand) =====
 document.querySelectorAll('.more-symptoms').forEach(function(btn) {
     btn.addEventListener('click', function() {
         const targetId = this.dataset.target;
@@ -551,7 +624,6 @@ document.querySelectorAll('.more-symptoms').forEach(function(btn) {
     });
 });
 
-// ===== LOAD MORE Q&A =====
 document.getElementById('loadMoreQA')?.addEventListener('click', function() {
     const btn = this;
     const loader = document.getElementById('qaLoader');
@@ -563,9 +635,7 @@ document.getElementById('loadMoreQA')?.addEventListener('click', function() {
     
     fetch('{{ url_for("load_more_qa") }}', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'search_term=' + encodeURIComponent(searchTerm) + '&offset=' + offset
     })
     .then(response => response.json())
@@ -590,7 +660,6 @@ document.getElementById('loadMoreQA')?.addEventListener('click', function() {
                 container.appendChild(card);
             });
             
-            // Re-bind View More buttons for new cards
             document.querySelectorAll('.qa-toggle-btn').forEach(function(btn) {
                 btn.addEventListener('click', function() {
                     const container = this.closest('.qa-answer-container');
