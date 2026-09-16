@@ -48,7 +48,7 @@ df_health_tips = safe_load_csv(os.path.join(base_dir, 'data', 'processed', 'heal
 df_medical_qa = safe_load_csv(os.path.join(base_dir, 'data', 'processed', 'medical_qa_database.csv'))
 df_symptom_precautions = safe_load_csv(os.path.join(base_dir, 'data', 'processed', 'symptom_precautions_combined.csv'))
 df_symptom_descriptions = safe_load_csv(os.path.join(base_dir, 'data', 'processed', 'symptom_descriptions.csv'))
-df_clinics = safe_load_csv(os.path.join(base_dir, 'data', 'processed', 'sa_clinic_database_full.csv'))
+df_clinics = safe_load_csv(os.path.join(base_dir, 'data', 'processed', 'sa_clinic_database_real.csv'))
 df_firstaid = safe_load_csv(os.path.join(base_dir, 'data', 'raw', 'firstaid_qa_dataset.csv'))
 
 # ============================================================
@@ -2570,22 +2570,34 @@ def patient_clinics():
         if search_location and df_clinics is not None:
             try:
                 df = df_clinics.copy()
-                df['City'] = df['City'].astype(str).str.lower()
-                df['Area'] = df['Area'].astype(str).str.lower()
-                search_lower = search_location.lower()
-                results = df[df['City'].str.contains(search_lower, na=False) | df['Area'].str.contains(search_lower, na=False)]
-                search_results = results.head(10).to_dict('records')
+                # Ensure text columns are strings and lowercased for case-insensitive search
+                for col in ['Province', 'District', 'City', 'Area', 'Clinic_Name']:
+                    if col in df.columns:
+                        df[col] = df[col].astype(str).str.lower()
                 
-                # Add Google Maps links
+                search_lower = search_location.lower()
+                
+                # Search across all relevant columns
+                mask = (
+                    df['Province'].str.contains(search_lower, na=False) |
+                    df['District'].str.contains(search_lower, na=False) |
+                    df['City'].str.contains(search_lower, na=False) |
+                    df['Area'].str.contains(search_lower, na=False) |
+                    df['Clinic_Name'].str.contains(search_lower, na=False)
+                )
+                
+                results = df[mask].head(50)
+                search_results = results.to_dict('records')
+                
+                # Add Google Maps search link (no coordinates needed)
                 for clinic in search_results:
-                    if clinic.get('Latitude') and clinic.get('Longitude'):
-                        clinic['maps_url'] = f"https://www.google.com/maps/embed/v1/place?q={clinic['Latitude']},{clinic['Longitude']}&key=AIzaSyDefaultKey"
-                        clinic['directions_url'] = f"https://www.google.com/maps/dir/?api=1&destination={clinic['Latitude']},{clinic['Longitude']}"
-                    else:
-                        clinic_name_encoded = clinic.get('Clinic_Name', '').replace(' ', '+')
-                        city_encoded = clinic.get('City', '').replace(' ', '+')
-                        clinic['maps_url'] = f"https://www.google.com/maps/embed/v1/search?q={clinic_name_encoded}+{city_encoded}&key=AIzaSyDefaultKey"
-                        clinic['directions_url'] = f"https://www.google.com/maps/search/?api=1&query={clinic_name_encoded}+{city_encoded}"
+                    clinic_name = str(clinic.get('Clinic_Name', '')).replace(' ', '+')
+                    city = str(clinic.get('City', '')).replace(' ', '+')
+                    province = str(clinic.get('Province', '')).replace(' ', '+')
+                    query = f"{clinic_name}+{city}+{province}+South+Africa"
+                    clinic['maps_url'] = f"https://www.google.com/maps/search/?api=1&query={query}"
+                    clinic['directions_url'] = f"https://www.google.com/maps/dir/?api=1&destination={query}"
+                    
             except Exception as e:
                 print(f"Clinic search error: {e}")
     
