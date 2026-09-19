@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Symptom Check - MediSense{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="text-center mb-4">
+        <h2 class="text-primary"><i class="fas fa-stethoscope"></i> Free Symptom Check</h2>
+        <p class="text-muted">Describe how you feel — no login needed. Sign up to save results and book appointments.</p>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="POST">
+                <div class="input-group input-group-lg">
+                    <input type="text" class="form-control" name="search_term" value="{{ search_term }}"
+                           placeholder="e.g., fever and cough, headache, chest pain" required>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Check
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if search_result %}
+        {% if search_result.found %}
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> Results for "{{ search_result.search_term }}"
+            </div>
+            {% for d in search_result.diseases %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="text-primary">{{ d.disease }}</h5>
+                    <p>{{ d.description }}</p>
+                    {% if d.symptoms %}
+                    <p><strong>Symptoms:</strong>
+                        {% for s in d.symptoms[:5] %}<span class="badge bg-light text-dark border">{{ s }}</span> {% endfor %}
+                    </p>
+                    {% endif %}
+                    <p><strong>Urgency:</strong>
+                        <span class="badge {% if d.urgency == 'Emergency' %}bg-danger{% elif d.urgency == 'Urgent' %}bg-warning text-dark{% else %}bg-success{% endif %}">{{ d.urgency }}</span>
+                    </p>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i> {{ search_result.message }}
+                {% if search_result.did_you_mean %}
+                    <br><a href="#" onclick="document.querySelector('[name=search_term]').value='{{ search_result.did_you_mean }}'; document.querySelector('form').submit(); return false;">
+                        Try "{{ search_result.did_you_mean }}"
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% endif %}
+
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> <strong>Want more?</strong>
+        <a href="{{ url_for('signup') }}">Create a free account</a> to book appointments, save health history, and get personalized recommendations.
+    </div>
+</div>
+{% endblock %}

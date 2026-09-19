@@ -19,6 +19,26 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from functools import wraps
 
+# ===== FIX #8: Spell correction library =====
+from difflib import get_close_matches
+# ===== END FIX #8 =====
+
+# ============================================================
+# FIX #10: DB path helper (persistent data dir for online hosting)
+# ============================================================
+def _get_db_dir():
+    env_dir = os.environ.get('MEDISENSE_DATA_DIR', '').strip()
+    if env_dir:
+        os.makedirs(env_dir, exist_ok=True)
+        return env_dir
+    os.makedirs('database', exist_ok=True)
+    return 'database'
+
+DB_PATH = os.path.join(_get_db_dir(), 'medisense_users.db')
+# ============================================================
+# END FIX #10
+# ============================================================
+
 # ============================================================
 # LOAD ALL DATASETS
 # ============================================================
@@ -90,7 +110,6 @@ model_nn = None
 model_ensemble = None
 models_loaded = False
 try:
-    # Try to load additional models if they exist
     xgb_path = os.path.join(base_dir, 'models', 'xgb_model.pkl')
     nn_path = os.path.join(base_dir, 'models', 'nn_model.pkl')
     ensemble_path = os.path.join(base_dir, 'models', 'ensemble_model.pkl')
@@ -436,7 +455,7 @@ translations = {
         'Watch for allergic reaction': 'Qaphela ukungezwani komzimba',
         'Sit forward, not backward': 'Hlala ubheke phambili, hhayi emuva',
         'Pinch the soft part of the nose': 'Bamba ingxenye ethambile yekhala',
-        'Apply cold compress to nose bridge': 'Faka compress ebandayo esiqondweni sekhala',
+        'Apply cold compress to nose bridge': 'Faka compress ebandayo esiqondeni sekhala',
         'Breathe through the mouth': 'Phefumula ngomlomo',
         'Seek help if bleeding persists': 'Funa usizo uma ukopha kuqhubeka',
         'Rest in a quiet, dark room': 'Phumula ekamelweni elithule, elimnyama',
@@ -492,6 +511,170 @@ def translate_text(text, lang):
     return trans.get(text, text)
 
 # ============================================================
+# FIX #1: SA ID VALIDATION
+# ============================================================
+def validate_sa_id(id_number):
+    """Return (is_valid, message). Validates format, date, and Luhn checksum."""
+    if not id_number:
+        return False, "ID number is required."
+    id_number = str(id_number).strip()
+    if not id_number.isdigit():
+        return False, "ID number must contain only digits."
+    if len(id_number) != 13:
+        return False, f"ID number must be exactly 13 digits (you entered {len(id_number)})."
+    year = int(id_number[0:2])
+    month = int(id_number[2:4])
+    day = int(id_number[4:6])
+    if month < 1 or month > 12:
+        return False, f"Invalid month '{month:02d}'. Month must be 01-12."
+    if day < 1 or day > 31:
+        return False, f"Invalid day '{day:02d}'. Day must be 01-31."
+    is_leap = (year % 4 == 0 and (year % 100 != 0 or year % 400 == 0))
+    days_in_month = [31, 29 if is_leap else 28, 31, 30, 31, 30,
+                     31, 31, 30, 31, 30, 31]
+    if day > days_in_month[month - 1]:
+        return False, f"Invalid day '{day:02d}' for month {month:02d}."
+    total = 0
+    for i, ch in enumerate(id_number):
+        d = int(ch)
+        if i % 2 == 1:
+            d *= 2
+            if d > 9:
+                d -= 9
+        total += d
+    if total % 10 != 0:
+        return False, "Invalid ID number (checksum failed). Please check the digits."
+    return True, "Valid"
+
+def extract_dob_from_sa_id(id_number):
+    """Return (year, month, day) from a valid SA ID, or (None, None, None)."""
+    if not id_number or len(str(id_number)) != 13:
+        return None, None, None
+    yy = int(str(id_number)[0:2])
+    mm = int(str(id_number)[2:4])
+    dd = int(str(id_number)[4:6])
+    current_yy = datetime.now().year % 100
+    year = 2000 + yy if yy <= current_yy else 1900 + yy
+    return year, mm, dd
+# ============================================================
+# END FIX #1
+# ============================================================
+
+# ============================================================
+# FIX #8: SPELL CORRECTION HELPERS
+# ============================================================
+_TERM_CACHE = None
+
+def _build_term_cache():
+    global _TERM_CACHE
+    if _TERM_CACHE is not None:
+        return _TERM_CACHE
+    terms = set()
+    try:
+        if df_master is not None and 'disease' in df_master.columns:
+            for t in df_master['disease'].dropna().astype(str):
+                terms.add(t.strip().lower())
+        if df_symptom_descriptions is not None and 'symptom' in df_symptom_descriptions.columns:
+            for t in df_symptom_descriptions['symptom'].dropna().astype(str):
+                terms.add(t.strip().lower())
+        if df_symptom_precautions is not None and 'condition' in df_symptom_precautions.columns:
+            for t in df_symptom_precautions['condition'].dropna().astype(str):
+                terms.add(t.strip().lower())
+        if df_disease_to_medicine is not None and 'disease' in df_disease_to_medicine.columns:
+            for t in df_disease_to_medicine['disease'].dropna().astype(str):
+                terms.add(t.strip().lower())
+        if df_medicine_to_disease is not None and 'medicine' in df_medicine_to_disease.columns:
+            for t in df_medicine_to_disease['medicine'].dropna().astype(str):
+                terms.add(t.strip().lower())
+        if df_clinics is not None:
+            for col in ['Clinic_Name', 'City', 'Area', 'Province', 'District']:
+                if col in df_clinics.columns:
+                    for t in df_clinics[col].dropna().astype(str):
+                        terms.add(t.strip().lower())
+    except Exception as e:
+        print(f"[spell] cache error: {e}")
+    _TERM_CACHE = list(terms)
+    return _TERM_CACHE
+
+def correct_spelling(query, n=1, cutoff=0.72):
+    """Return the best spelling suggestion for `query`, or None."""
+    if not query or len(query.strip()) < 3:
+        return None
+    terms = _build_term_cache()
+    if not terms:
+        return None
+    q = query.strip().lower()
+    if q in terms:
+        return None
+    matches = get_close_matches(q, terms, n=n, cutoff=cutoff)
+    if not matches:
+        words = q.split()
+        corrected_words = []
+        changed = False
+        for w in words:
+            if len(w) < 3:
+                corrected_words.append(w)
+                continue
+            m = get_close_matches(w, terms, n=1, cutoff=cutoff)
+            if m:
+                corrected_words.append(m[0])
+                changed = True
+            else:
+                corrected_words.append(w)
+        if changed:
+            return ' '.join(corrected_words)
+        return None
+    return matches[0]
+# ============================================================
+# END FIX #8
+# ============================================================
+
+# ============================================================
+# FIX #9: HEALTH SCORE (starts at 0)
+# ============================================================
+def calculate_health_score(age, health_conditions, appointments,
+                           profile_complete=False, has_id=False,
+                           has_emergency=False, has_allergies=False):
+    """Health score starts at 0. Grows only from real user data."""
+    score = 0
+    if age and 1 <= age <= 120:
+        score += 5
+    if profile_complete:
+        score += 5
+    if has_id:
+        score += 5
+    if has_emergency:
+        score += 5
+    if health_conditions is not None and health_conditions != '':
+        score += 5
+    if has_allergies is not None and has_allergies != '':
+        score += 5
+    total = len(appointments)
+    completed = sum(1 for a in appointments if a['status'] == 'Completed')
+    score += min(completed * 5, 40)
+    checked_in = sum(1 for a in appointments if a['status'] == 'Checked-in')
+    score += min(checked_in * 3, 15)
+    no_shows = sum(1 for a in appointments if a['status'] == 'No-Show')
+    score -= min(no_shows * 10, 30)
+    cancelled = sum(1 for a in appointments if a['status'] == 'Cancelled')
+    score -= min(cancelled * 2, 10)
+    if total >= 3: score += 5
+    if total >= 5: score += 5
+    if total >= 10: score += 5
+    score = max(0, min(score, 100))
+    return score
+
+def get_health_score_category(score):
+    if score >= 80: return 'Excellent'
+    if score >= 60: return 'Good'
+    if score >= 40: return 'Fair'
+    if score >= 20: return 'Needs Attention'
+    return 'New'
+# ============================================================
+# END FIX #9
+# ============================================================
+
+# ============================================================
 # DATABASE INIT
 # ============================================================
 
@@ -529,9 +712,9 @@ def default_terms_content():
     """
 
 def init_database():
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     cursor = conn.cursor()
     
     cursor.execute('''
@@ -624,6 +807,20 @@ def init_database():
     )
     ''')
     
+    # ===== FIX #7: Chatbot history table =====
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS chatbot_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        question TEXT,
+        answer TEXT,
+        source TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+    ''')
+    # ===== END FIX #7 =====
+    
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS terms_versions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -683,15 +880,14 @@ def get_risk_category(risk_score):
     elif risk_score < 70: return 'High'
     else: return 'Very High'
 
-# ===== ML-BASED NO-SHOW PREDICTION =====
 def predict_no_show(user_email):
     """Predict if patient will no-show based on history using ML"""
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
-    # Get patient history
     cursor.execute('''
     SELECT 
         COUNT(*) as total_appointments,
@@ -708,12 +904,10 @@ def predict_no_show(user_email):
     if not data or data['total_appointments'] == 0:
         return {'risk': 0, 'category': 'Low', 'confidence': 0, 'predictions': []}
     
-    # Calculate features
     no_show_rate = data['no_shows'] / data['total_appointments'] if data['total_appointments'] > 0 else 0
     completion_rate = data['completed'] / data['total_appointments'] if data['total_appointments'] > 0 else 0
     cancellation_rate = data['cancelled'] / data['total_appointments'] if data['total_appointments'] > 0 else 0
     
-    # Use ensemble model if available, otherwise use simple scoring
     if models_loaded and model_ensemble is not None:
         try:
             features = np.array([[no_show_rate, completion_rate, cancellation_rate, data['total_appointments']]])
@@ -721,7 +915,6 @@ def predict_no_show(user_email):
         except:
             prediction = no_show_rate
     else:
-        # Simple scoring based on history
         prediction = no_show_rate
     
     confidence = min(0.9, 0.5 + (data['total_appointments'] / 20))
@@ -735,7 +928,6 @@ def predict_no_show(user_email):
     else:
         category = 'Very High'
     
-    # Predictions for different models
     predictions = []
     if model_loaded:
         predictions.append({'model': 'RandomForest', 'score': round(no_show_rate * 100, 1)})
@@ -799,8 +991,9 @@ def get_available_times(clinic, date):
         for minute in ['00', '30']:
             all_times.append(f"{hour:02d}:{minute}")
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     cursor = conn.cursor()
     
     cursor.execute('''
@@ -833,7 +1026,6 @@ def analyze_symptoms_nlp(text):
     if not text:
         return []
     
-    # Common symptom keywords
     symptom_keywords = [
         'pain', 'ache', 'cough', 'fever', 'headache', 'dizziness', 
         'nausea', 'vomiting', 'diarrhea', 'rash', 'itching', 
@@ -852,7 +1044,6 @@ def analyze_symptoms_nlp(text):
         if keyword in text_lower:
             found.append(keyword)
     
-    # Also try to extract 2-3 word phrases
     words = text_lower.split()
     for i in range(len(words) - 1):
         phrase = words[i] + ' ' + words[i+1]
@@ -870,8 +1061,9 @@ def check_expired_appointments():
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
@@ -907,7 +1099,7 @@ def check_expired_appointments():
     return expired_count
 
 # ============================================================
-# EMAIL HELPER FOR PASSWORD RESET
+# FIX #5: EMAIL HELPER — uses SMTP_USERNAME + SMTP_PASSWORD env vars
 # ============================================================
 
 def generate_reset_token():
@@ -915,8 +1107,15 @@ def generate_reset_token():
 
 def send_reset_email(email, reset_token):
     try:
-        sender_email = "siyandakhoza13@gmail.com"
-        sender_password = "atedytjwgemfuusg"
+        # ===== FIX #5: read SMTP creds from env, don't hardcode =====
+        sender_email = os.environ.get('SMTP_USERNAME', '').strip()
+        sender_password = os.environ.get('SMTP_PASSWORD', '').strip()
+        
+        if not sender_email or not sender_password:
+            print("[email] SMTP_USERNAME / SMTP_PASSWORD not set. Printing token instead.")
+            print(f"[email] Reset token for {email}: {reset_token}")
+            return False
+        # ===== END FIX #5 =====
         
         reset_link = url_for('reset_password', token=reset_token, _external=True)
         
@@ -961,15 +1160,20 @@ def send_reset_email(email, reset_token):
 def require_terms_acceptance(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        exempt_routes = ['view_terms', 'accept_terms', 'logout', 'login', 'signup', 'forgot_password', 'reset_password', 'home', 'ussd']
+        exempt_routes = ['view_terms', 'accept_terms', 'logout', 'login', 'signup', 'forgot_password', 'reset_password', 'home', 'ussd',
+                         # ===== FIX #3: exempt public routes =====
+                         'public_home', 'public_symptoms', 'public_clinics', 'public_first_aid',
+                         # ===== END FIX #3 =====
+                        ]
         if request.endpoint in exempt_routes:
             return f(*args, **kwargs)
         
         if 'user_id' not in session:
             return f(*args, **kwargs)
         
-        db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-        conn = sqlite3.connect(db_path)
+        # ===== FIX #10: use DB_PATH =====
+        conn = sqlite3.connect(DB_PATH)
+        # ===== END FIX #10 =====
         cursor = conn.cursor()
         cursor.execute('SELECT terms_accepted FROM users WHERE id = ?', (session['user_id'],))
         result = cursor.fetchone()
@@ -987,82 +1191,63 @@ def require_terms_acceptance(f):
 # ============================================================
 
 def get_disease_suggestions(search_term):
-    """Get close matches for misspelled search terms using simple string matching"""
     if not search_term:
         return []
     
     search_lower = search_term.lower().strip()
     all_terms = []
     
-    # Get all disease names
     if df_master is not None and 'disease' in df_master.columns:
         disease_list = df_master['disease'].dropna().tolist()
         all_terms.extend(disease_list)
     
-    # Get all symptom names
     if df_symptom_descriptions is not None and 'symptom' in df_symptom_descriptions.columns:
         symptom_list = df_symptom_descriptions['symptom'].dropna().tolist()
         all_terms.extend(symptom_list)
     
-    # Get all conditions from precautions
     if df_symptom_precautions is not None and 'condition' in df_symptom_precautions.columns:
         condition_list = df_symptom_precautions['condition'].dropna().tolist()
         all_terms.extend(condition_list)
     
-    # Remove duplicates and empty strings
     all_terms = list(set([term for term in all_terms if term and str(term).strip()]))
     
-    # Simple fuzzy matching - find terms that contain the search term or are similar
     suggestions = []
     search_words = search_lower.split()
     
     for term in all_terms:
         term_lower = str(term).lower()
-        
-        # Check if search term is contained in the disease name
         if search_lower in term_lower:
             suggestions.append(str(term))
-        # Check if any word in search matches
         elif any(word in term_lower for word in search_words if len(word) > 3):
             suggestions.append(str(term))
-        # Check for common typos (letter substitution)
         elif len(search_lower) > 3 and len(term_lower) > 3:
-            # Simple similarity check - count matching characters
             matches = sum(1 for i in range(min(len(search_lower), len(term_lower))) 
                          if i < len(search_lower) and i < len(term_lower) and search_lower[i] == term_lower[i])
             similarity = matches / max(len(search_lower), len(term_lower))
             if similarity > 0.6:
                 suggestions.append(str(term))
     
-    # Remove duplicates and limit
     suggestions = list(set(suggestions))[:3]
-    
     return suggestions
 
 def is_question(search_term):
-    """Detect if the search term is a question"""
     if not search_term:
         return False
     
     search_lower = search_term.lower().strip()
-    
-    # Check if it ends with a question mark
     if search_lower.endswith('?'):
         return True
     
-    # List of question words in English
     question_words = [
         'what', 'how', 'why', 'when', 'where', 'who', 'whom', 'whose', 'which',
         'does', 'do', 'did', 'is', 'are', 'was', 'were', 'has', 'have', 'had',
         'can', 'could', 'will', 'would', 'shall', 'should', 'may', 'might', 'must'
     ]
     
-    # Check if the search starts with a question word
     first_word = search_lower.split()[0] if search_lower.split() else ''
     if first_word in question_words:
         return True
     
-    # Check if it contains a question word (for longer phrases)
     for word in question_words:
         if search_lower.startswith(word + ' '):
             return True
@@ -1070,18 +1255,11 @@ def is_question(search_term):
     return False
 
 def is_short_keyword(search_term):
-    """Detect if it's a short keyword (not a question)"""
     if not search_term:
         return False
-    
-    # If it's a question, it's not a short keyword
     if is_question(search_term):
         return False
-    
-    # Count words
     word_count = len(search_term.strip().split())
-    
-    # Short keyword = 1-3 words
     return word_count <= 3
 
 def search_medical_qa(search_term, limit=6, offset=0):
@@ -1093,10 +1271,7 @@ def search_medical_qa(search_term, limit=6, offset=0):
     results = []
     
     try:
-        # Search in questions
         matches = df_medical_qa[df_medical_qa['question'].astype(str).str.lower().str.contains(search_lower, na=False)]
-        
-        # If no results, try searching in answers
         if matches.empty:
             matches = df_medical_qa[df_medical_qa['answer'].astype(str).str.lower().str.contains(search_lower, na=False)]
         
@@ -1109,7 +1284,6 @@ def search_medical_qa(search_term, limit=6, offset=0):
     except Exception as e:
         print(f"Q&A search error: {e}")
     
-    # Remove duplicates based on question
     unique_results = []
     seen = set()
     for r in results:
@@ -1119,14 +1293,11 @@ def search_medical_qa(search_term, limit=6, offset=0):
             unique_results.append(r)
     
     total_count = len(unique_results)
-    
-    # Apply pagination
     paginated_results = unique_results[offset:offset+limit]
     
     return paginated_results, total_count
 
 def extract_health_terms(query):
-    """Extract health terms using both keyword matching and NLP"""
     if not query:
         return []
     
@@ -1134,7 +1305,6 @@ def extract_health_terms(query):
     extracted = []
     health_terms = set()
     
-    # Get terms from datasets
     if df_master is not None and 'disease' in df_master.columns:
         for disease in df_master['disease'].dropna():
             health_terms.add(disease.lower().strip())
@@ -1147,13 +1317,11 @@ def extract_health_terms(query):
         for condition in df_symptom_precautions['condition'].dropna():
             health_terms.add(condition.lower().strip())
     
-    # Use NLP to extract symptoms
     nlp_symptoms = analyze_symptoms_nlp(query)
     for symptom in nlp_symptoms:
         if symptom not in extracted:
             extracted.append(symptom)
     
-    # Phrase extraction
     words = query_lower.split()
     for i in range(len(words)):
         for j in range(2, 4):
@@ -1162,13 +1330,11 @@ def extract_health_terms(query):
                 if phrase in health_terms and phrase not in extracted:
                     extracted.append(phrase)
     
-    # Single word extraction
     for word in words:
         word_clean = word.strip('.,!?()[]"\'')
         if word_clean in health_terms and word_clean not in extracted:
             extracted.append(word_clean)
     
-    # Fallback: check for common terms
     if not extracted:
         common = ['flu', 'fever', 'cough', 'headache', 'pain', 'cold', 'diabetes', 'asthma', 'allergy', 'infection', 'virus', 'disease', 'symptom', 'treatment', 'doctor', 'hospital', 'clinic', 'medicine', 'tb', 'hiv', 'covid']
         for term in common:
@@ -1205,7 +1371,6 @@ def search_master_database(search_term):
     
     try:
         matches = df_master[df_master['disease'].astype(str).str.lower().str.contains(search_lower, na=False)]
-        
         if matches.empty:
             matches = df_master[df_master['all_symptoms'].astype(str).str.lower().str.contains(search_lower, na=False)]
         
@@ -1286,7 +1451,6 @@ def search_symptom_precautions(search_term):
 # ============================================================
 
 def search_medicines_by_disease(search_term):
-    """Search for medicines that treat a specific disease"""
     if df_disease_to_medicine is None or not search_term:
         return []
     
@@ -1310,7 +1474,6 @@ def search_medicines_by_disease(search_term):
     return results
 
 def search_diseases_by_medicine(search_term):
-    """Search for diseases that a specific medicine treats"""
     if df_medicine_to_disease is None or not search_term:
         return []
     
@@ -1334,7 +1497,6 @@ def search_diseases_by_medicine(search_term):
     return results
 
 def get_medicine_details(medicine_name):
-    """Get full details for a specific medicine"""
     if df_medicines_master is None or not medicine_name:
         return None
     
@@ -1364,7 +1526,7 @@ def get_medicine_details(medicine_name):
     except Exception as e:
         print(f"Medicine details error: {e}")
     
-    return None    
+    return None
 
 # ============================================================
 # AUTHENTICATION ROUTES
@@ -1412,8 +1574,9 @@ def signup():
             flash('You must agree to the Terms and Conditions.', 'error')
             return render_template('signup.html', lang='en', translate_text=translate_text)
         
-        db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-        conn = sqlite3.connect(db_path)
+        # ===== FIX #10: use DB_PATH =====
+        conn = sqlite3.connect(DB_PATH)
+        # ===== END FIX #10 =====
         cursor = conn.cursor()
         cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
         if cursor.fetchone():
@@ -1467,8 +1630,9 @@ def login():
             lang = session.get('language', 'en')
             return render_template('login.html', lang=lang, translate_text=translate_text)
         
-        db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-        conn = sqlite3.connect(db_path)
+        # ===== FIX #10: use DB_PATH =====
+        conn = sqlite3.connect(DB_PATH)
+        # ===== END FIX #10 =====
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute('''
@@ -1527,7 +1691,9 @@ def logout():
 @app.route('/')
 def home():
     if 'user_id' not in session:
-        return redirect('/login')
+        # ===== FIX #3: send public visitors to welcome page =====
+        return redirect('/welcome')
+        # ===== END FIX #3 =====
     role = session.get('role')
     if role == 'patient':
         return redirect('/patient/dashboard')
@@ -1536,6 +1702,115 @@ def home():
     elif role == 'admin':
         return redirect('/admin/dashboard')
     return redirect('/login')
+
+# ============================================================
+# FIX #3: PUBLIC ROUTES (no login required)
+# ============================================================
+
+@app.route('/welcome')
+def public_home():
+    clinics_count = len(df_clinics) if df_clinics is not None else 521
+    diseases_count = len(df_master) if df_master is not None else 99
+    medicines_count = len(df_medicines_master) if df_medicines_master is not None else 24034
+    lang = session.get('language', 'en')
+    return render_template('public_home.html',
+                           clinics_count=clinics_count,
+                           diseases_count=diseases_count,
+                           medicines_count=medicines_count,
+                           lang=lang, translate_text=translate_text)
+
+@app.route('/public/symptoms', methods=['GET', 'POST'])
+def public_symptoms():
+    search_result = None
+    search_term = ''
+    if request.method == 'POST':
+        search_term = request.form.get('search_term', '').strip()
+        if search_term:
+            search_result = {
+                'found': False, 'search_term': search_term, 'did_you_mean': None,
+                'diseases': [], 'message': ''
+            }
+            diseases = search_master_database(search_term)
+            if diseases:
+                search_result['found'] = True
+                search_result['diseases'] = diseases[:3]
+            else:
+                suggestion = correct_spelling(search_term)
+                if suggestion:
+                    search_result['did_you_mean'] = suggestion
+                    search_result['message'] = f'No results for "{search_term}". Did you mean "{suggestion}"?'
+                else:
+                    search_result['message'] = f'No results for "{search_term}".'
+    lang = session.get('language', 'en')
+    return render_template('public_symptoms.html',
+                           search_result=search_result,
+                           search_term=search_term,
+                           lang=lang, translate_text=translate_text)
+
+@app.route('/public/clinics', methods=['GET', 'POST'])
+def public_clinics():
+    search_location = ''
+    search_results = None
+    if request.method == 'POST':
+        search_location = request.form.get('location', '').strip()
+        if search_location and df_clinics is not None:
+            df = df_clinics.copy()
+            for col in ['Province', 'District', 'City', 'Area', 'Clinic_Name']:
+                if col in df.columns:
+                    df[col] = df[col].astype(str).str.lower()
+            sl = search_location.lower()
+            mask = (df['Province'].str.contains(sl, na=False) |
+                    df['District'].str.contains(sl, na=False) |
+                    df['City'].str.contains(sl, na=False) |
+                    df['Area'].str.contains(sl, na=False) |
+                    df['Clinic_Name'].str.contains(sl, na=False))
+            results = df[mask].head(50)
+            search_results = results.to_dict('records')
+            for c in search_results:
+                n = str(c.get('Clinic_Name', '')).replace(' ', '+')
+                ci = str(c.get('City', '')).replace(' ', '+')
+                p = str(c.get('Province', '')).replace(' ', '+')
+                q = f"{n}+{ci}+{p}+South+Africa"
+                c['maps_url'] = f"https://www.google.com/maps/search/?api=1&query={q}"
+                c['directions_url'] = f"https://www.google.com/maps/dir/?api=1&destination={q}"
+    lang = session.get('language', 'en')
+    return render_template('public_clinics.html',
+                           clinics=search_results,
+                           search_location=search_location,
+                           lang=lang, translate_text=translate_text)
+
+@app.route('/public/first-aid')
+def public_first_aid():
+    first_aid_categories = [
+        {'id': 'heart_attack', 'icon': 'fa-heart-pulse', 'title': 'Heart Attack', 'description': 'Emergency signs & response', 'color': 'danger'},
+        {'id': 'stroke', 'icon': 'fa-brain', 'title': 'Stroke', 'description': 'FAST - Face, Arms, Speech, Time', 'color': 'danger'},
+        {'id': 'choking', 'icon': 'fa-lungs', 'title': 'Choking', 'description': 'Heimlich maneuver for adults & children', 'color': 'danger'},
+        {'id': 'severe_bleeding', 'icon': 'fa-droplet', 'title': 'Severe Bleeding', 'description': 'How to stop heavy bleeding', 'color': 'danger'},
+        {'id': 'allergic_reaction', 'icon': 'fa-allergies', 'title': 'Allergic Reaction', 'description': 'Anaphylaxis emergency response', 'color': 'danger'},
+        {'id': 'seizure', 'icon': 'fa-bolt', 'title': 'Seizure / Fits', 'description': 'What to do during a seizure', 'color': 'danger'},
+        {'id': 'poisoning', 'icon': 'fa-skull-crossbones', 'title': 'Poisoning', 'description': 'Immediate steps for poisoning', 'color': 'danger'},
+        {'id': 'drowning', 'icon': 'fa-water', 'title': 'Drowning', 'description': 'Rescue & CPR for drowning', 'color': 'danger'},
+        {'id': 'burns', 'icon': 'fa-fire', 'title': 'Burns & Scalds', 'description': 'First aid for burns', 'color': 'warning'},
+        {'id': 'fracture', 'icon': 'fa-bone', 'title': 'Fractures & Sprains', 'description': 'Handle broken bones & sprains', 'color': 'warning'},
+        {'id': 'heatstroke', 'icon': 'fa-temperature-high', 'title': 'Heat Stroke & Dehydration', 'description': 'Emergency cooling response', 'color': 'warning'},
+        {'id': 'hypothermia', 'icon': 'fa-snowflake', 'title': 'Hypothermia', 'description': 'Warming a person safely', 'color': 'warning'},
+        {'id': 'diabetic_emergency', 'icon': 'fa-syringe', 'title': 'Diabetic Emergency', 'description': 'Low/high blood sugar response', 'color': 'warning'},
+        {'id': 'asthma_attack', 'icon': 'fa-lungs', 'title': 'Asthma Attack', 'description': 'Help someone having an asthma attack', 'color': 'warning'},
+        {'id': 'cuts_scrapes', 'icon': 'fa-bandage', 'title': 'Cuts & Scrapes', 'description': 'Clean and dress minor wounds', 'color': 'info'},
+        {'id': 'insect_bites', 'icon': 'fa-bug', 'title': 'Insect Bites & Stings', 'description': 'Treatment for bites and stings', 'color': 'info'},
+        {'id': 'nosebleed', 'icon': 'fa-nose', 'title': 'Nosebleeds', 'description': 'How to stop a nosebleed', 'color': 'info'},
+        {'id': 'headache_migraine', 'icon': 'fa-head-side-virus', 'title': 'Headache & Migraine', 'description': 'Relief for headaches', 'color': 'info'},
+        {'id': 'food_poisoning', 'icon': 'fa-utensils', 'title': 'Food Poisoning', 'description': 'Symptoms and home care', 'color': 'info'},
+        {'id': 'fever_management', 'icon': 'fa-thermometer', 'title': 'Fever Management', 'description': 'How to manage a fever', 'color': 'info'},
+    ]
+    lang = session.get('language', 'en')
+    return render_template('public_first_aid.html',
+                           first_aid_categories=first_aid_categories,
+                           lang=lang, translate_text=translate_text)
+
+# ============================================================
+# END FIX #3
+# ============================================================
 
 # ============================================================
 # FORGOT PASSWORD & RESET
@@ -1551,8 +1826,9 @@ def forgot_password():
             lang = session.get('language', 'en')
             return render_template('forgot_password.html', lang=lang, translate_text=translate_text)
         
-        db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-        conn = sqlite3.connect(db_path)
+        # ===== FIX #10: use DB_PATH =====
+        conn = sqlite3.connect(DB_PATH)
+        # ===== END FIX #10 =====
         cursor = conn.cursor()
         cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
         user = cursor.fetchone()
@@ -1566,8 +1842,9 @@ def forgot_password():
         reset_token = generate_reset_token()
         expires = datetime.now() + timedelta(minutes=15)
         
-        db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-        conn = sqlite3.connect(db_path)
+        # ===== FIX #10: use DB_PATH =====
+        conn = sqlite3.connect(DB_PATH)
+        # ===== END FIX #10 =====
         cursor = conn.cursor()
         cursor.execute('''
         UPDATE users SET reset_token = ?, reset_expires = ?
@@ -1590,8 +1867,9 @@ def forgot_password():
 
 @app.route('/reset-password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute('''
@@ -1619,10 +1897,10 @@ def reset_password(token):
             lang = session.get('language', 'en')
             return render_template('reset_password.html', token=token, lang=lang, translate_text=translate_text)
         
-        db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-        conn = sqlite3.connect(db_path)
+        # ===== FIX #10: use DB_PATH =====
+        conn = sqlite3.connect(DB_PATH)
+        # ===== END FIX #10 =====
         cursor = conn.cursor()
-        
         password_hash = hashlib.sha256(new_password.encode()).hexdigest()
         cursor.execute('''
         UPDATE users SET password_hash = ?, reset_token = NULL, reset_expires = NULL
@@ -1643,8 +1921,9 @@ def reset_password(token):
 
 @app.route('/terms')
 def view_terms():
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
@@ -1665,7 +1944,9 @@ def view_terms():
     terms_accepted = False
     accepted_at = None
     if 'user_id' in session:
-        conn = sqlite3.connect(db_path)
+        # ===== FIX #10: use DB_PATH =====
+        conn = sqlite3.connect(DB_PATH)
+        # ===== END FIX #10 =====
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute('''
@@ -1701,8 +1982,9 @@ def accept_terms():
         flash('You must agree to the terms to continue.', 'error')
         return redirect(url_for('view_terms'))
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     cursor = conn.cursor()
     cursor.execute('''
     SELECT version FROM terms_versions 
@@ -1733,8 +2015,9 @@ def admin_terms():
         flash('Admin access required.', 'error')
         return redirect(url_for('login'))
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
@@ -1789,7 +2072,7 @@ def admin_terms():
     )
 
 # ============================================================
-# PATIENT PROFILE SETUP - UPDATED WITH GENDER AND ID NUMBER
+# PATIENT PROFILE SETUP - FIX #1 (SA ID) + FIX #6 (allergies)
 # ============================================================
 
 @app.route('/patient/profile-setup', methods=['GET', 'POST'])
@@ -1800,8 +2083,9 @@ def patient_profile_setup():
     if session.get('role') != 'patient':
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute('SELECT age, location, health_conditions FROM users WHERE id = ?', (session['user_id'],))
@@ -1820,8 +2104,6 @@ def patient_profile_setup():
         emergency_phone = request.form.get('emergency_phone', '').strip()
         emergency_relationship = request.form.get('emergency_relationship', '').strip()
         allergies = request.form.get('allergy_details', '').strip()
-        
-        # ===== NEW FIELDS =====
         gender = request.form.get('gender', '').strip()
         id_number = request.form.get('id_number', '').strip()
         
@@ -1846,18 +2128,23 @@ def patient_profile_setup():
             lang = session.get('language', 'en')
             return render_template('patient_profile_setup.html', user=session, lang=lang, translate_text=translate_text)
         
-        # Validate ID number (13 digits)
-        if id_number and not (id_number.isdigit() and len(id_number) == 13):
-            flash('Please enter a valid 13-digit South African ID number.', 'error')
-            lang = session.get('language', 'en')
-            return render_template('patient_profile_setup.html', user=session, lang=lang, translate_text=translate_text)
+        # ===== FIX #1: SA ID validation =====
+        if id_number:
+            valid, msg = validate_sa_id(id_number)
+            if not valid:
+                flash(f'ID Number: {msg}', 'error')
+                lang = session.get('language', 'en')
+                return render_template('patient_profile_setup.html', user=session, lang=lang, translate_text=translate_text)
+        # ===== END FIX #1 =====
         
         if not gender:
             flash('Please select your gender.', 'error')
             lang = session.get('language', 'en')
             return render_template('patient_profile_setup.html', user=session, lang=lang, translate_text=translate_text)
         
-        conn = sqlite3.connect(db_path)
+        # ===== FIX #10: use DB_PATH =====
+        conn = sqlite3.connect(DB_PATH)
+        # ===== END FIX #10 =====
         cursor = conn.cursor()
         cursor.execute('''
         UPDATE users 
@@ -1899,8 +2186,9 @@ def staff_profile_setup():
     if session.get('role') not in ['nurse', 'staff']:
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute('SELECT staff_clinic FROM users WHERE id = ?', (session['user_id'],))
@@ -1921,7 +2209,9 @@ def staff_profile_setup():
             lang = session.get('language', 'en')
             return render_template('staff_profile_setup.html', user=session, clinics=clinics, lang=lang, translate_text=translate_text)
         
-        conn = sqlite3.connect(db_path)
+        # ===== FIX #10: use DB_PATH =====
+        conn = sqlite3.connect(DB_PATH)
+        # ===== END FIX #10 =====
         cursor = conn.cursor()
         cursor.execute('''
         UPDATE users SET staff_clinic = ?
@@ -1944,7 +2234,7 @@ def staff_profile_setup():
     )
 
 # ============================================================
-# PATIENT DASHBOARD
+# PATIENT DASHBOARD - FIX #9: health score starts at 0
 # ============================================================
 
 @app.route('/patient/dashboard')
@@ -1953,12 +2243,13 @@ def patient_dashboard():
     if 'user_id' not in session or session.get('role') != 'patient':
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
-    cursor.execute('SELECT id, email, full_name, phone, role, age, health_conditions, location, gender, id_number FROM users WHERE id = ?', (session['user_id'],))
+    cursor.execute('SELECT id, email, full_name, phone, role, age, health_conditions, location, gender, id_number, allergies, emergency_name, emergency_phone FROM users WHERE id = ?', (session['user_id'],))
     patient = cursor.fetchone()
     
     if patient is None:
@@ -1976,16 +2267,30 @@ def patient_dashboard():
     appointments = cursor.fetchall()
     conn.close()
     
-    age = patient['age'] if patient['age'] else 30
+    age = patient['age'] if patient['age'] else 0
     health_conditions = patient['health_conditions'] if patient['health_conditions'] else ''
     health_count = len([c for c in health_conditions.split(',') if c.strip()]) if health_conditions else 0
     
-    risk_score = calculate_risk_score(age, health_conditions, appointments)
-    risk_category = get_risk_category(risk_score)
+    # ===== FIX #9: use health score starting at 0 =====
+    profile_complete = bool(age and patient['location'])
+    has_id = bool(patient['id_number'])
+    has_emergency = bool(patient['emergency_name'] and patient['emergency_phone'])
+    has_allergies = patient['allergies'] or ''
+    health_score = calculate_health_score(
+        age, health_conditions, appointments,
+        profile_complete=profile_complete,
+        has_id=has_id,
+        has_emergency=has_emergency,
+        has_allergies=has_allergies
+    )
+    health_score_category = get_health_score_category(health_score)
+    # Keep risk_score/risk_category names so the existing template still works
+    risk_score = health_score
+    risk_category = health_score_category
+    # ===== END FIX #9 =====
+    
     nearest_clinic = get_nearest_clinic(patient['location'] if patient['location'] else None)
     health_tip = get_random_health_tip()
-    
-    # ML-based no-show prediction
     no_show_prediction = predict_no_show(session['email'])
     
     lang = session.get('language', 'en')
@@ -1998,6 +2303,8 @@ def patient_dashboard():
         completed_count=sum(1 for a in appointments if a['status'] == 'Completed'),
         cancelled_count=sum(1 for a in appointments if a['status'] == 'Cancelled'),
         total_appointments=len(appointments),
+        health_score=health_score,
+        health_score_category=health_score_category,
         risk_score=risk_score,
         risk_category=risk_category,
         nearest_clinic=nearest_clinic,
@@ -2011,7 +2318,7 @@ def patient_dashboard():
     )
 
 # ============================================================
-# PATIENT - HEALTH & SYMPTOMS (ENHANCED WITH NLP)
+# PATIENT - HEALTH & SYMPTOMS - FIX #7 (Q&A removed), FIX #8 (spell)
 # ============================================================
 
 @app.route('/patient/health-symptoms', methods=['GET', 'POST'])
@@ -2032,8 +2339,9 @@ def patient_health_symptoms():
         except:
             pass
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute('''
@@ -2053,26 +2361,32 @@ def patient_health_symptoms():
             is_question_search = is_question(search_term)
             is_keyword_search = is_short_keyword(search_term) and not is_question_search
             
-            # Use NLP to extract symptoms
             nlp_symptoms = analyze_symptoms_nlp(search_term)
             extracted_terms = extract_health_terms(search_term)
-            
-            # Combine NLP and keyword extraction
             all_extracted = list(set(nlp_symptoms + extracted_terms))
             search_queries = all_extracted if all_extracted else [search_term]
+            
+            # ===== FIX #8: offer spelling correction =====
+            corrected = None
+            has_any_result = bool(search_master_database(search_term)) or bool(search_medicines_by_disease(search_term)) or bool(search_diseases_by_medicine(search_term))
+            if not has_any_result:
+                corrected = correct_spelling(search_term)
+            # ===== END FIX #8 =====
             
             search_result = {
                 'found': False,
                 'search_term': search_term,
+                # ===== FIX #8: did_you_mean =====
+                'did_you_mean': corrected,
+                # ===== END FIX #8 =====
                 'extracted_terms': all_extracted,
                 'nlp_symptoms': nlp_symptoms,
                 'is_question': is_question_search,
                 'is_keyword': is_keyword_search,
                 'diseases': [],
-                'qa': [],
-                'qa_total': 0,
-                'qa_offset': 0,
-                'qa_limit': 6,
+                # ===== FIX #7: Q&A fields kept so old template doesn't break, but never populated =====
+                'qa': [], 'qa_total': 0, 'qa_offset': 0, 'qa_limit': 0,
+                # ===== END FIX #7 =====
                 'precautions': [],
                 'symptom_descriptions': [],
                 'health_tips': [],
@@ -2086,9 +2400,7 @@ def patient_health_symptoms():
                 'has_symptom_info': False,
                 'has_precaution_info': False,
                 'has_health_tips': False,
-                'did_you_mean': None,
                 'suggestions': [],
-                # ===== NEW MEDICINE FIELDS =====
                 'has_medicine_info': False,
                 'medicines': [],
                 'all_medicines': [],
@@ -2098,97 +2410,45 @@ def patient_health_symptoms():
             }
             
             all_diseases = []
-            all_qa = []
             all_symptoms = []
             all_precautions = []
             all_tips = []
             
-            if is_question_search:
-                qa_results, qa_total = search_medical_qa(search_term, limit=6, offset=0)
-                if qa_results:
-                    all_qa.extend(qa_results)
-                    search_result['qa_total'] = qa_total
-                    search_result['has_qa_info'] = True
-                    search_result['found'] = True
-                else:
-                    for query in search_queries:
-                        disease_results = search_master_database(query)
-                        if disease_results:
-                            all_diseases.extend(disease_results)
-                        
-                        qa_results2, qa_total2 = search_medical_qa(query, limit=6, offset=0)
-                        if qa_results2:
-                            all_qa.extend(qa_results2)
-                            search_result['qa_total'] = qa_total2
-                        
-                        symptom_results = search_symptom_descriptions(query)
-                        if symptom_results:
-                            all_symptoms.extend(symptom_results)
-                        
-                        precaution_results = search_symptom_precautions(query)
-                        if precaution_results:
-                            all_precautions.extend(precaution_results)
-                        
-                        if df_health_tips is not None:
-                            try:
-                                tip_matches = df_health_tips[df_health_tips['tip'].astype(str).str.lower().str.contains(query.lower(), na=False)]
-                                if not tip_matches.empty:
-                                    all_tips.extend(tip_matches['tip'].head(2).tolist())
-                            except:
-                                pass
-            else:
-                for query in search_queries:
-                    disease_results = search_master_database(query)
-                    if disease_results:
-                        all_diseases.extend(disease_results)
-                    
-                    qa_results, qa_total = search_medical_qa(query, limit=6, offset=0)
-                    if qa_results:
-                        all_qa.extend(qa_results)
-                        search_result['qa_total'] = qa_total
-                    
-                    symptom_results = search_symptom_descriptions(query)
-                    if symptom_results:
-                        all_symptoms.extend(symptom_results)
-                    
-                    precaution_results = search_symptom_precautions(query)
-                    if precaution_results:
-                        all_precautions.extend(precaution_results)
-                    
-                    if df_health_tips is not None:
-                        try:
-                            tip_matches = df_health_tips[df_health_tips['tip'].astype(str).str.lower().str.contains(query.lower(), na=False)]
-                            if not tip_matches.empty:
-                                all_tips.extend(tip_matches['tip'].head(2).tolist())
-                        except:
-                            pass
+            # ===== FIX #7: no Q&A search inside the main search =====
+            for query in search_queries:
+                disease_results = search_master_database(query)
+                if disease_results:
+                    all_diseases.extend(disease_results)
+                symptom_results = search_symptom_descriptions(query)
+                if symptom_results:
+                    all_symptoms.extend(symptom_results)
+                precaution_results = search_symptom_precautions(query)
+                if precaution_results:
+                    all_precautions.extend(precaution_results)
+                if df_health_tips is not None:
+                    try:
+                        tip_matches = df_health_tips[df_health_tips['tip'].astype(str).str.lower().str.contains(query.lower(), na=False)]
+                        if not tip_matches.empty:
+                            all_tips.extend(tip_matches['tip'].head(2).tolist())
+                    except:
+                        pass
+            # ===== END FIX #7 =====
             
-            # ===== MEDICINE SEARCH (NEW) =====
-            # Search for medicines by disease (if user searched for a disease)
-            medicine_results = []
-            if search_term:
-                medicine_results = search_medicines_by_disease(search_term)
-
+            medicine_results = search_medicines_by_disease(search_term)
             if medicine_results:
                 search_result['has_medicine_info'] = True
                 search_result['medicines'] = medicine_results
                 search_result['found'] = True
-                
                 all_medicines = []
                 for item in medicine_results:
                     all_medicines.extend(item.get('medicines', []))
                 search_result['all_medicines'] = list(set(all_medicines))[:10]
-
-            # Search for diseases by medicine (if user searched for a medicine)
-            disease_results = []
-            if search_term:
-                disease_results = search_diseases_by_medicine(search_term)
-
+            
+            disease_results = search_diseases_by_medicine(search_term)
             if disease_results:
                 search_result['has_disease_by_medicine_info'] = True
                 search_result['diseases_by_medicine'] = disease_results
                 search_result['found'] = True
-                
                 all_diseases_by_med = []
                 for item in disease_results:
                     all_diseases_by_med.extend(item.get('diseases', []))
@@ -2202,22 +2462,27 @@ def patient_health_symptoms():
                     seen.add(name)
                     unique_diseases.append(d)
             
-            results_found = unique_diseases or all_qa or all_symptoms or all_precautions or all_tips or medicine_results or disease_results
+            results_found = unique_diseases or all_symptoms or all_precautions or all_tips or medicine_results or disease_results
             
             if not results_found:
-                suggestions = get_disease_suggestions(search_term)
-                if suggestions:
-                    search_result['did_you_mean'] = suggestions[0]
-                    search_result['suggestions'] = suggestions
-                    if is_question_search:
-                        search_result['message'] = f"No results found for your question '{search_term}'. Did you mean: {suggestions[0]}?"
-                    else:
-                        search_result['message'] = f"No exact match found for '{search_term}'. Did you mean: {suggestions[0]}?"
+                # ===== FIX #8: suggest correction if available =====
+                if corrected:
+                    search_result['message'] = f"No results for '{search_term}'. Did you mean '{corrected}'?"
                 else:
-                    if is_question_search:
-                        search_result['message'] = f"No results found for your question '{search_term}'. Please try rephrasing or use a shorter search term."
+                    suggestions = get_disease_suggestions(search_term)
+                    if suggestions:
+                        search_result['did_you_mean'] = suggestions[0]
+                        search_result['suggestions'] = suggestions
+                        if is_question_search:
+                            search_result['message'] = f"No results found for your question '{search_term}'. Did you mean: {suggestions[0]}?"
+                        else:
+                            search_result['message'] = f"No exact match found for '{search_term}'. Did you mean: {suggestions[0]}?"
                     else:
-                        search_result['message'] = f"No information found for '{search_term}'. Please try a different term."
+                        if is_question_search:
+                            search_result['message'] = f"No results found for your question '{search_term}'. Please try rephrasing or use a shorter search term."
+                        else:
+                            search_result['message'] = f"No information found for '{search_term}'. Please try a different term."
+                # ===== END FIX #8 =====
                 search_result['suggestions'] = featured_diseases[:6]
             else:
                 search_result['found'] = True
@@ -2244,10 +2509,6 @@ def patient_health_symptoms():
                         if d.get('urgency') and d['urgency'] not in urgency_levels:
                             urgency_levels.append(d['urgency'])
                 
-                if all_qa:
-                    search_result['has_qa_info'] = True
-                    search_result['qa'] = all_qa
-                
                 if all_symptoms:
                     search_result['has_symptom_info'] = True
                     search_result['symptom_descriptions'] = all_symptoms[:3]
@@ -2266,20 +2527,21 @@ def patient_health_symptoms():
                 search_result['all_risks'] = search_result['all_risks'][:3]
                 search_result['all_urgency'] = urgency_levels[:2]
                 
-                if search_result['found']:
-                    urgency = ', '.join(urgency_levels[:2]) if urgency_levels else 'Unknown'
-                    result_summary = search_result['diseases'][0]['disease'] if search_result['diseases'] else 'Health information'
-                    try:
-                        conn = sqlite3.connect(db_path)
-                        cursor = conn.cursor()
-                        cursor.execute('''
-                        INSERT INTO symptom_history (user_id, search_term, result, urgency_level)
-                        VALUES (?, ?, ?, ?)
-                        ''', (session['user_id'], search_term, result_summary, urgency))
-                        conn.commit()
-                        conn.close()
-                    except:
-                        pass
+                urgency = ', '.join(urgency_levels[:2]) if urgency_levels else 'Unknown'
+                result_summary = search_result['diseases'][0]['disease'] if search_result['diseases'] else 'Health information'
+                try:
+                    # ===== FIX #10: use DB_PATH =====
+                    conn = sqlite3.connect(DB_PATH)
+                    # ===== END FIX #10 =====
+                    cursor = conn.cursor()
+                    cursor.execute('''
+                    INSERT INTO symptom_history (user_id, search_term, result, urgency_level)
+                    VALUES (?, ?, ?, ?)
+                    ''', (session['user_id'], search_term, result_summary, urgency))
+                    conn.commit()
+                    conn.close()
+                except:
+                    pass
     
     lang = session.get('language', 'en')
     return render_template('patient_health_symptoms_enhanced.html',
@@ -2294,22 +2556,94 @@ def patient_health_symptoms():
     )
 
 # ============================================================
-# LOAD MORE Q&A - AJAX ENDPOINT
+# FIX #7: CHATBOT ROUTE (Q&A moved here)
 # ============================================================
+
+@app.route('/patient/chatbot', methods=['GET', 'POST'])
+@require_terms_acceptance
+def patient_chatbot():
+    if 'user_id' not in session or session.get('role') != 'patient':
+        return redirect('/login')
+    
+    question = ''
+    answer_data = None
+    history = []
+    
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute('''
+    SELECT question, answer, source, created_at 
+    FROM chatbot_history 
+    WHERE user_id = ? 
+    ORDER BY created_at DESC 
+    LIMIT 10
+    ''', (session['user_id'],))
+    history = cursor.fetchall()
+    conn.close()
+    
+    if request.method == 'POST':
+        question = request.form.get('question', '').strip()
+        if question:
+            corrected = correct_spelling(question)
+            query = corrected if corrected else question
+            results, _ = search_medical_qa(query, limit=3, offset=0)
+            
+            answer_data = {
+                'question': question,
+                'corrected': corrected if corrected and corrected.lower() != question.lower() else None,
+                'results': results,
+                'found': bool(results),
+            }
+            
+            if not results:
+                diseases = search_master_database(query)
+                if diseases:
+                    answer_data['results'] = [{
+                        'question': f'Information about {diseases[0]["disease"]}',
+                        'answer': diseases[0].get('description', 'No description available'),
+                        'source': 'Disease Database',
+                    }]
+                    answer_data['found'] = True
+            
+            if answer_data['found']:
+                try:
+                    # ===== FIX #10: use DB_PATH =====
+                    conn = sqlite3.connect(DB_PATH)
+                    # ===== END FIX #10 =====
+                    cursor = conn.cursor()
+                    cursor.execute('''
+                    INSERT INTO chatbot_history (user_id, question, answer, source)
+                    VALUES (?, ?, ?, ?)
+                    ''', (session['user_id'], question,
+                          answer_data['results'][0]['answer'],
+                          answer_data['results'][0]['source']))
+                    conn.commit()
+                    conn.close()
+                except:
+                    pass
+    
+    lang = session.get('language', 'en')
+    return render_template('patient_chatbot.html',
+        user=session,
+        question=question,
+        answer_data=answer_data,
+        history=history,
+        lang=lang,
+        translate_text=translate_text
+    )
 
 @app.route('/load-more-qa', methods=['POST'])
 @require_terms_acceptance
 def load_more_qa():
-    """AJAX endpoint to load more Q&A results"""
     search_term = request.form.get('search_term', '').strip()
     offset = int(request.form.get('offset', 0))
     limit = 6
-    
     if not search_term:
         return jsonify({'error': 'No search term provided'}), 400
-    
     results, total = search_medical_qa(search_term, limit=limit, offset=offset)
-    
     return jsonify({
         'results': results,
         'total': total,
@@ -2328,8 +2662,9 @@ def patient_health_journal():
     if 'user_id' not in session or session.get('role') != 'patient':
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
@@ -2403,8 +2738,9 @@ def patient_book():
             lang = session.get('language', 'en')
             return render_template('book_appointment.html', today=today, clinics=clinics, lang=lang, translate_text=translate_text)
         
-        db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-        conn = sqlite3.connect(db_path)
+        # ===== FIX #10: use DB_PATH =====
+        conn = sqlite3.connect(DB_PATH)
+        # ===== END FIX #10 =====
         cursor = conn.cursor()
         
         cursor.execute('''
@@ -2456,8 +2792,9 @@ def patient_cancel(appt_id):
     if 'user_id' not in session or session.get('role') != 'patient':
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     cursor = conn.cursor()
     cursor.execute('UPDATE appointments SET status = "Cancelled" WHERE id = ? AND patient_email = ?', (appt_id, session['email']))
     conn.commit()
@@ -2466,7 +2803,7 @@ def patient_cancel(appt_id):
     return redirect('/patient/dashboard')
 
 # ============================================================
-# PATIENT PROFILE - UPDATED WITH GENDER AND ID NUMBER
+# PATIENT PROFILE - FIX #1 (SA ID) + FIX #6 (allergies)
 # ============================================================
 
 @app.route('/patient/profile', methods=['GET', 'POST'])
@@ -2475,8 +2812,9 @@ def patient_profile():
     if 'user_id' not in session or session.get('role') != 'patient':
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
@@ -2486,15 +2824,19 @@ def patient_profile():
         location = request.form.get('location', '').strip()
         language = request.form.get('language', 'en')
         phone = request.form.get('phone', '').strip()
-        
-        # ===== NEW FIELDS =====
         gender = request.form.get('gender', '').strip()
         id_number = request.form.get('id_number', '').strip()
+        # ===== FIX #6: allergies saved =====
+        allergies = request.form.get('allergies', '').strip()
+        # ===== END FIX #6 =====
         
-        # Validate ID number (13 digits)
-        if id_number and not (id_number.isdigit() and len(id_number) == 13):
-            flash('Please enter a valid 13-digit South African ID number.', 'error')
-            return redirect('/patient/profile')
+        # ===== FIX #1: SA ID validation =====
+        if id_number:
+            valid, msg = validate_sa_id(id_number)
+            if not valid:
+                flash(f'ID Number: {msg}', 'error')
+                return redirect('/patient/profile')
+        # ===== END FIX #1 =====
         
         try:
             age = int(age)
@@ -2505,9 +2847,10 @@ def patient_profile():
         cursor.execute('''
         UPDATE users 
         SET age = ?, health_conditions = ?, location = ?, 
-            language = ?, phone = ?, gender = ?, id_number = ?
+            language = ?, phone = ?, gender = ?, id_number = ?,
+            allergies = ?
         WHERE id = ?
-        ''', (age, health_conditions, location, language, phone, gender, id_number, session['user_id']))
+        ''', (age, health_conditions, location, language, phone, gender, id_number, allergies, session['user_id']))
         conn.commit()
         conn.close()
         
@@ -2521,7 +2864,7 @@ def patient_profile():
         flash('Profile updated successfully', 'success')
         return redirect('/patient/dashboard')
     
-    cursor.execute('SELECT id, email, full_name, phone, age, health_conditions, location, gender, id_number FROM users WHERE id = ?', (session['user_id'],))
+    cursor.execute('SELECT id, email, full_name, phone, age, health_conditions, location, gender, id_number, allergies, emergency_name, emergency_phone FROM users WHERE id = ?', (session['user_id'],))
     patient = cursor.fetchone()
     conn.close()
     lang = session.get('language', 'en')
@@ -2538,7 +2881,6 @@ def patient_profile():
 
 @app.route('/get-clinic-location/<clinic_name>')
 def get_clinic_location(clinic_name):
-    """Get clinic coordinates for Google Maps"""
     if df_clinics is not None:
         try:
             row = df_clinics[df_clinics['Clinic_Name'].str.contains(clinic_name, case=False, na=False)].iloc[0]
@@ -2570,14 +2912,11 @@ def patient_clinics():
         if search_location and df_clinics is not None:
             try:
                 df = df_clinics.copy()
-                # Ensure text columns are strings and lowercased for case-insensitive search
                 for col in ['Province', 'District', 'City', 'Area', 'Clinic_Name']:
                     if col in df.columns:
                         df[col] = df[col].astype(str).str.lower()
                 
                 search_lower = search_location.lower()
-                
-                # Search across all relevant columns
                 mask = (
                     df['Province'].str.contains(search_lower, na=False) |
                     df['District'].str.contains(search_lower, na=False) |
@@ -2585,11 +2924,26 @@ def patient_clinics():
                     df['Area'].str.contains(search_lower, na=False) |
                     df['Clinic_Name'].str.contains(search_lower, na=False)
                 )
-                
                 results = df[mask].head(50)
                 search_results = results.to_dict('records')
                 
-                # Add Google Maps search link (no coordinates needed)
+                # ===== FIX #8: spell correction for clinic search =====
+                if not search_results:
+                    corrected = correct_spelling(search_location)
+                    if corrected and corrected != search_location.lower():
+                        flash(f'No results for "{search_location}". Showing results for "{corrected}".', 'info')
+                        search_location = corrected
+                        search_lower = corrected.lower()
+                        mask = (
+                            df['Province'].str.contains(search_lower, na=False) |
+                            df['District'].str.contains(search_lower, na=False) |
+                            df['City'].str.contains(search_lower, na=False) |
+                            df['Area'].str.contains(search_lower, na=False) |
+                            df['Clinic_Name'].str.contains(search_lower, na=False)
+                        )
+                        search_results = df[mask].head(50).to_dict('records')
+                # ===== END FIX #8 =====
+                
                 for clinic in search_results:
                     clinic_name = str(clinic.get('Clinic_Name', '')).replace(' ', '+')
                     city = str(clinic.get('City', '')).replace(' ', '+')
@@ -2597,7 +2951,6 @@ def patient_clinics():
                     query = f"{clinic_name}+{city}+{province}+South+Africa"
                     clinic['maps_url'] = f"https://www.google.com/maps/search/?api=1&query={query}"
                     clinic['directions_url'] = f"https://www.google.com/maps/dir/?api=1&destination={query}"
-                    
             except Exception as e:
                 print(f"Clinic search error: {e}")
     
@@ -2633,7 +2986,6 @@ def book_from_clinic():
         if date < today:
             flash('Cannot book appointments for past dates.', 'error')
             return redirect('/patient/clinics')
-        
         if date == today and time <= current_time:
             flash('Cannot book an appointment time that has already passed today.', 'error')
             return redirect('/patient/clinics')
@@ -2641,8 +2993,9 @@ def book_from_clinic():
         flash('Invalid date or time format.', 'error')
         return redirect('/patient/clinics')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     cursor = conn.cursor()
     
     cursor.execute('''
@@ -2691,8 +3044,9 @@ def patient_no_show_history():
     if 'user_id' not in session or session.get('role') != 'patient':
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
@@ -2702,7 +3056,6 @@ def patient_no_show_history():
     no_show_appointments = cursor.fetchall()
     conn.close()
     
-    # Get ML prediction
     no_show_prediction = predict_no_show(session['email'])
     
     lang = session.get('language', 'en')
@@ -2721,7 +3074,7 @@ def patient_no_show_history():
     )
 
 # ============================================================
-# PATIENT - MEDICINE SEARCH ROUTE
+# PATIENT - MEDICINE SEARCH - FIX #8 (spell)
 # ============================================================
 
 @app.route('/patient/medicines', methods=['GET', 'POST'])
@@ -2732,7 +3085,7 @@ def patient_medicines():
     
     search_results = []
     search_term = ''
-    search_mode = 'disease'  # 'disease' or 'medicine'
+    search_mode = 'disease'
     search_performed = False
     
     if request.method == 'POST':
@@ -2745,6 +3098,17 @@ def patient_medicines():
                 search_results = search_medicines_by_disease(search_term)
             else:
                 search_results = search_diseases_by_medicine(search_term)
+            
+            # ===== FIX #8: spell correction =====
+            if not search_results:
+                corrected = correct_spelling(search_term)
+                if corrected:
+                    flash(f'No results for "{search_term}". Did you mean "{corrected}"?', 'info')
+                    if search_mode == 'disease':
+                        search_results = search_medicines_by_disease(corrected)
+                    else:
+                        search_results = search_diseases_by_medicine(corrected)
+            # ===== END FIX #8 =====
     
     lang = session.get('language', 'en')
     return render_template('patient_medicines.html',
@@ -2755,10 +3119,10 @@ def patient_medicines():
         search_performed=search_performed,
         lang=lang,
         translate_text=translate_text
-    )    
+    )
 
 # ============================================================
-# PATIENT - FIRST AID (UPDATED WITH 20 CATEGORIES)
+# PATIENT - FIRST AID
 # ============================================================
 
 @app.route('/patient/first-aid')
@@ -2778,33 +3142,27 @@ def patient_first_aid():
         except:
             pass
     
-    # ===== FIRST AID CATEGORIES - 20 CATEGORIES =====
     first_aid_categories = [
-        # ===== EMERGENCY (Danger) =====
-        {'id': 'heart_attack', 'icon': '💔', 'title': 'Heart Attack', 'description': 'Emergency signs & response', 'color': 'danger'},
-        {'id': 'stroke', 'icon': '🧠', 'title': 'Stroke', 'description': 'FAST - Face, Arms, Speech, Time', 'color': 'danger'},
-        {'id': 'choking', 'icon': '🫁', 'title': 'Choking', 'description': 'Heimlich maneuver for adults & children', 'color': 'danger'},
-        {'id': 'severe_bleeding', 'icon': '🩸', 'title': 'Severe Bleeding', 'description': 'How to stop heavy bleeding', 'color': 'danger'},
-        {'id': 'allergic_reaction', 'icon': '🤧', 'title': 'Allergic Reaction', 'description': 'Anaphylaxis emergency response', 'color': 'danger'},
-        {'id': 'seizure', 'icon': '⚡', 'title': 'Seizure / Fits', 'description': 'What to do during a seizure', 'color': 'danger'},
-        {'id': 'poisoning', 'icon': '☠️', 'title': 'Poisoning', 'description': 'Immediate steps for poisoning', 'color': 'danger'},
-        {'id': 'drowning', 'icon': '🏊', 'title': 'Drowning', 'description': 'Rescue & CPR for drowning', 'color': 'danger'},
-        
-        # ===== URGENT (Warning) =====
-        {'id': 'burns', 'icon': '🔥', 'title': 'Burns & Scalds', 'description': 'First aid for burns', 'color': 'warning'},
-        {'id': 'fracture', 'icon': '🦴', 'title': 'Fractures & Sprains', 'description': 'Handle broken bones & sprains', 'color': 'warning'},
-        {'id': 'heatstroke', 'icon': '🌡️', 'title': 'Heat Stroke & Dehydration', 'description': 'Emergency cooling response', 'color': 'warning'},
-        {'id': 'hypothermia', 'icon': '❄️', 'title': 'Hypothermia', 'description': 'Warming a person safely', 'color': 'warning'},
-        {'id': 'diabetic_emergency', 'icon': '🩸', 'title': 'Diabetic Emergency', 'description': 'Low/high blood sugar response', 'color': 'warning'},
-        {'id': 'asthma_attack', 'icon': '🫁', 'title': 'Asthma Attack', 'description': 'Help someone having an asthma attack', 'color': 'warning'},
-        
-        # ===== ROUTINE (Info) =====
-        {'id': 'cuts_scrapes', 'icon': '🩹', 'title': 'Cuts & Scrapes', 'description': 'Clean and dress minor wounds', 'color': 'info'},
-        {'id': 'insect_bites', 'icon': '🐝', 'title': 'Insect Bites & Stings', 'description': 'Treatment for bites and stings', 'color': 'info'},
-        {'id': 'nosebleed', 'icon': '🩸', 'title': 'Nosebleeds', 'description': 'How to stop a nosebleed', 'color': 'info'},
-        {'id': 'headache_migraine', 'icon': '🤕', 'title': 'Headache & Migraine', 'description': 'Relief for headaches', 'color': 'info'},
-        {'id': 'food_poisoning', 'icon': '🤢', 'title': 'Food Poisoning', 'description': 'Symptoms and home care', 'color': 'info'},
-        {'id': 'fever_management', 'icon': '🌡️', 'title': 'Fever Management', 'description': 'How to manage a fever', 'color': 'info'},
+        {'id': 'heart_attack', 'icon': 'fa-heart-pulse', 'title': 'Heart Attack', 'description': 'Emergency signs & response', 'color': 'danger'},
+        {'id': 'stroke', 'icon': 'fa-brain', 'title': 'Stroke', 'description': 'FAST - Face, Arms, Speech, Time', 'color': 'danger'},
+        {'id': 'choking', 'icon': 'fa-lungs', 'title': 'Choking', 'description': 'Heimlich maneuver for adults & children', 'color': 'danger'},
+        {'id': 'severe_bleeding', 'icon': 'fa-droplet', 'title': 'Severe Bleeding', 'description': 'How to stop heavy bleeding', 'color': 'danger'},
+        {'id': 'allergic_reaction', 'icon': 'fa-allergies', 'title': 'Allergic Reaction', 'description': 'Anaphylaxis emergency response', 'color': 'danger'},
+        {'id': 'seizure', 'icon': 'fa-bolt', 'title': 'Seizure / Fits', 'description': 'What to do during a seizure', 'color': 'danger'},
+        {'id': 'poisoning', 'icon': 'fa-skull-crossbones', 'title': 'Poisoning', 'description': 'Immediate steps for poisoning', 'color': 'danger'},
+        {'id': 'drowning', 'icon': 'fa-water', 'title': 'Drowning', 'description': 'Rescue & CPR for drowning', 'color': 'danger'},
+        {'id': 'burns', 'icon': 'fa-fire', 'title': 'Burns & Scalds', 'description': 'First aid for burns', 'color': 'warning'},
+        {'id': 'fracture', 'icon': 'fa-bone', 'title': 'Fractures & Sprains', 'description': 'Handle broken bones & sprains', 'color': 'warning'},
+        {'id': 'heatstroke', 'icon': 'fa-temperature-high', 'title': 'Heat Stroke & Dehydration', 'description': 'Emergency cooling response', 'color': 'warning'},
+        {'id': 'hypothermia', 'icon': 'fa-snowflake', 'title': 'Hypothermia', 'description': 'Warming a person safely', 'color': 'warning'},
+        {'id': 'diabetic_emergency', 'icon': 'fa-syringe', 'title': 'Diabetic Emergency', 'description': 'Low/high blood sugar response', 'color': 'warning'},
+        {'id': 'asthma_attack', 'icon': 'fa-lungs', 'title': 'Asthma Attack', 'description': 'Help someone having an asthma attack', 'color': 'warning'},
+        {'id': 'cuts_scrapes', 'icon': 'fa-bandage', 'title': 'Cuts & Scrapes', 'description': 'Clean and dress minor wounds', 'color': 'info'},
+        {'id': 'insect_bites', 'icon': 'fa-bug', 'title': 'Insect Bites & Stings', 'description': 'Treatment for bites and stings', 'color': 'info'},
+        {'id': 'nosebleed', 'icon': 'fa-nose', 'title': 'Nosebleeds', 'description': 'How to stop a nosebleed', 'color': 'info'},
+        {'id': 'headache_migraine', 'icon': 'fa-head-side-virus', 'title': 'Headache & Migraine', 'description': 'Relief for headaches', 'color': 'info'},
+        {'id': 'food_poisoning', 'icon': 'fa-utensils', 'title': 'Food Poisoning', 'description': 'Symptoms and home care', 'color': 'info'},
+        {'id': 'fever_management', 'icon': 'fa-thermometer', 'title': 'Fever Management', 'description': 'How to manage a fever', 'color': 'info'},
     ]
     
     lang = session.get('language', 'en')
@@ -2826,8 +3184,9 @@ def staff_dashboard():
     if 'user_id' not in session or session.get('role') not in ['nurse', 'staff']:
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute('SELECT staff_clinic FROM users WHERE id = ?', (session['user_id'],))
@@ -2842,8 +3201,9 @@ def staff_dashboard():
     
     today = datetime.now().strftime('%Y-%m-%d')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
@@ -2877,6 +3237,7 @@ def staff_dashboard():
         search_query='',
         search_results=None,
         staff_clinic=staff_clinic,
+        today=today,
         lang=lang,
         translate_text=translate_text
     )
@@ -2886,8 +3247,9 @@ def staff_dashboard():
 def staff_checkin(appt_id):
     if 'user_id' not in session or session.get('role') not in ['nurse', 'staff', 'admin']:
         return redirect('/login')
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     cursor = conn.cursor()
     cursor.execute('UPDATE appointments SET status = "Checked-in" WHERE id = ?', (appt_id,))
     conn.commit()
@@ -2899,8 +3261,9 @@ def staff_checkin(appt_id):
 def staff_checkout(appt_id):
     if 'user_id' not in session or session.get('role') not in ['nurse', 'staff', 'admin']:
         return redirect('/login')
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     cursor = conn.cursor()
     cursor.execute('UPDATE appointments SET status = "Completed" WHERE id = ?', (appt_id,))
     conn.commit()
@@ -2912,8 +3275,9 @@ def staff_checkout(appt_id):
 def staff_noshow(appt_id):
     if 'user_id' not in session or session.get('role') not in ['nurse', 'staff', 'admin']:
         return redirect('/login')
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     cursor = conn.cursor()
     cursor.execute('UPDATE appointments SET status = "No-Show" WHERE id = ?', (appt_id,))
     conn.commit()
@@ -2925,18 +3289,15 @@ def staff_send_reminder(appt_id):
     flash('Reminder sent', 'success')
     return redirect('/staff/dashboard')
 
-# ============================================================
-# STAFF - MANUAL BOOKING
-# ============================================================
-
 @app.route('/staff/manual-book', methods=['GET', 'POST'])
 @require_terms_acceptance
 def staff_manual_book():
     if 'user_id' not in session or session.get('role') not in ['nurse', 'staff']:
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute('SELECT staff_clinic FROM users WHERE id = ?', (session['user_id'],))
@@ -2964,8 +3325,9 @@ def staff_manual_book():
             lang = session.get('language', 'en')
             return render_template('staff_manual_book.html', today=today, clinics=clinics, staff_clinic=staff_clinic, lang=lang, translate_text=translate_text)
         
-        db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-        conn = sqlite3.connect(db_path)
+        # ===== FIX #10: use DB_PATH =====
+        conn = sqlite3.connect(DB_PATH)
+        # ===== END FIX #10 =====
         cursor = conn.cursor()
         
         cursor.execute('''
@@ -3013,18 +3375,15 @@ def staff_manual_book():
         translate_text=translate_text
     )
 
-# ============================================================
-# STAFF - MANAGE SLOTS
-# ============================================================
-
 @app.route('/staff/manage-slots', methods=['GET', 'POST'])
 @require_terms_acceptance
 def staff_manage_slots():
     if 'user_id' not in session or session.get('role') not in ['nurse', 'staff']:
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute('SELECT staff_clinic FROM users WHERE id = ?', (session['user_id'],))
@@ -3039,7 +3398,9 @@ def staff_manage_slots():
     today = datetime.now().strftime('%Y-%m-%d')
     selected_date = request.args.get('date', today)
     
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     cursor = conn.cursor()
     
     if request.method == 'POST':
@@ -3116,7 +3477,7 @@ def staff_manage_slots():
     )
 
 # ============================================================
-# STAFF - SEARCH PATIENTS - UPDATED WITH GENDER AND ID NUMBER
+# STAFF - SEARCH PATIENTS - FIX #6 (allergies)
 # ============================================================
 
 @app.route('/staff/search', methods=['GET'])
@@ -3125,8 +3486,9 @@ def staff_search():
     if 'user_id' not in session or session.get('role') not in ['nurse', 'staff']:
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute('SELECT staff_clinic FROM users WHERE id = ?', (session['user_id'],))
@@ -3145,25 +3507,30 @@ def staff_search():
     
     if query:
         search_performed = True
-        conn = sqlite3.connect(db_path)
+        # ===== FIX #10: use DB_PATH =====
+        conn = sqlite3.connect(DB_PATH)
+        # ===== END FIX #10 =====
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
-        # ===== UPDATED: Added gender and id_number to SELECT =====
+        # ===== FIX #6: allergies included =====
         cursor.execute('''
         SELECT id, email, full_name, phone, role, age, health_conditions, location, 
-               staff_clinic, is_active, created_at, gender, id_number
+               staff_clinic, is_active, created_at, gender, id_number, allergies
         FROM users 
         WHERE role = 'patient' 
         AND (full_name LIKE ? OR phone LIKE ? OR email LIKE ?)
         ORDER BY full_name
         ''', ('%' + query + '%', '%' + query + '%', '%' + query + '%'))
+        # ===== END FIX #6 =====
         
         patients = cursor.fetchall()
         conn.close()
         
         for patient in patients:
-            conn = sqlite3.connect(db_path)
+            # ===== FIX #10: use DB_PATH =====
+            conn = sqlite3.connect(DB_PATH)
+            # ===== END FIX #10 =====
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             
@@ -3201,7 +3568,7 @@ def staff_search():
             else:
                 risk_category = 'Very High'
             
-            # ===== UPDATED: Added gender and id_number to results =====
+            # ===== FIX #6: allergies in results =====
             search_results.append({
                 'id': patient['id'],
                 'full_name': patient['full_name'],
@@ -3210,6 +3577,7 @@ def staff_search():
                 'age': age,
                 'gender': patient['gender'] or 'N/A',
                 'id_number': patient['id_number'] or 'N/A',
+                'allergies': patient['allergies'] or '',
                 'health_conditions': patient['health_conditions'] or 'None',
                 'location': patient['location'] or 'N/A',
                 'is_active': patient['is_active'],
@@ -3221,6 +3589,7 @@ def staff_search():
                 'risk_category': risk_category,
                 'created_at': patient['created_at']
             })
+            # ===== END FIX #6 =====
     
     lang = session.get('language', 'en')
     return render_template('staff_search_results.html',
@@ -3234,7 +3603,7 @@ def staff_search():
     )
 
 # ============================================================
-# STAFF - EXPORT DATA (CSV)
+# STAFF - EXPORT
 # ============================================================
 
 @app.route('/staff/export')
@@ -3243,8 +3612,9 @@ def staff_export():
     if 'user_id' not in session or session.get('role') not in ['nurse', 'staff']:
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute('SELECT staff_clinic FROM users WHERE id = ?', (session['user_id'],))
@@ -3259,7 +3629,9 @@ def staff_export():
     
     export_type = request.args.get('type', 'today')
     
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
@@ -3316,18 +3688,15 @@ def staff_export():
     
     return response
 
-# ============================================================
-# STAFF - EXPORT PATIENTS LIST (CSV)
-# ============================================================
-
 @app.route('/staff/export-patients')
 @require_terms_acceptance
 def staff_export_patients():
     if 'user_id' not in session or session.get('role') not in ['nurse', 'staff']:
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute('SELECT staff_clinic FROM users WHERE id = ?', (session['user_id'],))
@@ -3340,7 +3709,9 @@ def staff_export_patients():
         flash('Please select your clinic first', 'warning')
         return redirect(url_for('staff_profile_setup'))
     
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
@@ -3390,7 +3761,7 @@ def staff_export_patients():
     return response
 
 # ============================================================
-# STAFF - PATIENT PROFILE VIEW - UPDATED WITH GENDER AND ID NUMBER
+# STAFF - PATIENT PROFILE - FIX #6 (allergies + emergency)
 # ============================================================
 
 @app.route('/staff/patient/<int:patient_id>')
@@ -3399,18 +3770,21 @@ def staff_patient_history(patient_id):
     if 'user_id' not in session or session.get('role') not in ['nurse', 'staff', 'admin']:
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
-    # ===== UPDATED: Added gender and id_number to SELECT =====
+    # ===== FIX #6: allergies + emergency fields included =====
     cursor.execute('''
     SELECT id, email, full_name, phone, role, age, health_conditions, location, 
-           is_active, created_at, gender, id_number
+           is_active, created_at, gender, id_number, allergies,
+           emergency_name, emergency_phone, emergency_relationship
     FROM users 
     WHERE id = ? AND role = 'patient'
     ''', (patient_id,))
+    # ===== END FIX #6 =====
     patient = cursor.fetchone()
     
     if not patient:
@@ -3458,7 +3832,6 @@ def staff_patient_history(patient_id):
     
     health_conditions_list = [c.strip() for c in health_conditions.split(',') if c.strip()]
     
-    # Get ML no-show prediction
     no_show_prediction = predict_no_show(patient['email'])
     
     lang = session.get('language', 'en')
@@ -3482,7 +3855,7 @@ def staff_patient_history(patient_id):
     )
 
 # ============================================================
-# ADMIN - USER MANAGEMENT - UPDATED WITH GENDER AND ID NUMBER
+# ADMIN - DASHBOARD
 # ============================================================
 
 @app.route('/admin/dashboard')
@@ -3491,14 +3864,12 @@ def admin_dashboard():
     if 'user_id' not in session or session.get('role') != 'admin':
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
-    # ===== REAL-TIME STATISTICS =====
-    
-    # User stats
     cursor.execute("SELECT COUNT(*) FROM users")
     total_users = cursor.fetchone()[0]
     
@@ -3511,7 +3882,6 @@ def admin_dashboard():
     cursor.execute("SELECT COUNT(*) FROM users WHERE is_active = 1")
     active_users = cursor.fetchone()[0]
     
-    # Appointment stats
     cursor.execute("SELECT COUNT(*) FROM appointments")
     total_appointments = cursor.fetchone()[0]
     
@@ -3527,12 +3897,10 @@ def admin_dashboard():
     cursor.execute("SELECT COUNT(*) FROM appointments WHERE status = 'No-Show'")
     no_show = cursor.fetchone()[0]
     
-    # Today's appointments
     today = datetime.now().strftime('%Y-%m-%d')
     cursor.execute("SELECT COUNT(*) FROM appointments WHERE appointment_date = ?", (today,))
     today_appointments = cursor.fetchone()[0]
     
-    # ===== DAILY APPOINTMENTS (Last 7 days) =====
     daily_labels = []
     daily_counts = []
     for i in range(6, -1, -1):
@@ -3543,7 +3911,6 @@ def admin_dashboard():
         count = cursor.fetchone()[0]
         daily_counts.append(count)
     
-    # ===== APPOINTMENTS BY CLINIC =====
     cursor.execute('''
     SELECT clinic_name, COUNT(*) as count 
     FROM appointments 
@@ -3555,7 +3922,6 @@ def admin_dashboard():
     clinic_labels = [row['clinic_name'][:15] for row in clinic_stats]
     clinic_counts = [row['count'] for row in clinic_stats]
     
-    # ===== RECENT USERS =====
     cursor.execute('''
     SELECT full_name, email, role, created_at 
     FROM users 
@@ -3564,10 +3930,7 @@ def admin_dashboard():
     ''')
     recent_users = cursor.fetchall()
     
-    # ===== NO-SHOW RATE =====
     no_show_rate = round((no_show / total_appointments * 100) if total_appointments > 0 else 0, 1)
-    
-    # ===== TOTAL CLINICS =====
     total_clinics = len(get_clinics_list())
     
     conn.close()
@@ -3603,11 +3966,11 @@ def admin_users():
     if 'user_id' not in session or session.get('role') != 'admin':
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    # ===== UPDATED: Added gender and id_number to SELECT =====
     cursor.execute('SELECT id, full_name, email, phone, role, is_active, is_verified, created_at, gender, id_number FROM users ORDER BY created_at DESC')
     users = cursor.fetchall()
     conn.close()
@@ -3645,8 +4008,9 @@ def admin_user_add():
             error = translate_text('Password must be at least 6 characters.', lang)
             return render_template('admin_user_add.html', user=session, error=error, lang=lang, translate_text=translate_text)
         
-        db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-        conn = sqlite3.connect(db_path)
+        # ===== FIX #10: use DB_PATH =====
+        conn = sqlite3.connect(DB_PATH)
+        # ===== END FIX #10 =====
         cursor = conn.cursor()
         
         cursor.execute('SELECT id FROM users WHERE email = ?', (email,))
@@ -3679,8 +4043,9 @@ def admin_user_edit(user_id):
     if 'user_id' not in session or session.get('role') != 'admin':
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
@@ -3691,6 +4056,14 @@ def admin_user_edit(user_id):
         is_active = int(request.form.get('is_active', 1))
         gender = request.form.get('gender', '').strip()
         id_number = request.form.get('id_number', '').strip()
+        
+        # ===== FIX #1: SA ID validation in admin edit =====
+        if id_number:
+            valid, msg = validate_sa_id(id_number)
+            if not valid:
+                flash(f'ID Number: {msg}', 'error')
+                return redirect(url_for('admin_user_edit', user_id=user_id))
+        # ===== END FIX #1 =====
         
         cursor.execute('''
         UPDATE users SET full_name = ?, phone = ?, role = ?, is_active = ?, gender = ?, id_number = ?
@@ -3729,8 +4102,9 @@ def admin_user_delete(user_id):
         flash('You cannot delete your own account.', 'error')
         return redirect(url_for('admin_users'))
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     cursor = conn.cursor()
     cursor.execute('DELETE FROM users WHERE id = ?', (user_id,))
     conn.commit()
@@ -3745,8 +4119,9 @@ def admin_user_toggle(user_id):
     if 'user_id' not in session or session.get('role') != 'admin':
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     cursor = conn.cursor()
     
     cursor.execute('SELECT is_active FROM users WHERE id = ?', (user_id,))
@@ -3760,18 +4135,15 @@ def admin_user_toggle(user_id):
     flash('User status updated.', 'success')
     return redirect(url_for('admin_users'))
 
-# ============================================================
-# ADMIN - STAFF MANAGEMENT
-# ============================================================
-
 @app.route('/admin/staff')
 @require_terms_acceptance
 def admin_staff():
     if 'user_id' not in session or session.get('role') != 'admin':
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute('''
@@ -3797,8 +4169,9 @@ def admin_staff_verify(user_id):
     if 'user_id' not in session or session.get('role') != 'admin':
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     cursor = conn.cursor()
     cursor.execute('UPDATE users SET is_verified = 1 WHERE id = ?', (user_id,))
     conn.commit()
@@ -3806,10 +4179,6 @@ def admin_staff_verify(user_id):
     
     flash('Staff member verified successfully.', 'success')
     return redirect(url_for('admin_staff'))
-
-# ============================================================
-# ADMIN - CLINIC MANAGEMENT
-# ============================================================
 
 @app.route('/admin/clinics')
 @require_terms_acceptance
@@ -3903,18 +4272,15 @@ def admin_clinic_delete(clinic_id):
     flash('Clinic deleted successfully.', 'success')
     return redirect(url_for('admin_clinics'))
 
-# ============================================================
-# ADMIN - ALL APPOINTMENTS
-# ============================================================
-
 @app.route('/admin/appointments')
 @require_terms_acceptance
 def admin_appointments():
     if 'user_id' not in session or session.get('role') != 'admin':
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute('''
@@ -3933,18 +4299,15 @@ def admin_appointments():
         translate_text=translate_text
     )
 
-# ============================================================
-# ADMIN - REPORTS
-# ============================================================
-
 @app.route('/admin/reports')
 @require_terms_acceptance
 def admin_reports():
     if 'user_id' not in session or session.get('role') != 'admin':
         return redirect('/login')
     
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
@@ -3997,10 +4360,6 @@ def admin_reports():
         translate_text=translate_text
     )
 
-# ============================================================
-# ADMIN - ACTIVITY LOG
-# ============================================================
-
 @app.route('/admin/activity')
 @require_terms_acceptance
 def admin_activity():
@@ -4008,8 +4367,9 @@ def admin_activity():
         return redirect('/login')
     
     activities = []
-    db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-    conn = sqlite3.connect(db_path)
+    # ===== FIX #10: use DB_PATH =====
+    conn = sqlite3.connect(DB_PATH)
+    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
@@ -4040,10 +4400,6 @@ def admin_activity():
         translate_text=translate_text
     )
 
-# ============================================================
-# ADMIN - SYSTEM SETTINGS
-# ============================================================
-
 @app.route('/admin/settings', methods=['GET', 'POST'])
 @require_terms_acceptance
 def admin_settings():
@@ -4061,10 +4417,6 @@ def admin_settings():
         lang=lang,
         translate_text=translate_text
     )
-
-# ============================================================
-# ADMIN - CHECK NO-SHOWS
-# ============================================================
 
 @app.route('/admin/check-no-shows', methods=['GET'])
 @require_terms_acceptance
@@ -4147,8 +4499,9 @@ def ussd():
                 return "END No symptoms detected. Please try again."
     
     if parts[0] == "3":
-        db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-        conn = sqlite3.connect(db_path)
+        # ===== FIX #10: use DB_PATH =====
+        conn = sqlite3.connect(DB_PATH)
+        # ===== END FIX #10 =====
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute('''
@@ -4219,8 +4572,9 @@ def update_language():
     lang = request.form.get('language', 'en')
     if lang in ['en', 'zulu']:
         session['language'] = lang
-        db_path = os.path.join(base_dir, 'database', 'medisense_users.db')
-        conn = sqlite3.connect(db_path)
+        # ===== FIX #10: use DB_PATH =====
+        conn = sqlite3.connect(DB_PATH)
+        # ===== END FIX #10 =====
         cursor = conn.cursor()
         try:
             cursor.execute('UPDATE users SET language = ? WHERE id = ?', (lang, session['user_id']))

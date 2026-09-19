@@ -1,231 +1,146 @@
 {% extends "base.html" %}
 
-{% block title %}{{ translate_text('Find Clinics', lang) }} - MediSense{% endblock %}
+{% block title %}Find Clinics — MediSense{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-12">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('patient_dashboard') }}" class="text-decoration-none">{{ translate_text('Dashboard', lang) }}</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">{{ translate_text('Find Clinics', lang) }}</li>
-                </ol>
-            </nav>
-            
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white border-bottom">
-                    <h4 class="mb-0 text-primary"><i class="fas fa-map-marker-alt"></i> {{ translate_text('Find Clinics', lang) }}</h4>
-                    <p class="text-muted small mb-0">{{ translate_text('Search for clinics near your location', lang) }}</p>
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('patient_dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active">Find Clinics</li>
+        </ol>
+    </nav>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header">
+            <h5 class="mb-1"><i class="fas fa-map-location-dot text-primary me-2"></i>Find Clinics</h5>
+            <p class="text-muted small mb-0">Search by province, city, area, or clinic name.</p>
+        </div>
+        <div class="card-body p-4">
+            <form method="POST" action="{{ url_for('patient_clinics') }}">
+                <div class="row g-3">
+                    <div class="col-md-9">
+                        <input type="text" class="form-control form-control-lg" name="location"
+                               value="{{ search_location }}"
+                               placeholder="e.g. Durban, Cape Town, Soweto, KwaMashu">
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-search me-2"></i>Search
+                        </button>
+                    </div>
                 </div>
-                <div class="card-body">
-                    
-                    <!-- Search Form -->
-                    <form method="POST" action="{{ url_for('patient_clinics') }}">
-                        <div class="row g-3">
-                            <div class="col-md-8">
-                                <label for="location" class="form-label fw-semibold">{{ translate_text('Enter your location', lang) }}</label>
-                                <input type="text" class="form-control form-control-lg" 
-                                       id="location" name="location" 
-                                       value="{{ search_location }}" 
-                                       placeholder="{{ translate_text('e.g., Durban, Cape Town, Soweto, KwaMashu', lang) }}">
-                            </div>
-                            <div class="col-md-4 d-flex align-items-end">
-                                <button type="submit" class="btn btn-primary w-100 btn-lg">
-                                    <i class="fas fa-search"></i> {{ translate_text('Search Clinics', lang) }}
+            </form>
+
+            <hr class="my-4">
+
+            {% if clinics %}
+            <h6 class="text-muted mb-3">Found {{ clinics|length }} clinic(s) near "{{ search_location }}"</h6>
+            <div class="row g-3">
+                {% for c in clinics %}
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="fw-bold text-primary mb-2">{{ c.Clinic_Name }}</h6>
+                            <p class="small text-muted mb-2">
+                                <i class="fas fa-location-dot me-1"></i>
+                                {{ c.City or '' }}{% if c.Area %}, {{ c.Area }}{% endif %}{% if c.Province %}, {{ c.Province }}{% endif %}
+                            </p>
+                            {% if c.Phone %}
+                            <p class="small text-muted mb-3"><i class="fas fa-phone me-1"></i>{{ c.Phone }}</p>
+                            {% endif %}
+                            <div class="d-flex gap-2">
+                                {% if c.directions_url %}
+                                <a href="{{ c.directions_url }}" target="_blank" class="btn btn-sm btn-outline-primary flex-grow-1">
+                                    <i class="fas fa-directions me-1"></i>Directions
+                                </a>
+                                {% endif %}
+                                <button class="btn btn-sm btn-primary flex-grow-1"
+                                        data-bs-toggle="modal" data-bs-target="#bookModal"
+                                        data-clinic="{{ c.Clinic_Name }}"
+                                        data-location="{{ c.City or '' }}">
+                                    <i class="fas fa-calendar-plus me-1"></i>Book
                                 </button>
                             </div>
                         </div>
-                    </form>
-
-                    <hr>
-
-                    <!-- Results -->
-                    {% if clinics %}
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="text-primary">{{ translate_text('Found', lang) }} {{ clinics|length }} {{ translate_text('clinic(s) near', lang) }} "{{ search_location }}"</h5>
                     </div>
-                    
-                    <div class="row">
-                        {% for clinic in clinics %}
-                        <div class="col-md-6 mb-4">
-                            <div class="card clinic-card h-100 shadow-sm border-0">
-                                <div class="card-body">
-                                    <div class="clinic-header d-flex justify-content-between align-items-start">
-                                        <h5 class="card-title text-primary fw-bold">{{ clinic.Clinic_Name }}</h5>
-                                        <span class="badge bg-success">{{ translate_text('Available', lang) }}</span>
-                                    </div>
-                                    
-                                    <div class="clinic-details mt-2">
-                                        <p class="card-text small text-muted">
-                                            <i class="fas fa-map-pin text-primary"></i> 
-                                            {% if clinic.City %}{{ clinic.City }}{% endif %}
-                                            {% if clinic.Area %}, {{ clinic.Area }}{% endif %}
-                                            {% if clinic.Province %}, {{ clinic.Province }}{% endif %}
-                                            <br>
-                                            <i class="fas fa-phone text-primary"></i> {{ clinic.Phone or 'N/A' }}
-                                        </p>
-                                        
-                                        {% if clinic.Services %}
-                                        <p class="card-text small">
-                                            <i class="fas fa-tag text-primary"></i> 
-                                            <span class="text-muted">{{ clinic.Services }}</span>
-                                        </p>
-                                        {% endif %}
-                                    </div>
-                                    
-                                    <!-- ===== MAP SECTION REMOVED ===== -->
-                                    
-                                    <div class="clinic-actions mt-3 d-flex gap-2 flex-wrap">
-                                        <!-- ===== GET DIRECTIONS BUTTON (OpenStreetMap) ===== -->
-                                        <a href="https://www.openstreetmap.org/directions?from=&to={{ clinic.Clinic_Name|urlencode }}+{{ clinic.City|urlencode }}" 
-                                           target="_blank" class="btn btn-outline-primary btn-sm flex-grow-1">
-                                            <i class="fas fa-directions"></i> {{ translate_text('Directions', lang) }}
-                                        </a>
-                                        
-                                        <!-- Book Appointment Button -->
-                                        <button class="btn btn-primary btn-sm flex-grow-1" 
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#bookModal"
-                                                data-clinic="{{ clinic.Clinic_Name }}"
-                                                data-city="{{ clinic.City }}"
-                                                data-phone="{{ clinic.Phone }}">
-                                            <i class="fas fa-calendar-plus"></i> {{ translate_text('Book', lang) }}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    
-                    {% elif search_location %}
-                    <div class="text-center py-5">
-                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">{{ translate_text('No clinics found near', lang) }} "{{ search_location }}"</h5>
-                        <p class="text-muted small">{{ translate_text('Please try a different location or check your spelling.', lang) }}</p>
-                    </div>
-                    {% else %}
-                    <div class="text-center py-5">
-                        <i class="fas fa-map-marked-alt fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">{{ translate_text('Search for clinics', lang) }}</h5>
-                        <p class="text-muted small">{{ translate_text('Enter your location above to find clinics near you.', lang) }}</p>
-                    </div>
-                    {% endif %}
-                    
-                    <div class="mt-3">
-                        <a href="{{ url_for('patient_dashboard') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> {{ translate_text('Back to Dashboard', lang) }}
-                        </a>
-                    </div>
-                    
                 </div>
+                {% endfor %}
+            </div>
+            {% elif search_location %}
+            <div class="text-center py-5">
+                <i class="fas fa-magnifying-glass fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No clinics found for "{{ search_location }}"</h5>
+                <p class="text-muted small">Try a different city or check the spelling.</p>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-map-marked-alt fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Search for clinics near you</h5>
+                <p class="text-muted small">Enter your city, township, or province above.</p>
+            </div>
+            {% endif %}
+
+            <div class="mt-4">
+                <a href="{{ url_for('patient_dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ============================================================ -->
-<!-- BOOK APPOINTMENT MODAL -->
-<!-- ============================================================ -->
-<div class="modal fade" id="bookModal" tabindex="-1" aria-hidden="true">
+<!-- BOOK MODAL -->
+<div class="modal fade" id="bookModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title"><i class="fas fa-calendar-plus"></i> {{ translate_text('Book Appointment', lang) }}</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-calendar-plus me-2"></i>Book Appointment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form method="POST" action="{{ url_for('book_from_clinic') }}">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">{{ translate_text('Clinic', lang) }}</label>
+                        <label class="form-label">Clinic</label>
                         <input type="text" class="form-control bg-light" id="modal_clinic" name="clinic" readonly>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">{{ translate_text('Location', lang) }}</label>
-                        <input type="text" class="form-control bg-light" id="modal_location" disabled>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="appointment_date" class="form-label fw-semibold">{{ translate_text('Appointment Date', lang) }} *</label>
-                        <input type="date" class="form-control" id="appointment_date" name="appointment_date" min="{{ today }}" required>
+                        <label class="form-label">Date</label>
+                        <input type="date" class="form-control" name="appointment_date" min="{{ today }}" required>
                     </div>
                     <div class="mb-3">
-                        <label for="appointment_time" class="form-label fw-semibold">{{ translate_text('Appointment Time', lang) }} *</label>
-                        <select class="form-select" id="appointment_time" name="appointment_time" required>
-                            <option value="">-- {{ translate_text('Select time', lang) }} --</option>
-                            <option value="08:00">08:00</option>
-                            <option value="08:30">08:30</option>
-                            <option value="09:00">09:00</option>
-                            <option value="09:30">09:30</option>
-                            <option value="10:00">10:00</option>
-                            <option value="10:30">10:30</option>
-                            <option value="11:00">11:00</option>
-                            <option value="11:30">11:30</option>
-                            <option value="12:00">12:00</option>
-                            <option value="12:30">12:30</option>
-                            <option value="13:00">13:00</option>
-                            <option value="13:30">13:30</option>
-                            <option value="14:00">14:00</option>
-                            <option value="14:30">14:30</option>
-                            <option value="15:00">15:00</option>
-                            <option value="15:30">15:30</option>
-                            <option value="16:00">16:00</option>
-                            <option value="16:30">16:30</option>
+                        <label class="form-label">Time</label>
+                        <select class="form-select" name="appointment_time" required>
+                            <option value="">Select time</option>
+                            {% for h in range(8, 17) %}
+                                {% for m in ['00','30'] %}
+                                <option value="{{ '%02d:%s'|format(h, m) }}">{{ '%02d:%s'|format(h, m) }}</option>
+                                {% endfor %}
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="reason" class="form-label fw-semibold">{{ translate_text('Reason for Visit', lang) }} *</label>
-                        <input type="text" class="form-control" id="reason" name="reason" required placeholder="{{ translate_text('e.g., General checkup, Flu symptoms', lang) }}">
+                        <label class="form-label">Reason for Visit</label>
+                        <input type="text" class="form-control" name="reason" required placeholder="e.g. General checkup">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ translate_text('Cancel', lang) }}</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-check"></i> {{ translate_text('Book Appointment', lang) }}
+                        <i class="fas fa-check me-1"></i>Book
                     </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+{% endblock %}
 
-<style>
-.clinic-card {
-    transition: all 0.2s ease;
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-}
-.clinic-card:hover {
-    border-color: #0d6efd;
-    transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-}
-.clinic-header .card-title {
-    margin-bottom: 0;
-    font-size: 1.1rem;
-}
-.clinic-details {
-    font-size: 0.9rem;
-}
-.clinic-actions .btn {
-    font-size: 0.85rem;
-    padding: 6px 12px;
-}
-</style>
-
+{% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Book modal - populate clinic details
-    document.querySelectorAll('[data-bs-target="#bookModal"]').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var clinic = this.getAttribute('data-clinic');
-            var city = this.getAttribute('data-city');
-            var phone = this.getAttribute('data-phone');
-            
-            document.getElementById('modal_clinic').value = clinic;
-            document.getElementById('modal_location').value = city + (phone ? ' - Phone: ' + phone : '');
-        });
+document.querySelectorAll('[data-bs-target="#bookModal"]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.getElementById('modal_clinic').value = this.dataset.clinic;
     });
 });
 </script>

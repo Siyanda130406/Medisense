@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Ask a Question - MediSense{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('patient_dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active">Ask a Question</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-comments text-primary"></i> Health Chatbot</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small">Ask any health question in plain language. Answers come from our medical Q&A database.</p>
+
+                    <form method="POST">
+                        <div class="mb-3">
+                            <textarea class="form-control" name="question" rows="3" required
+                                      placeholder="e.g., What causes a headache? How do I prevent diabetes?">{{ question }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Ask
+                        </button>
+                    </form>
+
+                    {% if answer_data %}
+                    <hr class="my-4">
+                    <div class="p-3 rounded mb-3" style="background: rgba(52,152,219,0.1);">
+                        <strong>You asked:</strong> {{ answer_data.question }}
+                    </div>
+                    {% if answer_data.corrected %}
+                    <div class="alert alert-info small mb-2">
+                        <i class="fas fa-lightbulb"></i> Searched for: <strong>{{ answer_data.corrected }}</strong>
+                    </div>
+                    {% endif %}
+
+                    {% if answer_data.found %}
+                        {% for r in answer_data.results %}
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="text-primary"><i class="fas fa-robot"></i> {{ r.question }}</h6>
+                                <p>{{ r.answer }}</p>
+                                <small class="text-muted"><i class="fas fa-tag"></i> {{ r.source }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> No answer found. Try rephrasing, or use the <a href="{{ url_for('patient_health_symptoms') }}">Health Search</a> page.
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
+                    {% if history %}
+                    <hr class="my-4">
+                    <h6 class="text-muted">Recent questions</h6>
+                    {% for h in history %}
+                    <div class="border-bottom py-2">
+                        <div class="fw-semibold small">{{ h.question }}</div>
+                        <div class="text-muted small text-truncate">{{ h.answer[:120] }}...</div>
+                        <small class="text-muted">{{ h.created_at[:16] if h.created_at else '' }}</small>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-3">
+                <i class="fas fa-shield-alt"></i> Answers are for general information only. Always consult a healthcare professional.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

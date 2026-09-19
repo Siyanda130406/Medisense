@@ -1,253 +1,201 @@
 {% extends "base.html" %}
 
-{% block title %}{{ translate_text('Complete Your Profile', lang) }} - MediSense{% endblock %}
+{% block title %}Complete Your Profile — MediSense{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
+<div class="container py-4">
     <div class="row justify-content-center">
-        <div class="col-md-7">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="fas fa-user"></i> {{ translate_text('Complete Your Profile', lang) }}</h4>
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user-circle me-2 text-primary"></i>Complete Your Profile</h5>
                 </div>
-                <div class="card-body">
-                    <!-- ===== GUIDED TOUR STEPS ===== -->
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between mb-3">
-                            <span class="text-muted small">{{ translate_text('Step', lang) }} 1 {{ translate_text('of', lang) }} 3</span>
-                            <span class="text-muted small">{{ translate_text('Profile Setup', lang) }}</span>
-                        </div>
-                        <div class="progress mb-3" style="height: 6px;" role="progressbar" aria-valuenow="33" aria-valuemin="0" aria-valuemax="100">
-                            <div class="progress-bar bg-primary" style="width: 33%;"></div>
-                        </div>
-                        <p class="text-muted">
-                            <i class="fas fa-info-circle text-primary" aria-hidden="true"></i> 
-                            {{ translate_text('Please complete your profile to start using MediSense. This helps us provide personalized health recommendations.', lang) }}
-                        </p>
-                    </div>
-                    
-                    {% with messages = get_flashed_messages(with_categories=true) %}
-                        {% if messages %}
-                            {% for category, message in messages %}
-                                <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show">
-                                    {{ message }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            {% endfor %}
-                        {% endif %}
-                    {% endwith %}
+                <div class="card-body p-4">
+                    <p class="text-muted small mb-4">
+                        We use this information to give you accurate health recommendations, find clinics near you, and — in emergencies — contact the right person.
+                    </p>
 
-                    <form method="POST" action="{{ url_for('patient_profile_setup') }}" id="profileForm">
-                        
-                        <!-- ===== STEP 1: BASIC INFO ===== -->
-                        <div class="step-section">
-                            <h6 class="text-primary"><i class="fas fa-user-circle"></i> {{ translate_text('Basic Information', lang) }}</h6>
-                            <hr>
-                            
-                            <div class="mb-3">
-                                <label for="age" class="form-label fw-semibold">
-                                    {{ translate_text('Age', lang) }} <span class="text-danger">*</span>
-                                </label>
-                                <input type="number" class="form-control" id="age" name="age" 
-                                       placeholder="{{ translate_text('Enter your age', lang) }}" 
+                    <form method="POST" action="{{ url_for('patient_profile_setup') }}" id="profileForm" novalidate>
+
+                        <!-- BASIC INFO -->
+                        <h6 class="text-primary mb-3"><i class="fas fa-id-card me-2"></i>Basic Information</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="age" class="form-label">Age <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="age" name="age"
                                        min="1" max="120" required
-                                       aria-describedby="ageHelp">
-                                <div id="ageHelp" class="form-text">{{ translate_text('Enter your age in years (1-120)', lang) }}</div>
+                                       value="{{ request.form.get('age', '') }}">
+                                <div class="form-text">Enter your age in years (1–120).</div>
                             </div>
-
-                            <!-- ===== NEW: GENDER FIELD ===== -->
-                            <div class="mb-3">
-                                <label for="gender" class="form-label fw-semibold">
-                                    {{ translate_text('Gender', lang) }} <span class="text-danger">*</span>
-                                </label>
+                            <div class="col-md-6">
+                                <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
                                 <select class="form-select" id="gender" name="gender" required>
-                                    <option value="">{{ translate_text('Select Gender', lang) }}</option>
-                                    <option value="Male">{{ translate_text('Male', lang) }}</option>
-                                    <option value="Female">{{ translate_text('Female', lang) }}</option>
-                                    <option value="Other">{{ translate_text('Other', lang) }}</option>
-                                    <option value="Prefer not to say">{{ translate_text('Prefer not to say', lang) }}</option>
+                                    <option value="">Select gender</option>
+                                    <option value="Male" {% if request.form.get('gender') == 'Male' %}selected{% endif %}>Male</option>
+                                    <option value="Female" {% if request.form.get('gender') == 'Female' %}selected{% endif %}>Female</option>
+                                    <option value="Other" {% if request.form.get('gender') == 'Other' %}selected{% endif %}>Other</option>
+                                    <option value="Prefer not to say" {% if request.form.get('gender') == 'Prefer not to say' %}selected{% endif %}>Prefer not to say</option>
                                 </select>
-                                <div id="genderHelp" class="form-text">{{ translate_text('This helps us provide personalized health recommendations', lang) }}</div>
                             </div>
-
-                            <!-- ===== NEW: ID NUMBER FIELD ===== -->
-                            <div class="mb-3">
-                                <label for="id_number" class="form-label fw-semibold">
-                                    {{ translate_text('South African ID Number', lang) }} <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" class="form-control" id="id_number" name="id_number" 
-                                       placeholder="{{ translate_text('e.g., 9001011234567', lang) }}" 
-                                       maxlength="13" minlength="13" required
-                                       pattern="[0-9]{13}"
-                                       aria-describedby="idHelp">
-                                <div id="idHelp" class="form-text">{{ translate_text('Please enter your 13-digit South African ID number.', lang) }}</div>
+                            <div class="col-md-6">
+                                <label for="id_number" class="form-label">South African ID Number <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="id_number" name="id_number"
+                                       maxlength="13" minlength="13" pattern="[0-9]{13}"
+                                       placeholder="e.g. 9001011234567" required
+                                       value="{{ request.form.get('id_number', '') }}">
+                                <div class="form-text">13 digits. We validate the format, date, and checksum.</div>
+                                <div class="invalid-feedback" id="idError"></div>
                             </div>
-                            
-                            <div class="mb-3">
-                                <label for="location" class="form-label fw-semibold">
-                                    {{ translate_text('Location', lang) }} <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" class="form-control" id="location" name="location" 
-                                       placeholder="{{ translate_text('e.g., Durban, Cape Town, Soweto', lang) }}" required
-                                       aria-describedby="locationHelp">
-                                <div id="locationHelp" class="form-text">{{ translate_text('This helps us find clinics near you', lang) }}</div>
+                            <div class="col-md-6">
+                                <label for="location" class="form-label">Location <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="location" name="location"
+                                       placeholder="e.g. Durban, Soweto, Empangeni" required
+                                       value="{{ request.form.get('location', '') }}">
+                                <div class="form-text">Used to find clinics near you.</div>
                             </div>
                         </div>
-                        
-                        <!-- ===== STEP 2: HEALTH QUESTIONNAIRE ===== -->
-                        <div class="step-section mt-4">
-                            <h6 class="text-primary"><i class="fas fa-notes-medical"></i> {{ translate_text('Health Questionnaire', lang) }}</h6>
-                            <hr>
-                            
-                            <div class="mb-3">
-                                <label for="health_conditions" class="form-label fw-semibold">
-                                    {{ translate_text('Health Conditions', lang) }} ({{ translate_text('Optional', lang) }})
-                                </label>
-                                <textarea class="form-control" id="health_conditions" name="health_conditions" rows="3" 
-                                          placeholder="{{ translate_text('List any health conditions you have (e.g., Diabetes, Hypertension, Asthma) - separate with commas', lang) }}"
-                                          aria-describedby="conditionsHelp"></textarea>
-                                <div id="conditionsHelp" class="form-text">{{ translate_text('This helps us provide better health recommendations', lang) }}</div>
+
+                        <!-- HEALTH -->
+                        <h6 class="text-primary mb-3"><i class="fas fa-heart-pulse me-2"></i>Health Information</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <label for="health_conditions" class="form-label">Health Conditions (optional)</label>
+                                <textarea class="form-control" id="health_conditions" name="health_conditions" rows="2"
+                                          placeholder="e.g. Hypertension, Diabetes, Asthma — separate with commas">{{ request.form.get('health_conditions', '') }}</textarea>
                             </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">{{ translate_text('Do you have any known allergies?', lang) }}</label>
+                            <div class="col-12">
+                                <label class="form-label">Do you have any known allergies?</label>
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="allergies" id="allergiesNo" value="no" checked>
-                                    <label class="form-check-label" for="allergiesNo">{{ translate_text('No', lang) }}</label>
+                                    <label class="form-check-label" for="allergiesNo">No known allergies</label>
                                 </div>
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="allergies" id="allergiesYes" value="yes">
-                                    <label class="form-check-label" for="allergiesYes">{{ translate_text('Yes', lang) }}</label>
+                                    <label class="form-check-label" for="allergiesYes">Yes — I have allergies</label>
                                 </div>
                             </div>
-                            
-                            <div class="mb-3" id="allergiesDetail" style="display:none;">
-                                <label for="allergy_details" class="form-label">{{ translate_text('Please list your allergies', lang) }}</label>
-                                <input type="text" class="form-control" id="allergy_details" name="allergy_details" placeholder="{{ translate_text('e.g., Penicillin, Peanuts', lang) }}">
+                            <div class="col-12" id="allergiesDetail" style="display:none;">
+                                <label for="allergy_details" class="form-label">Please list your allergies <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="allergy_details" name="allergy_details" rows="3"
+                                          placeholder="e.g. Penicillin (rash), Peanuts (swelling), Latex">{{ request.form.get('allergy_details', '') }}</textarea>
+                                <div class="form-text">Include the allergen and the reaction if you know it. This is shared with nurses and staff for your safety.</div>
                             </div>
                         </div>
-                        
-                        <!-- ===== STEP 3: EMERGENCY CONTACTS ===== -->
-                        <div class="step-section mt-4">
-                            <h6 class="text-primary"><i class="fas fa-phone-alt text-danger"></i> {{ translate_text('Emergency Contacts', lang) }}</h6>
-                            <hr>
-                            <p class="text-muted small">{{ translate_text('This information will only be used in case of emergency', lang) }}</p>
-                            
-                            <div class="mb-3">
-                                <label for="emergency_name" class="form-label fw-semibold">{{ translate_text('Emergency Contact Name', lang) }}</label>
-                                <input type="text" class="form-control" id="emergency_name" name="emergency_name" placeholder="{{ translate_text('Full name of emergency contact', lang) }}">
+
+                        <!-- EMERGENCY CONTACT -->
+                        <h6 class="text-primary mb-3"><i class="fas fa-phone-volume me-2 text-danger"></i>Emergency Contact</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="emergency_name" class="form-label">Emergency Contact Name</label>
+                                <input type="text" class="form-control" id="emergency_name" name="emergency_name"
+                                       placeholder="Full name"
+                                       value="{{ request.form.get('emergency_name', '') }}">
                             </div>
-                            
-                            <div class="mb-3">
-                                <label for="emergency_phone" class="form-label fw-semibold">{{ translate_text('Emergency Contact Phone', lang) }}</label>
-                                <input type="tel" class="form-control" id="emergency_phone" name="emergency_phone" placeholder="{{ translate_text('e.g., 0821234567', lang) }}">
+                            <div class="col-md-6">
+                                <label for="emergency_phone" class="form-label">Emergency Contact Phone</label>
+                                <input type="tel" class="form-control" id="emergency_phone" name="emergency_phone"
+                                       placeholder="e.g. 0821234567"
+                                       value="{{ request.form.get('emergency_phone', '') }}">
                             </div>
-                            
-                            <div class="mb-3">
-                                <label for="emergency_relationship" class="form-label fw-semibold">{{ translate_text('Relationship', lang) }}</label>
+                            <div class="col-md-6">
+                                <label for="emergency_relationship" class="form-label">Relationship</label>
                                 <select class="form-select" id="emergency_relationship" name="emergency_relationship">
-                                    <option value="">{{ translate_text('Select relationship', lang) }}</option>
-                                    <option value="spouse">{{ translate_text('Spouse / Partner', lang) }}</option>
-                                    <option value="parent">{{ translate_text('Parent', lang) }}</option>
-                                    <option value="child">{{ translate_text('Child', lang) }}</option>
-                                    <option value="sibling">{{ translate_text('Sibling', lang) }}</option>
-                                    <option value="friend">{{ translate_text('Friend', lang) }}</option>
-                                    <option value="other">{{ translate_text('Other', lang) }}</option>
+                                    <option value="">Select relationship</option>
+                                    <option value="Spouse">Spouse / Partner</option>
+                                    <option value="Parent">Parent</option>
+                                    <option value="Child">Child</option>
+                                    <option value="Sibling">Sibling</option>
+                                    <option value="Friend">Friend</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </div>
                         </div>
-                        
-                        <!-- ===== SUBMIT ===== -->
-                        <div class="mt-4">
-                            <div class="alert alert-info">
-                                <i class="fas fa-shield-alt" aria-hidden="true"></i>
-                                {{ translate_text('Your health information is kept confidential and secure.', lang) }}
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100" id="submitBtn">
-                                <i class="fas fa-check" aria-hidden="true"></i> {{ translate_text('Complete Profile', lang) }}
-                            </button>
+
+                        <div class="alert alert-info border-0">
+                            <i class="fas fa-shield-halved me-2"></i>
+                            Your health information is kept confidential and only used to support your care.
                         </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2" id="submitBtn">
+                            <i class="fas fa-check me-2"></i>Complete Profile
+                        </button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
-<style>
-.step-section {
-    background: var(--bg-body);
-    padding: 15px;
-    border-radius: 10px;
-    border-left: 3px solid #3498db;
-}
-.step-section .form-label {
-    font-weight: 500;
-}
-#submitBtn {
-    padding: 12px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-#submitBtn:hover {
-    transform: scale(1.02);
-}
-</style>
-
+{% block extra_js %}
 <script>
-// ===== TOGGLE ALLERGIES DETAIL =====
+// Show/hide allergy details
 document.querySelectorAll('input[name="allergies"]').forEach(function(radio) {
     radio.addEventListener('change', function() {
-        const detailSection = document.getElementById('allergiesDetail');
+        var section = document.getElementById('allergiesDetail');
+        var input = document.getElementById('allergy_details');
         if (this.value === 'yes') {
-            detailSection.style.display = 'block';
-            document.getElementById('allergy_details').required = true;
+            section.style.display = 'block';
+            input.required = true;
         } else {
-            detailSection.style.display = 'none';
-            document.getElementById('allergy_details').required = false;
+            section.style.display = 'none';
+            input.required = false;
         }
     });
 });
 
-// ===== FORM VALIDATION =====
+// ===== SA ID VALIDATION (client-side) =====
+function validateSAIDClient(id) {
+    if (!id) return { valid: false, msg: 'ID number is required.' };
+    if (!/^\d+$/.test(id)) return { valid: false, msg: 'ID must contain only digits.' };
+    if (id.length !== 13) return { valid: false, msg: `ID must be exactly 13 digits (you entered ${id.length}).` };
+
+    var yy = parseInt(id.substr(0, 2), 10);
+    var mm = parseInt(id.substr(2, 2), 10);
+    var dd = parseInt(id.substr(4, 2), 10);
+
+    if (mm < 1 || mm > 12) return { valid: false, msg: `Invalid month "${String(mm).padStart(2,'0')}". Must be 01-12.` };
+    if (dd < 1 || dd > 31) return { valid: false, msg: `Invalid day "${String(dd).padStart(2,'0')}". Must be 01-31.` };
+
+    var isLeap = (yy % 4 === 0 && (yy % 100 !== 0 || yy % 400 === 0));
+    var daysInMonth = [31, isLeap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    if (dd > daysInMonth[mm - 1]) {
+        return { valid: false, msg: `Invalid day "${String(dd).padStart(2,'0')}" for month ${String(mm).padStart(2,'0')}.` };
+    }
+
+    // Luhn
+    var total = 0;
+    for (var i = 0; i < 13; i++) {
+        var d = parseInt(id[i], 10);
+        if (i % 2 === 1) {
+            d *= 2;
+            if (d > 9) d -= 9;
+        }
+        total += d;
+    }
+    if (total % 10 !== 0) return { valid: false, msg: 'Invalid ID number (checksum failed).' };
+
+    return { valid: true, msg: 'Valid' };
+}
+
 document.getElementById('profileForm').addEventListener('submit', function(e) {
-    const age = document.getElementById('age');
-    const location = document.getElementById('location');
-    const idNumber = document.getElementById('id_number');
-    const gender = document.getElementById('gender');
-    
-    if (age.value < 1 || age.value > 120) {
+    var idInput = document.getElementById('id_number');
+    var result = validateSAIDClient(idInput.value.trim());
+    if (!result.valid) {
         e.preventDefault();
-        alert('{{ translate_text("Please enter a valid age (1-120)", lang) }}');
-        age.focus();
+        idInput.classList.add('is-invalid');
+        document.getElementById('idError').textContent = result.msg;
+        document.getElementById('idError').style.display = 'block';
+        idInput.focus();
         return false;
     }
-    
-    if (location.value.trim() === '') {
-        e.preventDefault();
-        alert('{{ translate_text("Please enter your location", lang) }}');
-        location.focus();
-        return false;
-    }
-    
-    if (gender.value === '') {
-        e.preventDefault();
-        alert('{{ translate_text("Please select your gender", lang) }}');
-        gender.focus();
-        return false;
-    }
-    
-    if (idNumber.value.length !== 13 || !/^[0-9]{13}$/.test(idNumber.value)) {
-        e.preventDefault();
-        alert('{{ translate_text("Please enter a valid 13-digit South African ID number", lang) }}');
-        idNumber.focus();
-        return false;
-    }
-    
-    // Show loading state
-    const btn = document.getElementById('submitBtn');
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> {{ translate_text("Saving...", lang) }}';
+    var btn = document.getElementById('submitBtn');
     btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+});
+
+document.getElementById('id_number').addEventListener('input', function() {
+    this.value = this.value.replace(/[^0-9]/g, '').slice(0, 13);
 });
 </script>
 {% endblock %}

@@ -4,7 +4,7 @@
     <title>MediSense - All Appointments</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #222; }
         .header { background: #1a73e8; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
         .header .logo { font-size: 24px; font-weight: bold; }
         .header .user-info { display: flex; align-items: center; gap: 20px; }
@@ -28,6 +28,11 @@
         .badge-cancelled { background: #fce4ec; color: #c62828; }
         .badge-no-show { background: #fce4ec; color: #c62828; }
         .back-link { display: inline-block; margin-top: 15px; color: #1a73e8; text-decoration: none; }
+        /* ===== FIX: Ensure text is visible in light mode ===== */
+        .card p, .card span, .card small, .card a, .card td, .card th { color: #222; }
+        .card h2 { color: #222; }
+        .card h1, .card h3, .card h4, .card h5, .card h6 { color: #222; }
+        /* ===== END FIX ===== */
     </style>
 </head>
 <body>

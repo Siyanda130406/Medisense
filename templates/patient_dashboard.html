@@ -1,337 +1,234 @@
 {% extends "base.html" %}
 
-{% block title %}{{ translate_text('Dashboard', lang) }} - MediSense{% endblock %}
+{% block title %}Dashboard — MediSense{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-12">
-            
-            <!-- ===== HEALTH SCORE CARD ===== -->
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-7">
-                            <h4 class="text-primary"><i class="fas fa-user-circle"></i> {{ translate_text('Welcome back', lang) }}, {{ user.full_name }}</h4>
-                            <p class="text-muted small">{{ translate_text('Your health, our priority. Manage your appointments and health information here.', lang) }}</p>
-                        </div>
-                        <div class="col-md-5 text-center">
-                            <div class="d-flex justify-content-center align-items-center gap-4">
-                                <div>
-                                    <h5 class="mb-0 
-                                        {% if risk_score < 30 %}text-success{% elif risk_score < 50 %}text-warning{% elif risk_score < 70 %}text-danger{% else %}text-dark{% endif %}">
-                                        {{ risk_score }}%
-                                    </h5>
-                                    <small class="text-muted">{{ translate_text('Health Score', lang) }}</small>
-                                </div>
-                                <div>
-                                    <span class="badge 
-                                        {% if risk_score < 30 %}bg-success{% elif risk_score < 50 %}bg-warning{% elif risk_score < 70 %}bg-danger{% else %}bg-dark{% endif %} p-2">
-                                        {{ translate_text(risk_category, lang) }}
-                                    </span>
-                                    <br>
-                                    <small class="text-muted">{{ translate_text('Risk Level', lang) }}</small>
-                                </div>
-                                <div>
-                                    <h5 class="mb-0">{{ total_visits }}</h5>
-                                    <small class="text-muted">{{ translate_text('Total Visits', lang) }}</small>
-                                </div>
+<div class="container-fluid py-4">
+    <!-- WELCOME + HEALTH SCORE -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-lg-7">
+                    <h3 class="mb-1">Welcome back, {{ user.full_name }}</h3>
+                    <p class="text-muted mb-0">Here's a snapshot of your health activity.</p>
+                </div>
+                <div class="col-lg-5 mt-3 mt-lg-0">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="fw-bold fs-4 {% if health_score >= 60 %}text-success{% elif health_score >= 40 %}text-warning{% else %}text-muted{% endif %}">
+                                {{ health_score }}
                             </div>
+                            <small class="text-muted">Health Score</small>
+                            <div class="small text-muted">{{ health_score_category }}</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="fw-bold fs-4">{{ total_visits }}</div>
+                            <small class="text-muted">Total Visits</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="fw-bold fs-4">{{ completed_count }}</div>
+                            <small class="text-muted">Completed</small>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- ===== QUICK ACTIONS ===== -->
-            <div class="row g-3 mb-4">
-                <div class="col-md-3 col-6">
-                    <a href="{{ url_for('patient_book') }}" class="text-decoration-none" aria-label="{{ translate_text('Book Appointment', lang) }}">
-                        <div class="card text-center p-3 action-card border-0 shadow-sm" role="button" tabindex="0">
-                            <i class="fas fa-calendar-plus fa-2x text-primary" aria-hidden="true"></i>
-                            <span class="d-block mt-2 small fw-bold">{{ translate_text('Book Appointment', lang) }}</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="col-md-3 col-6">
-                    <a href="{{ url_for('patient_health_symptoms') }}" class="text-decoration-none" aria-label="{{ translate_text('Health & Symptoms', lang) }}">
-                        <div class="card text-center p-3 action-card border-0 shadow-sm" role="button" tabindex="0">
-                            <i class="fas fa-search fa-2x text-primary" aria-hidden="true"></i>
-                            <span class="d-block mt-2 small fw-bold">{{ translate_text('Health & Symptoms', lang) }}</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="col-md-3 col-6">
-                    <a href="{{ url_for('patient_clinics') }}" class="text-decoration-none" aria-label="{{ translate_text('Find Clinics', lang) }}">
-                        <div class="card text-center p-3 action-card border-0 shadow-sm" role="button" tabindex="0">
-                            <i class="fas fa-map-marker-alt fa-2x text-primary" aria-hidden="true"></i>
-                            <span class="d-block mt-2 small fw-bold">{{ translate_text('Find Clinics', lang) }}</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="col-md-3 col-6">
-                    <a href="{{ url_for('patient_first_aid') }}" class="text-decoration-none" aria-label="{{ translate_text('First Aid Guide', lang) }}">
-                        <div class="card text-center p-3 action-card border-0 shadow-sm" style="border-left: 3px solid #dc3545;" role="button" tabindex="0">
-                            <i class="fas fa-first-aid fa-2x text-danger" aria-hidden="true"></i>
-                            <span class="d-block mt-2 small fw-bold text-danger">{{ translate_text('First Aid Guide', lang) }}</span>
-                        </div>
-                    </a>
-                </div>
+            <div class="progress mt-3" style="height: 8px;">
+                <div class="progress-bar {% if health_score >= 60 %}bg-success{% elif health_score >= 40 %}bg-warning{% else %}bg-secondary{% endif %}"
+                     role="progressbar" style="width: {{ health_score }}%;"
+                     aria-valuenow="{{ health_score }}" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
-            
-            <!-- ===== TWO COLUMNS ===== -->
-            <div class="row">
-                
-                <!-- ===== LEFT: APPOINTMENTS & CALENDAR ===== -->
-                <div class="col-lg-8">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0"><i class="fas fa-calendar-check text-primary" aria-hidden="true"></i> {{ translate_text('My Appointments', lang) }}</h6>
-                            <span class="badge bg-primary">{{ appointments|length }}</span>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-sm table-hover mb-0" aria-label="{{ translate_text('Appointments table', lang) }}">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>{{ translate_text('Date', lang) }}</th>
-                                            <th>{{ translate_text('Clinic', lang) }}</th>
-                                            <th>{{ translate_text('Time', lang) }}</th>
-                                            <th>{{ translate_text('Status', lang) }}</th>
-                                            <th>{{ translate_text('Action', lang) }}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% if appointments %}
-                                        {% for appt in appointments[:5] %}
-                                        <tr>
-                                            <td>{{ appt.appointment_date }}</td>
-                                            <td>{{ appt.clinic_name }}</td>
-                                            <td>{{ appt.appointment_time }}</td>
-                                            <td>
-                                                {% if appt.status == 'Scheduled' %}
-                                                <span class="badge bg-primary">{{ translate_text('Scheduled', lang) }}</span>
-                                                {% elif appt.status == 'Completed' %}
-                                                <span class="badge bg-secondary">{{ translate_text('Completed', lang) }}</span>
-                                                {% elif appt.status == 'Cancelled' %}
-                                                <span class="badge bg-secondary">{{ translate_text('Cancelled', lang) }}</span>
-                                                {% elif appt.status == 'No-Show' %}
-                                                <span class="badge bg-danger">{{ translate_text('No-Show', lang) }}</span>
-                                                {% elif appt.status == 'Checked-in' %}
-                                                <span class="badge bg-warning text-dark">{{ translate_text('Checked-in', lang) }}</span>
-                                                {% else %}
-                                                <span class="badge bg-secondary">{{ appt.status }}</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                {% if appt.status == 'Scheduled' %}
-                                                <form method="POST" action="{{ url_for('patient_cancel', appt_id=appt.id) }}" style="display:inline;">
-                                                    <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('{{ translate_text('Cancel this appointment?', lang) }}')" aria-label="{{ translate_text('Cancel appointment', lang) }}">
-                                                        <i class="fas fa-times" aria-hidden="true"></i>
-                                                    </button>
-                                                </form>
-                                                {% else %}
-                                                <span class="text-muted small">—</span>
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
+            <p class="text-muted small mt-2 mb-0">
+                Your health score starts at 0 and grows as you complete your profile and attend appointments.
+                No-shows reduce it.
+            </p>
+        </div>
+    </div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <a href="{{ url_for('patient_book') }}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm text-center p-3 h-100">
+                    <i class="fas fa-calendar-plus fa-2x text-primary mb-2"></i>
+                    <div class="fw-semibold small">Book Appointment</div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 col-6">
+            <a href="{{ url_for('patient_health_symptoms') }}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm text-center p-3 h-100">
+                    <i class="fas fa-magnifying-glass fa-2x text-primary mb-2"></i>
+                    <div class="fw-semibold small">Health Search</div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 col-6">
+            <a href="{{ url_for('patient_chatbot') }}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm text-center p-3 h-100">
+                    <i class="fas fa-comments fa-2x text-primary mb-2"></i>
+                    <div class="fw-semibold small">Ask a Question</div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 col-6">
+            <a href="{{ url_for('patient_first_aid') }}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm text-center p-3 h-100">
+                    <i class="fas fa-briefcase-medical fa-2x text-danger mb-2"></i>
+                    <div class="fw-semibold small">First Aid</div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- APPOINTMENTS -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="fas fa-calendar-check text-primary me-2"></i>My Appointments</h6>
+                    <span class="badge bg-primary">{{ appointments|length }}</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Clinic</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if appointments %}
+                                {% for appt in appointments[:5] %}
+                                <tr>
+                                    <td>{{ appt.appointment_date }}</td>
+                                    <td>{{ appt.clinic_name }}</td>
+                                    <td>{{ appt.appointment_time }}</td>
+                                    <td>
+                                        {% if appt.status == 'Scheduled' %}
+                                            <span class="badge bg-primary">Scheduled</span>
+                                        {% elif appt.status == 'Completed' %}
+                                            <span class="badge bg-success">Completed</span>
+                                        {% elif appt.status == 'Cancelled' %}
+                                            <span class="badge bg-secondary">Cancelled</span>
+                                        {% elif appt.status == 'No-Show' %}
+                                            <span class="badge bg-danger">No-Show</span>
+                                        {% elif appt.status == 'Checked-in' %}
+                                            <span class="badge bg-warning text-dark">Checked-in</span>
                                         {% else %}
-                                        <tr>
-                                            <td colspan="5" class="text-center py-3 text-muted small">
-                                                <i class="fas fa-calendar-times" aria-hidden="true"></i> {{ translate_text('No appointments found.', lang) }}
-                                            </td>
-                                        </tr>
+                                            <span class="badge bg-secondary">{{ appt.status }}</span>
                                         {% endif %}
-                                    </tbody>
-                                </table>
-                            </div>
-                            {% if appointments|length > 5 %}
-                            <div class="text-center p-2">
-                                <small class="text-muted">{{ translate_text('Showing', lang) }} 5 {{ translate_text('of', lang) }} {{ appointments|length }} {{ translate_text('appointments', lang) }}</small>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <div class="card shadow-sm border-0 mt-3">
-                        <div class="card-header bg-white border-bottom">
-                            <h6 class="mb-0"><i class="fas fa-clock text-primary" aria-hidden="true"></i> {{ translate_text('Recent Activity', lang) }}</h6>
-                        </div>
-                        <div class="card-body">
-                            {% if appointments %}
-                            <div class="timeline">
-                                {% for appt in appointments[:3] %}
-                                <div class="d-flex mb-3 align-items-start">
-                                    <div class="me-3">
-                                        <span class="badge bg-{% if appt.status == 'Scheduled' %}primary{% elif appt.status == 'Completed' %}success{% elif appt.status == 'No-Show' %}danger{% else %}secondary{% endif %} p-2">
-                                            <i class="fas fa-{% if appt.status == 'Scheduled' %}clock{% elif appt.status == 'Completed' %}check{% elif appt.status == 'No-Show' %}times{% else %}info{% endif %}" aria-hidden="true"></i>
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <p class="mb-0 small">
-                                            <strong>{{ appt.clinic_name }}</strong>
-                                            <span class="text-muted">— {{ appt.appointment_date }} at {{ appt.appointment_time }}</span>
-                                        </p>
-                                        <small class="text-muted">{{ translate_text('Status', lang) }}: {{ translate_text(appt.status, lang) }}</small>
-                                    </div>
-                                </div>
+                                    </td>
+                                    <td>
+                                        {% if appt.status == 'Scheduled' %}
+                                        <form method="POST" action="{{ url_for('patient_cancel', appt_id=appt.id) }}" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                    onclick="return confirm('Cancel this appointment?')">
+                                                <i class="fas fa-xmark"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </td>
+                                </tr>
                                 {% endfor %}
-                            </div>
-                            {% else %}
-                            <p class="text-muted small mb-0">{{ translate_text('No recent activity', lang) }}</p>
-                            {% endif %}
-                        </div>
+                                {% else %}
+                                <tr><td colspan="5" class="text-center text-muted py-4">
+                                    <i class="fas fa-calendar-xmark me-2"></i>No appointments yet.
+                                    <a href="{{ url_for('patient_book') }}" class="ms-1">Book one now</a>.
+                                </td></tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-                
-                <!-- ===== RIGHT: HEALTH PROFILE ===== -->
-                <div class="col-lg-4">
-                    
-                    <div class="card shadow-sm border-0 mb-3">
-                        <div class="card-header bg-white border-bottom">
-                            <h6 class="mb-0"><i class="fas fa-user-md text-primary" aria-hidden="true"></i> {{ translate_text('My Health Profile', lang) }}</h6>
+            </div>
+
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body">
+                    <h6 class="mb-2"><i class="fas fa-lightbulb text-warning me-2"></i>Health Tip</h6>
+                    <p class="mb-0 text-muted small">{{ health_tip }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIDEBAR -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-user-doctor text-primary me-2"></i>My Health Profile</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <div class="fw-bold">{{ age or '—' }}</div>
+                            <small class="text-muted">Age</small>
                         </div>
-                        <div class="card-body">
-                            <div class="row text-center">
-                                <div class="col-4">
-                                    <h5 class="mb-0">{{ age or '?' }}</h5>
-                                    <small class="text-muted">{{ translate_text('Age', lang) }}</small>
-                                </div>
-                                <div class="col-4">
-                                    <h5 class="mb-0">{{ health_count or 0 }}</h5>
-                                    <small class="text-muted">{{ translate_text('Conditions', lang) }}</small>
-                                </div>
-                                <div class="col-4">
-                                    <h5 class="mb-0">{{ total_visits }}</h5>
-                                    <small class="text-muted">{{ translate_text('Visits', lang) }}</small>
-                                </div>
-                            </div>
-                            
-                            {% if health_conditions %}
-                            <hr>
-                            <p class="small text-muted mb-0"><strong>{{ translate_text('Conditions', lang) }}:</strong> {{ health_conditions }}</p>
-                            {% endif %}
-                            
-                            <hr>
-                            
-                            <div class="text-center">
-                                <p class="small mb-1 text-muted">{{ translate_text('No-Show Risk Assessment', lang) }}</p>
-                                <h5 class="mb-0 
-                                    {% if risk_score < 30 %}text-success{% elif risk_score < 50 %}text-warning{% elif risk_score < 70 %}text-danger{% else %}text-dark{% endif %}">
-                                    {{ risk_score }}% <span class="small">({{ translate_text(risk_category, lang) }})</span>
-                                </h5>
-                                <div class="progress mt-2" style="height: 6px;" role="progressbar" aria-valuenow="{{ risk_score }}" aria-valuemin="0" aria-valuemax="100">
-                                    <div class="progress-bar 
-                                        {% if risk_score < 30 %}bg-success{% elif risk_score < 50 %}bg-warning{% elif risk_score < 70 %}bg-danger{% else %}bg-dark{% endif %}" 
-                                        style="width: {{ risk_score }}%;"></div>
-                                </div>
-                                <small class="text-muted small">{{ translate_text('Higher score = Higher risk of missing appointments', lang) }}</small>
-                            </div>
-                            
-                            <div class="mt-3">
-                                <a href="{{ url_for('patient_profile') }}" class="btn btn-outline-secondary btn-sm w-100" aria-label="{{ translate_text('Update Profile', lang) }}">
-                                    <i class="fas fa-edit" aria-hidden="true"></i> {{ translate_text('Update Profile', lang) }}
-                                </a>
-                            </div>
+                        <div class="col-4">
+                            <div class="fw-bold">{{ health_count }}</div>
+                            <small class="text-muted">Conditions</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="fw-bold">{{ total_visits }}</div>
+                            <small class="text-muted">Visits</small>
                         </div>
                     </div>
-                    
-                    <div class="card shadow-sm border-0 mb-3">
-                        <div class="card-header bg-white border-bottom">
-                            <h6 class="mb-0"><i class="fas fa-map-pin text-primary" aria-hidden="true"></i> {{ translate_text('Nearest Clinic', lang) }}</h6>
+                    {% if health_conditions %}
+                    <p class="small mb-2"><strong>Conditions:</strong> {{ health_conditions }}</p>
+                    {% endif %}
+                    <a href="{{ url_for('patient_profile') }}" class="btn btn-outline-primary btn-sm w-100">
+                        <i class="fas fa-pen me-1"></i>Update Profile
+                    </a>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-location-dot text-primary me-2"></i>Nearest Clinic</h6>
+                </div>
+                <div class="card-body">
+                    <p class="fw-semibold mb-1">{{ nearest_clinic.name }}</p>
+                    <p class="text-muted small mb-1">Phone: {{ nearest_clinic.phone }}</p>
+                    <p class="text-muted small mb-3">Distance: {{ nearest_clinic.distance }}</p>
+                    <a href="{{ url_for('patient_clinics') }}" class="btn btn-outline-primary btn-sm w-100">
+                        <i class="fas fa-map-location-dot me-1"></i>Find Clinics
+                    </a>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-phone-volume text-danger me-2"></i>Emergency</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center g-2">
+                        <div class="col-4">
+                            <a href="tel:10177" class="text-decoration-none">
+                                <div class="fw-bold text-danger">10177</div>
+                                <small class="text-muted">Ambulance</small>
+                            </a>
                         </div>
-                        <div class="card-body">
-                            <p class="mb-0 fw-bold">{{ nearest_clinic.name }}</p>
-                            <p class="text-muted small mb-0">{{ translate_text('Phone', lang) }}: {{ nearest_clinic.phone }}</p>
-                            <p class="text-muted small">{{ translate_text('Distance', lang) }}: {{ nearest_clinic.distance }}</p>
-                            <a href="https://maps.google.com/?q={{ nearest_clinic.name }}" target="_blank" class="btn btn-outline-primary btn-sm w-100" aria-label="{{ translate_text('Get directions', lang) }}">
-                                <i class="fas fa-directions" aria-hidden="true"></i> {{ translate_text('Get Directions', lang) }}
+                        <div class="col-4">
+                            <a href="tel:10111" class="text-decoration-none">
+                                <div class="fw-bold text-danger">10111</div>
+                                <small class="text-muted">Police</small>
+                            </a>
+                        </div>
+                        <div class="col-4">
+                            <a href="tel:112" class="text-decoration-none">
+                                <div class="fw-bold text-danger">112</div>
+                                <small class="text-muted">National</small>
                             </a>
                         </div>
                     </div>
-                    
-                    <div class="card shadow-sm border-0">
-                        <div class="card-header bg-white border-bottom">
-                            <h6 class="mb-0"><i class="fas fa-phone-alt text-danger" aria-hidden="true"></i> {{ translate_text('Emergency Contacts', lang) }}</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="row text-center">
-                                <div class="col-4">
-                                    <a href="tel:10177" class="text-decoration-none" aria-label="{{ translate_text('Call Ambulance', lang) }}">
-                                        <p class="mb-0 fw-bold text-danger">10177</p>
-                                        <small class="text-muted">{{ translate_text('Ambulance', lang) }}</small>
-                                    </a>
-                                </div>
-                                <div class="col-4">
-                                    <a href="tel:10111" class="text-decoration-none" aria-label="{{ translate_text('Call Police', lang) }}">
-                                        <p class="mb-0 fw-bold text-danger">10111</p>
-                                        <small class="text-muted">{{ translate_text('Police', lang) }}</small>
-                                    </a>
-                                </div>
-                                <div class="col-4">
-                                    <a href="tel:112" class="text-decoration-none" aria-label="{{ translate_text('Call National Emergency', lang) }}">
-                                        <p class="mb-0 fw-bold text-danger">112</p>
-                                        <small class="text-muted">{{ translate_text('National Emergency', lang) }}</small>
-                                    </a>
-                                </div>
-                            </div>
-                            <hr>
-                            <p class="text-muted small mb-0 text-center">{{ translate_text('Nearest Clinic', lang) }}: {{ nearest_clinic.name }}</p>
-                            <div class="mt-2">
-                                <a href="{{ url_for('patient_first_aid') }}" class="btn btn-outline-danger btn-sm w-100" aria-label="{{ translate_text('First Aid Guide', lang) }}">
-                                    <i class="fas fa-first-aid" aria-hidden="true"></i> {{ translate_text('First Aid Guide', lang) }}
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    
+                    <a href="{{ url_for('patient_first_aid') }}" class="btn btn-outline-danger btn-sm w-100 mt-3">
+                        <i class="fas fa-briefcase-medical me-1"></i>First Aid Guide
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<style>
-.action-card {
-    transition: all 0.2s ease;
-    border: 1px solid var(--border-color) !important;
-    background: var(--bg-card) !important;
-    cursor: pointer;
-}
-.action-card:hover {
-    border-color: #0d6efd !important;
-    background: var(--bg-body) !important;
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-hover) !important;
-}
-.action-card i { transition: all 0.2s ease; }
-.action-card:hover i { transform: scale(1.05); }
-.timeline { padding: 0; }
-.timeline .badge {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-}
-
-/* ===== MOBILE RESPONSIVE FIX ===== */
-@media (max-width: 768px) {
-    .action-card { padding: 12px !important; }
-    .action-card i { font-size: 1.5rem !important; }
-    .action-card span { font-size: 0.75rem !important; }
-    .timeline .badge { width: 28px !important; height: 28px !important; }
-    .table-responsive { font-size: 0.75rem !important; }
-}
-
-@media (max-width: 576px) {
-    .col-6 { padding-left: 6px !important; padding-right: 6px !important; }
-    .card-body { padding: 12px !important; }
-    .row.text-center .col-4 { padding: 4px !important; }
-    .row.text-center h5 { font-size: 1rem !important; }
-    .row.text-center small { font-size: 0.7rem !important; }
-    .d-flex.justify-content-center.gap-4 { gap: 1rem !important; }
-}
-</style>
 {% endblock %}

@@ -1,199 +1,148 @@
 {% extends "base.html" %}
 
-{% block title %}{{ translate_text('Patient Profile', lang) }} - MediSense{% endblock %}
+{% block title %}Patient Profile — MediSense{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-12">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('staff_dashboard') }}">{{ translate_text('Dashboard', lang) }}</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">{{ translate_text('Patient', lang) }}: {{ patient.full_name }}</li>
-                </ol>
-            </nav>
-            
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="fas fa-user-md"></i> {{ translate_text('Patient Profile', lang) }}</h4>
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('staff_dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('staff_search') }}">Patients</a></li>
+            <li class="breadcrumb-item active">{{ patient.full_name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3"
+                         style="width:72px;height:72px;font-size:1.8rem;">
+                        {{ patient.full_name[0]|upper }}
+                    </div>
+                    <h5 class="mb-1">{{ patient.full_name }}</h5>
+                    <p class="text-muted small mb-0">{{ patient.email }}</p>
+                    <hr>
+                    <div class="text-start small">
+                        <p class="mb-2"><strong>Phone:</strong> {{ patient.phone or '—' }}</p>
+                        <p class="mb-2"><strong>Age:</strong> {{ patient.age or '—' }}</p>
+                        <p class="mb-2"><strong>Gender:</strong> {{ patient.gender or '—' }}</p>
+                        <p class="mb-2"><strong>ID Number:</strong> {{ patient.id_number or '—' }}</p>
+                        <p class="mb-2"><strong>Location:</strong> {{ patient.location or '—' }}</p>
+                    </div>
                 </div>
+            </div>
+
+            <!-- ALLERGIES — highlighted for clinical safety -->
+            <div class="card border-0 shadow-sm mt-4" style="border-left: 4px solid #d69e2e !important;">
                 <div class="card-body">
-                    <!-- Patient Information -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-header bg-white border-bottom">
-                                    <h6 class="mb-0">{{ translate_text('Personal Information', lang) }}</h6>
-                                </div>
-                                <div class="card-body">
-                                    <p><strong>{{ translate_text('Name', lang) }}:</strong> {{ patient.full_name }}</p>
-                                    <p><strong>{{ translate_text('Email', lang) }}:</strong> {{ patient.email }}</p>
-                                    <p><strong>{{ translate_text('Phone', lang) }}:</strong> {{ patient.phone or 'N/A' }}</p>
-                                    <!-- ===== NEW: GENDER FIELD ===== -->
-                                    <p><strong>{{ translate_text('Gender', lang) }}:</strong> {{ patient.gender or 'N/A' }}</p>
-                                    <!-- ===== NEW: ID NUMBER FIELD ===== -->
-                                    <p><strong>{{ translate_text('ID Number', lang) }}:</strong> {{ patient.id_number or 'N/A' }}</p>
-                                    <p><strong>{{ translate_text('Age', lang) }}:</strong> {{ age }}</p>
-                                    <p><strong>{{ translate_text('Location', lang) }}:</strong> {{ patient.location or 'N/A' }}</p>
-                                    <p><strong>{{ translate_text('Registered', lang) }}:</strong> {{ patient.created_at[:10] if patient.created_at else 'N/A' }}</p>
-                                    <p><strong>{{ translate_text('Status', lang) }}:</strong> 
-                                        <span class="badge {% if patient.is_active %}bg-success{% else %}bg-danger{% endif %}">
-                                            {% if patient.is_active %}{{ translate_text('Active', lang) }}{% else %}{{ translate_text('Inactive', lang) }}{% endif %}
-                                        </span>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-header bg-white border-bottom">
-                                    <h6 class="mb-0">{{ translate_text('Health Information', lang) }}</h6>
-                                </div>
-                                <div class="card-body">
-                                    <p><strong>{{ translate_text('Health Conditions', lang) }}:</strong></p>
-                                    {% if health_conditions_list %}
-                                    <ul class="list-group mb-3">
-                                        {% for condition in health_conditions_list %}
-                                        <li class="list-group-item">
-                                            <span class="badge bg-secondary me-2">{{ loop.index }}</span>
-                                            {{ condition }}
-                                        </li>
-                                        {% endfor %}
-                                    </ul>
-                                    {% else %}
-                                    <p class="text-muted">{{ translate_text('No health conditions reported', lang) }}</p>
-                                    {% endif %}
-                                    <p><strong>{{ translate_text('Total Conditions', lang) }}:</strong> {{ health_count }}</p>
-                                    <p><strong>{{ translate_text('Risk Score', lang) }}:</strong> {{ risk_score }}%</p>
-                                    <p><strong>{{ translate_text('Risk Category', lang) }}:</strong> 
-                                        <span class="badge {% if risk_category == 'Low' %}bg-success{% elif risk_category == 'Medium' %}bg-warning{% elif risk_category == 'High' %}bg-danger{% else %}bg-dark{% endif %}">
-                                            {{ translate_text(risk_category, lang) }}
-                                        </span>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+                    <h6 class="mb-2"><i class="fas fa-triangle-exclamation text-warning me-2"></i>Allergies</h6>
+                    {% if patient.allergies %}
+                    <p class="mb-0 fw-semibold">{{ patient.allergies }}</p>
+                    {% else %}
+                    <p class="mb-0 text-muted small">No known allergies reported.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- EMERGENCY CONTACT -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body">
+                    <h6 class="mb-2"><i class="fas fa-phone-volume text-danger me-2"></i>Emergency Contact</h6>
+                    {% if patient.emergency_name %}
+                    <p class="mb-1"><strong>{{ patient.emergency_name }}</strong></p>
+                    <p class="mb-1 small">{{ patient.emergency_phone or '—' }}</p>
+                    <p class="mb-0 small text-muted">{{ patient.emergency_relationship or '' }}</p>
+                    {% else %}
+                    <p class="mb-0 text-muted small">Not provided.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- HEALTH CONDITIONS -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body">
+                    <h6 class="mb-2"><i class="fas fa-notes-medical text-primary me-2"></i>Health Conditions</h6>
+                    {% if health_conditions_list %}
+                    {% for c in health_conditions_list %}
+                    <span class="badge bg-light text-dark border me-1 mb-1">{{ c }}</span>
+                    {% endfor %}
+                    {% else %}
+                    <p class="mb-0 text-muted small">None reported.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm text-center p-3">
+                        <div class="fs-3 fw-bold">{{ total }}</div>
+                        <small class="text-muted">Total</small>
                     </div>
-                    
-                    <!-- Appointment Statistics -->
-                    <div class="row mb-4">
-                        <div class="col-md-12">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-header bg-white border-bottom">
-                                    <h6 class="mb-0">{{ translate_text('Appointment Statistics', lang) }}</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-3">
-                                            <div class="stat-card bg-secondary text-white p-3 rounded">
-                                                <h6>{{ translate_text('Total', lang) }}</h6>
-                                                <h3>{{ total }}</h3>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="stat-card bg-success text-white p-3 rounded">
-                                                <h6>{{ translate_text('Completed', lang) }}</h6>
-                                                <h3>{{ completed }}</h3>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="stat-card bg-danger text-white p-3 rounded">
-                                                <h6>{{ translate_text('No-Shows', lang) }}</h6>
-                                                <h3>{{ no_shows }}</h3>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="stat-card bg-warning text-white p-3 rounded">
-                                                <h6>{{ translate_text('Cancelled', lang) }}</h6>
-                                                <h3>{{ cancelled }}</h3>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3">
-                                        <p><strong>{{ translate_text('No-Show Rate', lang) }}:</strong> {{ no_show_rate }}%</p>
-                                        <div class="progress">
-                                            <div class="progress-bar {% if no_show_rate < 20 %}bg-success{% elif no_show_rate < 40 %}bg-warning{% else %}bg-danger{% endif %}" 
-                                                 role="progressbar" 
-                                                 style="width: {{ no_show_rate }}%;" 
-                                                 aria-valuenow="{{ no_show_rate }}" 
-                                                 aria-valuemin="0" 
-                                                 aria-valuemax="100">
-                                                {{ no_show_rate }}%
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm text-center p-3">
+                        <div class="fs-3 fw-bold text-success">{{ completed }}</div>
+                        <small class="text-muted">Completed</small>
                     </div>
-                    
-                    <!-- Appointment History -->
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-header bg-white border-bottom">
-                                    <h6 class="mb-0">{{ translate_text('Appointment History', lang) }}</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-striped table-hover">
-                                            <thead class="table-dark">
-                                                <tr>
-                                                    <th>#</th>
-                                                    <th>{{ translate_text('Clinic', lang) }}</th>
-                                                    <th>{{ translate_text('Date', lang) }}</th>
-                                                    <th>{{ translate_text('Time', lang) }}</th>
-                                                    <th>{{ translate_text('Status', lang) }}</th>
-                                                    <th>{{ translate_text('Reason', lang) }}</th>
-                                                    <th>{{ translate_text('Booked', lang) }}</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for appt in appointments %}
-                                                <tr>
-                                                    <td>{{ loop.index }}</td>
-                                                    <td>{{ appt.clinic_name }}</td>
-                                                    <td>{{ appt.appointment_date }}</td>
-                                                    <td>{{ appt.appointment_time }}</td>
-                                                    <td>
-                                                        <span class="badge {% if appt.status == 'Completed' %}bg-success{% elif appt.status == 'Scheduled' %}bg-primary{% elif appt.status == 'Cancelled' %}bg-warning{% elif appt.status == 'No-Show' %}bg-danger{% elif appt.status == 'Checked-in' %}bg-info{% else %}bg-secondary{% endif %}">
-                                                            {{ translate_text(appt.status, lang) }}
-                                                        </span>
-                                                    </td>
-                                                    <td>{{ appt.reason or 'N/A' }}</td>
-                                                    <td>{{ appt.created_at[:10] if appt.created_at else 'N/A' }}</td>
-                                                </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm text-center p-3">
+                        <div class="fs-3 fw-bold text-danger">{{ no_shows }}</div>
+                        <small class="text-muted">No-Shows</small>
                     </div>
-                    
-                    <div class="mt-3 d-flex gap-2">
-                        <a href="{{ url_for('staff_dashboard') }}" class="btn btn-primary">
-                            <i class="fas fa-arrow-left"></i> {{ translate_text('Back to Dashboard', lang) }}
-                        </a>
-                        {% if appointments %}
-                        <a href="{{ url_for('staff_send_reminder', appt_id=appointments[0].id) }}" class="btn btn-warning">
-                            <i class="fas fa-envelope"></i> {{ translate_text('Send Reminder', lang) }}
-                        </a>
-                        {% endif %}
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm text-center p-3">
+                        <div class="fs-3 fw-bold text-warning">{{ no_show_rate }}%</div>
+                        <small class="text-muted">No-Show Rate</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-calendar-check text-primary me-2"></i>Appointment History</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Clinic</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                    <th>Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for a in appointments %}
+                                <tr>
+                                    <td>{{ a.appointment_date }}</td>
+                                    <td>{{ a.clinic_name }}</td>
+                                    <td>{{ a.appointment_time }}</td>
+                                    <td>
+                                        {% if a.status == 'Completed' %}<span class="badge bg-success">Completed</span>
+                                        {% elif a.status == 'Scheduled' %}<span class="badge bg-primary">Scheduled</span>
+                                        {% elif a.status == 'Cancelled' %}<span class="badge bg-secondary">Cancelled</span>
+                                        {% elif a.status == 'No-Show' %}<span class="badge bg-danger">No-Show</span>
+                                        {% elif a.status == 'Checked-in' %}<span class="badge bg-warning text-dark">Checked-in</span>
+                                        {% else %}<span class="badge bg-secondary">{{ a.status }}</span>{% endif %}
+                                    </td>
+                                    <td>{{ a.reason or '—' }}</td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="5" class="text-center text-muted py-4">No appointments recorded.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<style>
-.stat-card {
-    transition: transform 0.2s;
-}
-.stat-card:hover {
-    transform: scale(1.05);
-}
-</style>
 {% endblock %}

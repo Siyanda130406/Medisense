@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Find Clinics - MediSense{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="text-center mb-4">
+        <h2 class="text-primary"><i class="fas fa-map-marker-alt"></i> Find Clinics</h2>
+        <p class="text-muted">Search 500+ real South African clinics — no login needed.</p>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="POST">
+                <div class="input-group input-group-lg">
+                    <input type="text" class="form-control" name="location" value="{{ search_location }}"
+                           placeholder="e.g., Durban, Soweto, KwaMashu, Gauteng" required>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if clinics %}
+    <p class="text-muted">Found {{ clinics|length }} clinic(s) near "{{ search_location }}"</p>
+    <div class="row g-3">
+        {% for c in clinics %}
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h6 class="text-primary">{{ c.Clinic_Name }}</h6>
+                    <p class="small text-muted mb-1">
+                        <i class="fas fa-map-pin"></i> {{ c.City or '' }}{% if c.Area %}, {{ c.Area }}{% endif %}{% if c.Province %}, {{ c.Province }}{% endif %}
+                    </p>
+                    {% if c.Phone %}<p class="small text-muted mb-2"><i class="fas fa-phone"></i> {{ c.Phone }}</p>{% endif %}
+                    {% if c.directions_url %}
+                    <a href="{{ c.directions_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-directions"></i> Directions
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% elif search_location %}
+    <div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> No clinics found for "{{ search_location }}".</div>
+    {% endif %}
+
+    <div class="alert alert-info mt-4">
+        <i class="fas fa-info-circle"></i> <a href="{{ url_for('signup') }}">Sign up free</a> to book appointments at these clinics.
+    </div>
+</div>
+{% endblock %}

@@ -43,6 +43,21 @@
             transition: var(--transition);
         }
 
+        /* ===== FIX: Light mode visibility for cards, text, tables ===== */
+        .text-muted { color: var(--text-muted) !important; }
+        .card-body, .card-header, .card-footer { color: var(--text-primary); }
+        .card-title { color: var(--text-primary); }
+        .table { color: var(--text-primary); }
+        .table thead th { color: var(--text-primary); }
+        .table tbody td { color: var(--text-primary); }
+        .list-group-item { color: var(--text-primary); background: var(--bg-card); border-color: var(--border-color); }
+        .form-label { color: var(--text-primary); }
+        small, .small { color: inherit; }
+        p, span, div { color: inherit; }
+        h1, h2, h3, h4, h5, h6 { color: inherit; }
+        .modal-body, .modal-header, .modal-footer { color: var(--text-primary); }
+        /* ===== END FIX ===== */
+
         .navbar {
             background-color: var(--bg-card) !important;
             border-bottom: 1px solid var(--border-color);
@@ -400,6 +415,29 @@
                             </a>
                         </li>
                     {% else %}
+                        <!-- ===== FIX #3: Public access links added ===== -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('public_symptoms') }}">
+                                <i class="fas fa-stethoscope"></i> {{ translate_text('Symptom Check', lang) }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('public_clinics') }}">
+                                <i class="fas fa-map-marker-alt"></i> {{ translate_text('Find Clinics', lang) }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('public_first_aid') }}">
+                                <i class="fas fa-first-aid"></i> {{ translate_text('First Aid', lang) }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <button class="theme-toggle" onclick="toggleTheme()" type="button"
+                                    aria-label="{{ translate_text('Toggle dark mode', lang) }}">
+                                <i class="fas fa-moon" id="themeIcon" aria-hidden="true"></i>
+                            </button>
+                        </li>
+                        <!-- ===== END FIX #3 ===== -->
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('login') }}" aria-label="{{ translate_text('Login', lang) }}">{{ translate_text('Login', lang) }}</a>
                         </li>
@@ -430,6 +468,11 @@
                         <a class="nav-link {{ 'active' if request.endpoint == 'patient_health_symptoms' }}" href="{{ url_for('patient_health_symptoms') }}">
                             <i class="fas fa-search" aria-hidden="true"></i> {{ translate_text('Health & Symptoms', lang) }}
                         </a>
+                        <!-- ===== FIX #7: Chatbot link added ===== -->
+                        <a class="nav-link {{ 'active' if request.endpoint == 'patient_chatbot' }}" href="{{ url_for('patient_chatbot') }}">
+                            <i class="fas fa-comments" aria-hidden="true"></i> {{ translate_text('Ask a Question', lang) }}
+                        </a>
+                        <!-- ===== END FIX #7 ===== -->
                         <a class="nav-link {{ 'active' if request.endpoint == 'patient_clinics' }}" href="{{ url_for('patient_clinics') }}">
                             <i class="fas fa-map-marker-alt" aria-hidden="true"></i> {{ translate_text('Find Clinics', lang) }}
                         </a>
@@ -537,12 +580,14 @@
             html.setAttribute('data-bs-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             
-            if (newTheme === 'dark') {
-                icon.classList.remove('fa-moon');
-                icon.classList.add('fa-sun');
-            } else {
-                icon.classList.remove('fa-sun');
-                icon.classList.add('fa-moon');
+            if (icon) {
+                if (newTheme === 'dark') {
+                    icon.classList.remove('fa-moon');
+                    icon.classList.add('fa-sun');
+                } else {
+                    icon.classList.remove('fa-sun');
+                    icon.classList.add('fa-moon');
+                }
             }
             
             showToast('Switched to ' + newTheme + ' mode', 'info', 'Theme');

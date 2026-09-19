@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Medicines — MediSense{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('patient_dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active">Medicines</li>
+        </ol>
+    </nav>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header">
+            <h5 class="mb-1"><i class="fas fa-pills text-primary me-2"></i>Medicine Search</h5>
+            <p class="text-muted small mb-0">Two-way search — find medicines by disease, or diseases by medicine.</p>
+        </div>
+        <div class="card-body p-4">
+            <form method="POST">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" name="search_term" value="{{ search_term }}" required
+                                   placeholder="e.g. Flu, Diabetes, Paracetamol">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" name="search_mode">
+                            <option value="disease" {% if search_mode == 'disease' %}selected{% endif %}>By disease</option>
+                            <option value="medicine" {% if search_mode == 'medicine' %}selected{% endif %}>By medicine</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-search me-1"></i>Search</button>
+            </form>
+
+            {% if search_performed %}
+            <hr class="my-4">
+            {% if search_results %}
+                {% for item in search_results %}
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-body">
+                        {% if search_mode == 'disease' %}
+                        <h6 class="fw-bold">{{ item.disease }}</h6>
+                        <small class="text-muted d-block mb-2">Medicines that treat this:</small>
+                        <div>
+                            {% for med in item.medicines %}<span class="badge bg-light text-dark border me-1 mb-1">{{ med }}</span>{% endfor %}
+                        </div>
+                        {% else %}
+                        <h6 class="fw-bold">{{ item.medicine }}</h6>
+                        <small class="text-muted d-block mb-2">Diseases it treats:</small>
+                        <div>
+                            {% for dis in item.diseases %}<span class="badge bg-light text-dark border me-1 mb-1">{{ dis }}</span>{% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="alert alert-warning">
+                <i class="fas fa-triangle-exclamation me-2"></i>No results found for "{{ search_term }}".
+            </div>
+            {% endif %}
+            {% endif %}
+
+            <div class="mt-4">
+                <a href="{{ url_for('patient_dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

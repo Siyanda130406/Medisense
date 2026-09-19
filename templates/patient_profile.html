@@ -1,129 +1,153 @@
 {% extends "base.html" %}
 
-{% block title %}{{ translate_text('My Profile', lang) }} - MediSense{% endblock %}
+{% block title %}My Profile — MediSense{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-12">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('patient_dashboard') }}">{{ translate_text('Dashboard', lang) }}</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">{{ translate_text('My Profile', lang) }}</li>
-                </ol>
-            </nav>
-            
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="fas fa-user"></i> {{ translate_text('My Profile', lang) }}</h4>
-                </div>
-                <div class="card-body">
-                    {% if error %}
-                    <div class="alert alert-danger alert-dismissible fade show">
-                        {{ error }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                    {% endif %}
-                    
-                    {% with messages = get_flashed_messages(with_categories=true) %}
-                        {% if messages %}
-                            {% for category, message in messages %}
-                                <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show">
-                                    {{ message }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            {% endfor %}
-                        {% endif %}
-                    {% endwith %}
-                    
-                    <form method="POST" action="{{ url_for('patient_profile') }}">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="full_name" class="form-label fw-semibold">{{ translate_text('Full Name', lang) }}</label>
-                                    <input type="text" class="form-control" id="full_name" value="{{ patient.full_name }}" disabled>
-                                    <small class="text-muted">{{ translate_text('Name cannot be changed. Contact support for changes.', lang) }}</small>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="email" class="form-label fw-semibold">{{ translate_text('Email', lang) }}</label>
-                                    <input type="email" class="form-control" id="email" value="{{ patient.email }}" disabled>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="phone" class="form-label fw-semibold">{{ translate_text('Phone', lang) }}</label>
-                                    <input type="tel" class="form-control" id="phone" name="phone" value="{{ patient.phone or '' }}" placeholder="{{ translate_text('Enter your phone number', lang) }}">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="age" class="form-label fw-semibold">{{ translate_text('Age', lang) }}</label>
-                                    <input type="number" class="form-control" id="age" name="age" value="{{ patient.age or 30 }}" min="1" max="120">
-                                </div>
-                            </div>
-                        </div>
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('patient_dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active">My Profile</li>
+        </ol>
+    </nav>
 
-                        <!-- ===== NEW: GENDER FIELD (Read-only for patient - can be updated) ===== -->
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="gender" class="form-label fw-semibold">{{ translate_text('Gender', lang) }}</label>
-                                    <select class="form-select" id="gender" name="gender">
-                                        <option value="Male" {% if patient.gender == 'Male' %}selected{% endif %}>{{ translate_text('Male', lang) }}</option>
-                                        <option value="Female" {% if patient.gender == 'Female' %}selected{% endif %}>{{ translate_text('Female', lang) }}</option>
-                                        <option value="Other" {% if patient.gender == 'Other' %}selected{% endif %}>{{ translate_text('Other', lang) }}</option>
-                                        <option value="Prefer not to say" {% if patient.gender == 'Prefer not to say' %}selected{% endif %}>{{ translate_text('Prefer not to say', lang) }}</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="id_number" class="form-label fw-semibold">{{ translate_text('South African ID Number', lang) }}</label>
-                                    <input type="text" class="form-control" id="id_number" name="id_number" 
-                                           value="{{ patient.id_number or '' }}" 
-                                           placeholder="{{ translate_text('e.g., 9001011234567', lang) }}" 
-                                           maxlength="13" minlength="13" pattern="[0-9]{13}">
-                                    <small class="text-muted">{{ translate_text('13-digit South African ID number', lang) }}</small>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="location" class="form-label fw-semibold">{{ translate_text('Location', lang) }}</label>
-                            <input type="text" class="form-control" id="location" name="location" value="{{ patient.location or '' }}" placeholder="{{ translate_text('e.g., Durban, Cape Town', lang) }}">
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="health_conditions" class="form-label fw-semibold">{{ translate_text('Health Conditions', lang) }}</label>
-                            <textarea class="form-control" id="health_conditions" name="health_conditions" rows="3" placeholder="{{ translate_text('e.g., Diabetes, Hypertension, Asthma (separate with commas)', lang) }}">{{ patient.health_conditions or '' }}</textarea>
-                            <small class="text-muted">{{ translate_text('List any health conditions you have, separated by commas.', lang) }}</small>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="language" class="form-label fw-semibold">{{ translate_text('Preferred Language', lang) }}</label>
-                            <select class="form-select" id="language" name="language">
-                                <option value="en" {% if session.get('language') == 'en' %}selected{% endif %}>English</option>
-                                <option value="zulu" {% if session.get('language') == 'zulu' %}selected{% endif %}>isiZulu</option>
-                            </select>
-                        </div>
-                        
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> {{ translate_text('Save Changes', lang) }}
-                            </button>
-                            <a href="{{ url_for('patient_dashboard') }}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left"></i> {{ translate_text('Back to Dashboard', lang) }}
-                            </a>
-                        </div>
-                    </form>
+    <div class="card border-0 shadow-sm">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-user-circle text-primary me-2"></i>My Profile</h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="POST" action="{{ url_for('patient_profile') }}" id="profileForm" novalidate>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" value="{{ patient.full_name }}" disabled>
+                        <div class="form-text">Contact support to change your name.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" value="{{ patient.email }}" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="phone" class="form-label">Phone</label>
+                        <input type="tel" class="form-control" id="phone" name="phone"
+                               value="{{ patient.phone or '' }}" placeholder="e.g. 0821234567">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="age" class="form-label">Age</label>
+                        <input type="number" class="form-control" id="age" name="age"
+                               value="{{ patient.age or '' }}" min="1" max="120">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="gender" class="form-label">Gender</label>
+                        <select class="form-select" id="gender" name="gender">
+                            <option value="">Select</option>
+                            {% for g in ['Male', 'Female', 'Other', 'Prefer not to say'] %}
+                            <option value="{{ g }}" {% if patient.gender == g %}selected{% endif %}>{{ g }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="id_number" class="form-label">South African ID Number</label>
+                        <input type="text" class="form-control" id="id_number" name="id_number"
+                               value="{{ patient.id_number or '' }}" maxlength="13" pattern="[0-9]{13}"
+                               placeholder="13 digits">
+                        <div class="invalid-feedback" id="idError"></div>
+                    </div>
+                    <div class="col-12">
+                        <label for="location" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="location" name="location"
+                               value="{{ patient.location or '' }}" placeholder="e.g. Durban, Soweto">
+                    </div>
+                    <div class="col-12">
+                        <label for="health_conditions" class="form-label">Health Conditions</label>
+                        <textarea class="form-control" id="health_conditions" name="health_conditions" rows="2"
+                                  placeholder="Separate with commas">{{ patient.health_conditions or '' }}</textarea>
+                    </div>
+
+                    <!-- ALLERGIES (proper textarea) -->
+                    <div class="col-12">
+                        <label for="allergies" class="form-label">
+                            <i class="fas fa-triangle-exclamation text-warning me-1"></i>Allergies
+                        </label>
+                        <textarea class="form-control" id="allergies" name="allergies" rows="3"
+                                  placeholder="List any allergies — e.g. Penicillin (rash), Peanuts (swelling)">{{ patient.allergies or '' }}</textarea>
+                        <div class="form-text">Leave blank if you have no known allergies. This is shared with nurses and staff.</div>
+                    </div>
+
+                    <!-- EMERGENCY CONTACT -->
+                    <div class="col-12"><hr class="my-2"></div>
+                    <div class="col-md-4">
+                        <label for="emergency_name" class="form-label">Emergency Contact Name</label>
+                        <input type="text" class="form-control" id="emergency_name" name="emergency_name"
+                               value="{{ patient.emergency_name or '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="emergency_phone" class="form-label">Emergency Contact Phone</label>
+                        <input type="tel" class="form-control" id="emergency_phone" name="emergency_phone"
+                               value="{{ patient.emergency_phone or '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="emergency_relationship" class="form-label">Relationship</label>
+                        <input type="text" class="form-control" id="emergency_relationship" name="emergency_relationship"
+                               value="{{ patient.emergency_relationship or '' }}">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="language" class="form-label">Preferred Language</label>
+                        <select class="form-select" id="language" name="language">
+                            <option value="en" {% if session.get('language') == 'en' %}selected{% endif %}>English</option>
+                            <option value="zulu" {% if session.get('language') == 'zulu' %}selected{% endif %}>isiZulu</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-floppy-disk me-2"></i>Save Changes
+                    </button>
+                    <a href="{{ url_for('patient_dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function validateSAIDClient(id) {
+    if (!id) return { valid: true };
+    if (!/^\d+$/.test(id)) return { valid: false, msg: 'ID must contain only digits.' };
+    if (id.length !== 13) return { valid: false, msg: `ID must be 13 digits (you have ${id.length}).` };
+    var yy = parseInt(id.substr(0,2),10), mm = parseInt(id.substr(2,2),10), dd = parseInt(id.substr(4,2),10);
+    if (mm < 1 || mm > 12) return { valid: false, msg: `Invalid month "${String(mm).padStart(2,'0')}".` };
+    if (dd < 1 || dd > 31) return { valid: false, msg: `Invalid day "${String(dd).padStart(2,'0')}".` };
+    var isLeap = (yy % 4 === 0 && (yy % 100 !== 0 || yy % 400 === 0));
+    var dim = [31, isLeap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    if (dd > dim[mm-1]) return { valid: false, msg: `Invalid day for month ${String(mm).padStart(2,'0')}.` };
+    var total = 0;
+    for (var i = 0; i < 13; i++) { var d = parseInt(id[i],10); if (i%2===1) { d*=2; if (d>9) d-=9; } total += d; }
+    if (total % 10 !== 0) return { valid: false, msg: 'Checksum failed.' };
+    return { valid: true };
+}
+
+document.getElementById('id_number').addEventListener('input', function() {
+    this.value = this.value.replace(/[^0-9]/g, '').slice(0, 13);
+});
+
+document.getElementById('profileForm').addEventListener('submit', function(e) {
+    var idInput = document.getElementById('id_number');
+    var result = validateSAIDClient(idInput.value.trim());
+    if (!result.valid) {
+        e.preventDefault();
+        idInput.classList.add('is-invalid');
+        var err = document.getElementById('idError');
+        err.textContent = result.msg;
+        err.style.display = 'block';
+        idInput.focus();
+    }
+});
+</script>
 {% endblock %}
