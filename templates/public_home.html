@@ -3,150 +3,144 @@
 {% block title %}Welcome to MediSense{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container py-4 py-lg-5">
     <div class="row justify-content-center">
-        <div class="col-lg-10">
+        <div class="col-lg-11">
 
-            <!-- HERO -->
-            <div class="glass-panel text-center mb-4">
-                <i class="fas fa-heartbeat fa-3x text-white mb-3"></i>
-                <h1 class="text-white fw-bold text-shadow mb-3">Healthcare, in your pocket.</h1>
-                <p class="text-white-75 text-shadow mb-4" style="font-size: 1.05rem;">
-                    MediSense helps South Africans understand symptoms, find clinics, book appointments,
-                    and get first aid — in English and isiZulu.
+            <!-- ==================== HERO ==================== -->
+            <div class="hero-panel text-center mb-4">
+                <i class="fas fa-heartbeat fa-3x mb-3" style="color: #63b3ed;"></i>
+                <h1 class="hero-title mb-3">Healthcare, in your pocket.</h1>
+                <p class="hero-sub mb-4">
+                    MediSense helps South Africans understand symptoms, find clinics,
+                    book appointments, and get first aid — in English and isiZulu.
                 </p>
                 <div class="d-flex gap-2 justify-content-center flex-wrap">
-                    <a href="{{ url_for('public_symptoms') }}" class="btn btn-glass">
-                        <i class="fas fa-stethoscope"></i> Check Symptoms
+                    <a href="{{ url_for('public_symptoms') }}" class="btn-hero-primary">
+                        <i class="fas fa-stethoscope me-2"></i>Check Symptoms
                     </a>
-                    <a href="{{ url_for('signup') }}" class="btn btn-glass-outline">
-                        <i class="fas fa-user-plus"></i> Create Account
+                    <a href="{{ url_for('signup') }}" class="btn-hero-secondary">
+                        <i class="fas fa-user-plus me-2"></i>Create Account
                     </a>
                 </div>
-                <p class="text-white-50 text-shadow small mt-3 mb-0">
-                    <i class="fas fa-lock"></i> No sign-up needed to try basic features.
+                <p class="hero-small mt-3 mb-0">
+                    <i class="fas fa-lock me-1"></i>No sign-up needed to try basic features.
                 </p>
             </div>
 
-            <!-- QUICK ACCESS CARDS -->
+            <!-- ==================== QUICK ACTIONS ==================== -->
             <div class="row g-3 mb-4">
-                <div class="col-md-6 col-lg-3">
+                <div class="col-6 col-md-3">
                     <a href="{{ url_for('public_symptoms') }}" class="text-decoration-none">
-                        <div class="glass-tile">
-                            <i class="fas fa-notes-medical fa-2x text-white mb-2"></i>
-                            <div class="text-white fw-semibold small">Symptom Check</div>
+                        <div class="quick-tile quick-tile-blue">
+                            <i class="fas fa-notes-medical"></i>
+                            <span>Symptom Check</span>
                         </div>
                     </a>
                 </div>
-                <div class="col-md-6 col-lg-3">
+                <div class="col-6 col-md-3">
                     <a href="{{ url_for('public_clinics') }}" class="text-decoration-none">
-                        <div class="glass-tile">
-                            <i class="fas fa-map-marker-alt fa-2x text-white mb-2"></i>
-                            <div class="text-white fw-semibold small">Find Clinics</div>
+                        <div class="quick-tile quick-tile-green">
+                            <i class="fas fa-map-location-dot"></i>
+                            <span>Find Clinics</span>
                         </div>
                     </a>
                 </div>
-                <div class="col-md-6 col-lg-3">
+                <div class="col-6 col-md-3">
                     <a href="{{ url_for('public_first_aid') }}" class="text-decoration-none">
-                        <div class="glass-tile">
-                            <i class="fas fa-first-aid fa-2x text-white mb-2"></i>
-                            <div class="text-white fw-semibold small">First Aid</div>
+                        <div class="quick-tile quick-tile-red">
+                            <i class="fas fa-kit-medical"></i>
+                            <span>First Aid</span>
                         </div>
                     </a>
                 </div>
-                <div class="col-md-6 col-lg-3">
+                <div class="col-6 col-md-3">
                     <a href="{{ url_for('login') }}" class="text-decoration-none">
-                        <div class="glass-tile">
-                            <i class="fas fa-sign-in-alt fa-2x text-white mb-2"></i>
-                            <div class="text-white fw-semibold small">Sign In</div>
+                        <div class="quick-tile quick-tile-slate">
+                            <i class="fas fa-right-to-bracket"></i>
+                            <span>Sign In</span>
                         </div>
                     </a>
                 </div>
             </div>
 
-            <!-- STATS -->
+            <!-- ==================== CLINICS STAT (ONLY) ==================== -->
+            <div class="stat-banner mb-4">
+                <i class="fas fa-hospital fa-2x"></i>
+                <div>
+                    <div class="stat-number">{{ clinics_count }}</div>
+                    <div class="stat-label">Clinics across South Africa</div>
+                </div>
+            </div>
+
+            <!-- ==================== FEATURES ==================== -->
+            <h2 class="section-title mb-3">What MediSense does</h2>
             <div class="row g-3 mb-4">
-                <div class="col-md-4">
-                    <div class="glass-tile text-center">
-                        <i class="fas fa-hospital fa-2x text-white mb-2"></i>
-                        <h2 class="text-white fw-bold mb-0">{{ clinics_count }}</h2>
-                        <small class="text-white-75">Clinics across South Africa</small>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background: #ebf4ff; color: #2b6cb0;">
+                            <i class="fas fa-stethoscope"></i>
+                        </div>
+                        <h6 class="feature-title">Symptom Checker</h6>
+                        <p class="feature-text">Describe how you feel in plain language. Get possible conditions, urgency, and next steps.</p>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="glass-tile text-center">
-                        <i class="fas fa-virus fa-2x text-white mb-2"></i>
-                        <h2 class="text-white fw-bold mb-0">{{ diseases_count }}</h2>
-                        <small class="text-white-75">Diseases in our database</small>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background: #faf5ff; color: #6b46c1;">
+                            <i class="fas fa-pills"></i>
+                        </div>
+                        <h6 class="feature-title">Medicine Search</h6>
+                        <p class="feature-text">Search medicines by disease, or find what a medicine treats — two-way search.</p>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="glass-tile text-center">
-                        <i class="fas fa-pills fa-2x text-white mb-2"></i>
-                        <h2 class="text-white fw-bold mb-0">{{ "{:,}".format(medicines_count) }}</h2>
-                        <small class="text-white-75">Medicines catalogued</small>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background: #f0fff4; color: #2f855a;">
+                            <i class="fas fa-map-location-dot"></i>
+                        </div>
+                        <h6 class="feature-title">Find Clinics</h6>
+                        <p class="feature-text">Search by province, city, or area. Get directions in Google Maps.</p>
                     </div>
                 </div>
-            </div>
-
-            <!-- FEATURES -->
-            <div class="glass-panel mb-4">
-                <h2 class="text-white text-center text-shadow mb-4">What MediSense does</h2>
-                <div class="row g-3">
-                    <div class="col-md-6 col-lg-4">
-                        <div class="glass-feature">
-                            <i class="fas fa-stethoscope fa-2x text-white mb-2"></i>
-                            <h6 class="text-white fw-semibold mb-1">Symptom Checker</h6>
-                            <p class="text-white-75 small mb-0">Describe how you feel in plain language. Get possible conditions, urgency, and next steps.</p>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background: #fffaf0; color: #b7791f;">
+                            <i class="fas fa-calendar-check"></i>
                         </div>
+                        <h6 class="feature-title">Book Appointments</h6>
+                        <p class="feature-text">Real-time slots. No double bookings. Automatic no-show detection.</p>
                     </div>
-                    <div class="col-md-6 col-lg-4">
-                        <div class="glass-feature">
-                            <i class="fas fa-pills fa-2x text-white mb-2"></i>
-                            <h6 class="text-white fw-semibold mb-1">Medicine Search</h6>
-                            <p class="text-white-75 small mb-0">Search medicines by disease, or find what a medicine treats — two-way search.</p>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background: #fff5f5; color: #c53030;">
+                            <i class="fas fa-kit-medical"></i>
                         </div>
+                        <h6 class="feature-title">First Aid Guide</h6>
+                        <p class="feature-text">Step-by-step instructions for 20+ emergencies: heart attack, stroke, choking, and more.</p>
                     </div>
-                    <div class="col-md-6 col-lg-4">
-                        <div class="glass-feature">
-                            <i class="fas fa-map-marker-alt fa-2x text-white mb-2"></i>
-                            <h6 class="text-white fw-semibold mb-1">Find Clinics</h6>
-                            <p class="text-white-75 small mb-0">Search by province, city, or area. Get directions in Google Maps.</p>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background: #ebf8ff; color: #2c5282;">
+                            <i class="fas fa-comments"></i>
                         </div>
-                    </div>
-                    <div class="col-md-6 col-lg-4">
-                        <div class="glass-feature">
-                            <i class="fas fa-calendar-check fa-2x text-white mb-2"></i>
-                            <h6 class="text-white fw-semibold mb-1">Book Appointments</h6>
-                            <p class="text-white-75 small mb-0">Real-time slots. No double bookings. Automatic no-show detection.</p>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-lg-4">
-                        <div class="glass-feature">
-                            <i class="fas fa-first-aid fa-2x text-white mb-2"></i>
-                            <h6 class="text-white fw-semibold mb-1">First Aid Guide</h6>
-                            <p class="text-white-75 small mb-0">Step-by-step instructions for 20+ emergencies: heart attack, stroke, choking, and more.</p>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-lg-4">
-                        <div class="glass-feature">
-                            <i class="fas fa-comments fa-2x text-white mb-2"></i>
-                            <h6 class="text-white fw-semibold mb-1">Ask a Question</h6>
-                            <p class="text-white-75 small mb-0">Sign in and ask health questions in plain language. Get answers from our medical Q&A database.</p>
-                        </div>
+                        <h6 class="feature-title">Ask a Question</h6>
+                        <p class="feature-text">Sign in and ask health questions in plain language. Get answers from our medical Q&A database.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- CTA -->
-            <div class="glass-panel text-center">
-                <h3 class="text-white text-shadow mb-3">Ready to take charge of your health?</h3>
-                <p class="text-white-75 mb-4">Create a free account to book appointments, track symptoms, and more.</p>
+            <!-- ==================== BOTTOM CTA ==================== -->
+            <div class="cta-panel text-center">
+                <h3 class="cta-title mb-2">Ready to take charge of your health?</h3>
+                <p class="cta-text mb-4">Create a free account to book appointments, track symptoms, and more.</p>
                 <div class="d-flex gap-2 justify-content-center flex-wrap">
-                    <a href="{{ url_for('signup') }}" class="btn btn-glass">
-                        <i class="fas fa-user-plus"></i> Create Free Account
+                    <a href="{{ url_for('signup') }}" class="btn-hero-primary">
+                        <i class="fas fa-user-plus me-2"></i>Create Free Account
                     </a>
-                    <a href="{{ url_for('login') }}" class="btn btn-glass-outline">
+                    <a href="{{ url_for('login') }}" class="btn-hero-secondary">
                         Sign In
                     </a>
                 </div>
@@ -157,141 +151,278 @@
 </div>
 
 <style>
-    /* ===== SAME STYLE AS LOGIN / SIGNUP ===== */
-    body {
-        background: url("{{ url_for('static', filename='images/health-background.jpg') }}") no-repeat center center fixed;
-        background-size: cover;
-        margin: 0;
-        padding: 0;
-        min-height: 100vh;
-    }
+/* ==================== BACKGROUND (matches login/signup) ==================== */
+body {
+    background: url("{{ url_for('static', filename='images/health-background.jpg') }}") no-repeat center center fixed;
+    background-size: cover;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.62);
+    z-index: 0;
+}
+.container { position: relative; z-index: 1; }
+.content { background: transparent !important; }
 
-    body::before {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.55);
-        z-index: 0;
-    }
+/* ==================== HERO ==================== */
+.hero-panel {
+    padding: 40px 24px 32px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+.hero-title {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 2.2rem;
+    line-height: 1.15;
+    text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.85);
+}
+.hero-sub {
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 1.02rem;
+    max-width: 620px;
+    margin-left: auto;
+    margin-right: auto;
+    text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.75);
+}
+.hero-small {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+}
 
-    .container {
-        position: relative;
-        z-index: 1;
-    }
+/* ==================== BIG BRIGHT BUTTONS ==================== */
+.btn-hero-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #2b6cb0;
+    color: #ffffff !important;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 14px 30px;
+    border-radius: 12px;
+    border: none;
+    text-decoration: none;
+    box-shadow: 0 6px 20px rgba(43, 108, 176, 0.5);
+    transition: all 0.2s ease;
+    min-width: 200px;
+}
+.btn-hero-primary:hover {
+    background: #2c5282;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(43, 108, 176, 0.65);
+    color: #ffffff !important;
+}
 
-    .content {
-        background: transparent !important;
-    }
+.btn-hero-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    color: #2b6cb0 !important;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 14px 30px;
+    border-radius: 12px;
+    border: 2px solid #ffffff;
+    text-decoration: none;
+    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.35);
+    transition: all 0.2s ease;
+    min-width: 200px;
+}
+.btn-hero-secondary:hover {
+    background: rgba(255, 255, 255, 0.92);
+    transform: translateY(-2px);
+    color: #2c5282 !important;
+}
 
-    /* Glass panels — same look as login-form */
-    .glass-panel {
-        padding: 32px 28px;
-        border-radius: 20px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-    }
+/* ==================== QUICK TILES ==================== */
+.quick-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 22px 12px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    text-align: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    height: 100%;
+    min-height: 110px;
+    border-left-width: 5px;
+    border-left-style: solid;
+}
+.quick-tile i {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+}
+.quick-tile span {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: #1a202c;
+}
+.quick-tile:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
+}
+.quick-tile-blue   { border-left-color: #2b6cb0; }
+.quick-tile-blue i { color: #2b6cb0; }
+.quick-tile-green  { border-left-color: #38a169; }
+.quick-tile-green i{ color: #38a169; }
+.quick-tile-red    { border-left-color: #e53e3e; }
+.quick-tile-red i  { color: #e53e3e; }
+.quick-tile-slate  { border-left-color: #4a5568; }
+.quick-tile-slate i{ color: #4a5568; }
 
-    .glass-tile {
-        padding: 20px 18px;
-        border-radius: 16px;
-        background: rgba(255, 255, 255, 0.12);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        text-align: center;
-        transition: all 0.25s ease;
-        height: 100%;
-    }
+/* ==================== CLINICS STAT BANNER ==================== */
+.stat-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 26px 24px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(43, 108, 176, 0.95), rgba(44, 82, 130, 0.95));
+    color: #ffffff;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+.stat-banner i { color: rgba(255, 255, 255, 0.85); }
+.stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    color: #ffffff;
+}
+.stat-label {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.9);
+}
 
-    .glass-tile:hover {
-        background: rgba(255, 255, 255, 0.2);
-        transform: translateY(-3px);
-        box-shadow: 0 12px 40px rgba(52, 152, 219, 0.3);
-        text-decoration: none;
-    }
+/* ==================== FEATURES ==================== */
+.section-title {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1.4rem;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.85);
+    padding-left: 4px;
+}
+.feature-card {
+    padding: 22px;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    height: 100%;
+    transition: all 0.2s ease;
+}
+.feature-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+}
+.feature-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 14px;
+}
+.feature-title {
+    color: #1a202c;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 6px;
+}
+.feature-text {
+    color: #4a5568;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    margin: 0;
+}
 
-    .glass-feature {
-        padding: 18px;
-        border-radius: 14px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        height: 100%;
-    }
+/* ==================== BOTTOM CTA ==================== */
+.cta-panel {
+    padding: 36px 24px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+.cta-title {
+    color: #1a202c;
+    font-weight: 700;
+    font-size: 1.35rem;
+}
+.cta-text {
+    color: #4a5568;
+    font-size: 0.95rem;
+}
 
-    /* Text helpers */
-    .text-shadow {
-        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9);
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+    .hero-panel { padding: 28px 18px 24px; }
+    .hero-title { font-size: 1.7rem; }
+    .hero-sub { font-size: 0.95rem; }
+    .btn-hero-primary,
+    .btn-hero-secondary {
+        min-width: 160px;
+        padding: 12px 22px;
+        font-size: 0.92rem;
     }
-    .text-white-75 {
-        color: rgba(255, 255, 255, 0.85) !important;
-    }
+    .stat-banner { flex-direction: column; gap: 8px; text-align: center; padding: 20px; }
+    .stat-number { font-size: 1.7rem; }
+    .feature-card { padding: 18px; }
+}
 
-    /* Buttons matching login style */
-    .btn-glass {
-        background: rgba(52, 152, 219, 0.85) !important;
-        border: 1px solid rgba(255, 255, 255, 0.25) !important;
-        backdrop-filter: blur(6px);
-        -webkit-backdrop-filter: blur(6px);
-        color: #ffffff !important;
-        font-weight: 600;
-        padding: 12px 26px;
-        border-radius: 12px;
-        transition: all 0.25s ease;
-    }
+@media (max-width: 576px) {
+    .container { padding-left: 12px; padding-right: 12px; }
+    .hero-title { font-size: 1.5rem; }
+    .quick-tile { padding: 16px 8px; min-height: 96px; }
+    .quick-tile i { font-size: 1.5rem; }
+    .quick-tile span { font-size: 0.8rem; }
+    .cta-title { font-size: 1.15rem; }
+}
 
-    .btn-glass:hover {
-        background: rgba(52, 152, 219, 1) !important;
-        color: #ffffff !important;
-        transform: scale(1.03);
-        box-shadow: 0 0 25px rgba(52, 152, 219, 0.55);
-    }
+/* ==================== DARK MODE ==================== */
+[data-bs-theme="dark"] .feature-card {
+    background: #1e2a4a;
+    border-color: #2a3a5a;
+}
+[data-bs-theme="dark"] .feature-title { color: #f7fafc; }
+[data-bs-theme="dark"] .feature-text  { color: #cbd5e0; }
 
-    .btn-glass-outline {
-        background: rgba(255, 255, 255, 0.12) !important;
-        border: 1px solid rgba(255, 255, 255, 0.4) !important;
-        backdrop-filter: blur(6px);
-        -webkit-backdrop-filter: blur(6px);
-        color: #ffffff !important;
-        font-weight: 600;
-        padding: 12px 26px;
-        border-radius: 12px;
-        transition: all 0.25s ease;
-    }
+[data-bs-theme="dark"] .cta-panel {
+    background: #1e2a4a;
+    border-color: #2a3a5a;
+}
+[data-bs-theme="dark"] .cta-title { color: #f7fafc; }
+[data-bs-theme="dark"] .cta-text  { color: #cbd5e0; }
 
-    .btn-glass-outline:hover {
-        background: rgba(255, 255, 255, 0.25) !important;
-        color: #ffffff !important;
-        transform: scale(1.03);
-    }
+[data-bs-theme="dark"] .quick-tile {
+    background: #1e2a4a;
+    border: 1px solid #2a3a5a;
+    border-left-width: 5px;
+    border-left-style: solid;
+}
+[data-bs-theme="dark"] .quick-tile span { color: #f7fafc; }
 
-    /* Zoom animation (same as login/signup) */
-    body {
-        animation: zoomIn 25s ease-in-out infinite alternate;
-    }
-    @keyframes zoomIn {
-        0%   { transform: scale(1); }
-        100% { transform: scale(1.05); }
-    }
-
-    /* Mobile */
-    @media (max-width: 768px) {
-        .glass-panel { padding: 24px 18px; }
-        .glass-tile { padding: 16px 12px; }
-        h1 { font-size: 1.6rem !important; }
-        .btn-glass, .btn-glass-outline { padding: 10px 20px; font-size: 0.95rem; }
-    }
-
-    @media (max-width: 576px) {
-        .container { padding-left: 12px; padding-right: 12px; }
-        .glass-panel { padding: 20px 14px; border-radius: 16px; }
-        h1 { font-size: 1.4rem !important; }
-        h2 { font-size: 1.2rem !important; }
-    }
+/* ==================== ZOOM ANIMATION (matches login) ==================== */
+body { animation: zoomIn 25s ease-in-out infinite alternate; }
+@keyframes zoomIn {
+    0%   { transform: scale(1); }
+    100% { transform: scale(1.04); }
+}
 </style>
 {% endblock %}

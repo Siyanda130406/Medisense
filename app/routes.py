@@ -2201,8 +2201,7 @@ def logout():
 
 @app.route('/')
 def home():
-    # ===== FIX: Public visitors land on the public home page first =====
-    # Only logged-in users go to their dashboard. Everyone else sees /welcome.
+    # ===== FIX: Everyone without a session goes to public home first =====
     if 'user_id' not in session:
         return redirect('/welcome')
     role = session.get('role')
