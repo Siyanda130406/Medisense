@@ -26,6 +26,7 @@ from difflib import get_close_matches
 # ============================================================
 # FIX #10: DB path helper (persistent data dir for online hosting)
 # ============================================================
+# ===== FIX #10: DB path helper (persistent data dir for online hosting) =====
 def _get_db_dir():
     env_dir = os.environ.get('MEDISENSE_DATA_DIR', '').strip()
     if env_dir:
@@ -35,9 +36,21 @@ def _get_db_dir():
     return 'database'
 
 DB_PATH = os.path.join(_get_db_dir(), 'medisense_users.db')
+
+# ===== FIX: SQLite concurrency — WAL + timeout to prevent hangs =====
+def get_db_connection():
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
+    try:
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA busy_timeout=30000;")
+        conn.execute("PRAGMA synchronous=NORMAL;")
+    except Exception:
+        pass
+    return conn
+# ===== END FIX =====
 # ============================================================
 # END FIX #10
-# ============================================================
+# ====================================================
 
 # ============================================================
 # LOAD ALL DATASETS
@@ -1224,7 +1237,7 @@ def default_terms_content():
 
 def init_database():
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     cursor = conn.cursor()
     
@@ -1394,7 +1407,7 @@ def get_risk_category(risk_score):
 def predict_no_show(user_email):
     """Predict if patient will no-show based on history using ML"""
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -1503,7 +1516,7 @@ def get_available_times(clinic, date):
             all_times.append(f"{hour:02d}:{minute}")
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     cursor = conn.cursor()
     
@@ -1573,7 +1586,7 @@ def check_expired_appointments():
     today = now.strftime('%Y-%m-%d')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -1683,7 +1696,7 @@ def require_terms_acceptance(f):
             return f(*args, **kwargs)
         
         # ===== FIX #10: use DB_PATH =====
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         # ===== END FIX #10 =====
         cursor = conn.cursor()
         cursor.execute('SELECT terms_accepted FROM users WHERE id = ?', (session['user_id'],))
@@ -2086,7 +2099,7 @@ def signup():
             return render_template('signup.html', lang='en', translate_text=translate_text)
         
         # ===== FIX #10: use DB_PATH =====
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         # ===== END FIX #10 =====
         cursor = conn.cursor()
         cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
@@ -2142,7 +2155,7 @@ def login():
             return render_template('login.html', lang=lang, translate_text=translate_text)
         
         # ===== FIX #10: use DB_PATH =====
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         # ===== END FIX #10 =====
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
@@ -2338,7 +2351,7 @@ def forgot_password():
             return render_template('forgot_password.html', lang=lang, translate_text=translate_text)
         
         # ===== FIX #10: use DB_PATH =====
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         # ===== END FIX #10 =====
         cursor = conn.cursor()
         cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
@@ -2354,7 +2367,7 @@ def forgot_password():
         expires = datetime.now() + timedelta(minutes=15)
         
         # ===== FIX #10: use DB_PATH =====
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         # ===== END FIX #10 =====
         cursor = conn.cursor()
         cursor.execute('''
@@ -2379,7 +2392,7 @@ def forgot_password():
 @app.route('/reset-password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -2409,7 +2422,7 @@ def reset_password(token):
             return render_template('reset_password.html', token=token, lang=lang, translate_text=translate_text)
         
         # ===== FIX #10: use DB_PATH =====
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         # ===== END FIX #10 =====
         cursor = conn.cursor()
         password_hash = hashlib.sha256(new_password.encode()).hexdigest()
@@ -2433,7 +2446,7 @@ def reset_password(token):
 @app.route('/terms')
 def view_terms():
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -2456,7 +2469,7 @@ def view_terms():
     accepted_at = None
     if 'user_id' in session:
         # ===== FIX #10: use DB_PATH =====
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         # ===== END FIX #10 =====
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
@@ -2494,7 +2507,7 @@ def accept_terms():
         return redirect(url_for('view_terms'))
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     cursor = conn.cursor()
     cursor.execute('''
@@ -2527,7 +2540,7 @@ def admin_terms():
         return redirect(url_for('login'))
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -2595,7 +2608,7 @@ def patient_profile_setup():
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -2654,7 +2667,7 @@ def patient_profile_setup():
             return render_template('patient_profile_setup.html', user=session, lang=lang, translate_text=translate_text)
         
         # ===== FIX #10: use DB_PATH =====
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         # ===== END FIX #10 =====
         cursor = conn.cursor()
         cursor.execute('''
@@ -2698,7 +2711,7 @@ def staff_profile_setup():
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -2721,7 +2734,7 @@ def staff_profile_setup():
             return render_template('staff_profile_setup.html', user=session, clinics=clinics, lang=lang, translate_text=translate_text)
         
         # ===== FIX #10: use DB_PATH =====
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         # ===== END FIX #10 =====
         cursor = conn.cursor()
         cursor.execute('''
@@ -2755,7 +2768,7 @@ def patient_dashboard():
         return redirect('/login')
 
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -2888,7 +2901,7 @@ def patient_health_symptoms():
             pass
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -3079,7 +3092,7 @@ def patient_health_symptoms():
                 result_summary = search_result['diseases'][0]['disease'] if search_result['diseases'] else 'Health information'
                 try:
                     # ===== FIX #10: use DB_PATH =====
-                    conn = sqlite3.connect(DB_PATH)
+                    conn = get_db_connection()
                     # ===== END FIX #10 =====
                     cursor = conn.cursor()
                     cursor.execute('''
@@ -3118,7 +3131,7 @@ def patient_chatbot():
     history = []
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -3159,7 +3172,7 @@ def patient_chatbot():
             if answer_data['found']:
                 try:
                     # ===== FIX #10: use DB_PATH =====
-                    conn = sqlite3.connect(DB_PATH)
+                    conn = get_db_connection()
                     # ===== END FIX #10 =====
                     cursor = conn.cursor()
                     cursor.execute('''
@@ -3211,7 +3224,7 @@ def patient_health_journal():
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -3287,7 +3300,7 @@ def patient_book():
             return render_template('book_appointment.html', today=today, clinics=clinics, lang=lang, translate_text=translate_text)
         
         # ===== FIX #10: use DB_PATH =====
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         # ===== END FIX #10 =====
         cursor = conn.cursor()
         
@@ -3341,7 +3354,7 @@ def patient_cancel(appt_id):
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     cursor = conn.cursor()
     cursor.execute('UPDATE appointments SET status = "Cancelled" WHERE id = ? AND patient_email = ?', (appt_id, session['email']))
@@ -3361,7 +3374,7 @@ def patient_profile():
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -3542,7 +3555,7 @@ def book_from_clinic():
         return redirect('/patient/clinics')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     cursor = conn.cursor()
     
@@ -3593,7 +3606,7 @@ def patient_no_show_history():
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -3733,7 +3746,7 @@ def staff_dashboard():
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -3750,7 +3763,7 @@ def staff_dashboard():
     today = datetime.now().strftime('%Y-%m-%d')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -3796,7 +3809,7 @@ def staff_checkin(appt_id):
     if 'user_id' not in session or session.get('role') not in ['nurse', 'staff', 'admin']:
         return redirect('/login')
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     cursor = conn.cursor()
     cursor.execute('UPDATE appointments SET status = "Checked-in" WHERE id = ?', (appt_id,))
@@ -3810,7 +3823,7 @@ def staff_checkout(appt_id):
     if 'user_id' not in session or session.get('role') not in ['nurse', 'staff', 'admin']:
         return redirect('/login')
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     cursor = conn.cursor()
     cursor.execute('UPDATE appointments SET status = "Completed" WHERE id = ?', (appt_id,))
@@ -3824,7 +3837,7 @@ def staff_noshow(appt_id):
     if 'user_id' not in session or session.get('role') not in ['nurse', 'staff', 'admin']:
         return redirect('/login')
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     cursor = conn.cursor()
     cursor.execute('UPDATE appointments SET status = "No-Show" WHERE id = ?', (appt_id,))
@@ -3844,7 +3857,7 @@ def staff_manual_book():
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -3874,7 +3887,7 @@ def staff_manual_book():
             return render_template('staff_manual_book.html', today=today, clinics=clinics, staff_clinic=staff_clinic, lang=lang, translate_text=translate_text)
         
         # ===== FIX #10: use DB_PATH =====
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         # ===== END FIX #10 =====
         cursor = conn.cursor()
         
@@ -3930,7 +3943,7 @@ def staff_manage_slots():
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -3947,7 +3960,7 @@ def staff_manage_slots():
     selected_date = request.args.get('date', today)
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     cursor = conn.cursor()
     
@@ -4035,7 +4048,7 @@ def staff_search():
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -4056,7 +4069,7 @@ def staff_search():
     if query:
         search_performed = True
         # ===== FIX #10: use DB_PATH =====
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         # ===== END FIX #10 =====
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
@@ -4077,7 +4090,7 @@ def staff_search():
         
         for patient in patients:
             # ===== FIX #10: use DB_PATH =====
-            conn = sqlite3.connect(DB_PATH)
+            conn = get_db_connection()
             # ===== END FIX #10 =====
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
@@ -4161,7 +4174,7 @@ def staff_export():
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -4178,7 +4191,7 @@ def staff_export():
     export_type = request.args.get('type', 'today')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -4243,7 +4256,7 @@ def staff_export_patients():
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -4258,7 +4271,7 @@ def staff_export_patients():
         return redirect(url_for('staff_profile_setup'))
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -4319,7 +4332,7 @@ def staff_patient_history(patient_id):
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -4413,7 +4426,7 @@ def admin_dashboard():
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -4515,7 +4528,7 @@ def admin_users():
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -4557,7 +4570,7 @@ def admin_user_add():
             return render_template('admin_user_add.html', user=session, error=error, lang=lang, translate_text=translate_text)
         
         # ===== FIX #10: use DB_PATH =====
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         # ===== END FIX #10 =====
         cursor = conn.cursor()
         
@@ -4592,7 +4605,7 @@ def admin_user_edit(user_id):
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -4651,7 +4664,7 @@ def admin_user_delete(user_id):
         return redirect(url_for('admin_users'))
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     cursor = conn.cursor()
     cursor.execute('DELETE FROM users WHERE id = ?', (user_id,))
@@ -4668,7 +4681,7 @@ def admin_user_toggle(user_id):
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     cursor = conn.cursor()
     
@@ -4690,7 +4703,7 @@ def admin_staff():
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -4718,7 +4731,7 @@ def admin_staff_verify(user_id):
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     cursor = conn.cursor()
     cursor.execute('UPDATE users SET is_verified = 1 WHERE id = ?', (user_id,))
@@ -4827,7 +4840,7 @@ def admin_appointments():
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -4854,7 +4867,7 @@ def admin_reports():
         return redirect('/login')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -4916,7 +4929,7 @@ def admin_activity():
     
     activities = []
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -5048,7 +5061,7 @@ def ussd():
     
     if parts[0] == "3":
         # ===== FIX #10: use DB_PATH =====
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         # ===== END FIX #10 =====
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
@@ -5121,7 +5134,7 @@ def update_language():
     if lang in ['en', 'zulu']:
         session['language'] = lang
         # ===== FIX #10: use DB_PATH =====
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         # ===== END FIX #10 =====
         cursor = conn.cursor()
         try:

@@ -7,6 +7,7 @@ import threading
 import time
 
 # ===== FIX #10: Database persistence for online hosting (e.g. Render) =====
+# ===== FIX: Database persistence for online hosting (e.g. Render) =====
 def get_db_dir():
     env_dir = os.environ.get('MEDISENSE_DATA_DIR', '').strip()
     if env_dir:
@@ -17,12 +18,24 @@ def get_db_dir():
 
 DATA_DIR = get_db_dir()
 DB_PATH = os.path.join(DATA_DIR, 'medisense_users.db')
-# ===== END FIX #10 =====
+# ===== END FIX =====
+
+# ===== FIX: SQLite concurrency — WAL + timeout to prevent hangs =====
+def get_db_connection():
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
+    try:
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA busy_timeout=30000;")
+        conn.execute("PRAGMA synchronous=NORMAL;")
+    except Exception:
+        pass
+    return conn
+# ===== END FIX =====
 
 def init_database():
     """Initialize the database with required tables"""
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     cursor = conn.cursor()
 
@@ -206,7 +219,7 @@ def check_expired_appointments():
     today = now.strftime('%Y-%m-%d')
     
     # ===== FIX #10: use DB_PATH =====
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -250,7 +263,7 @@ def run_auto_checker():
                 print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Marked {expired} appointments as No-Show")
         except Exception as e:
             print(f"Error in auto checker: {e}")
-        time.sleep(60)
+        time.sleep(300)
 
 if __name__ == '__main__':
     print("Initializing database...")
@@ -274,4 +287,4 @@ if __name__ == '__main__':
     print("Auto No-Show Checker: Running (checks every 60 seconds)")
     print("="*60)
     
-    app.run(debug=True, port=5000, host='127.0.0.1')
+    app.run(debug=True, port=5000, host='0.0.0.0')
