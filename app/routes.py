@@ -2242,40 +2242,48 @@ def staff_profile_setup():
 def patient_dashboard():
     if 'user_id' not in session or session.get('role') != 'patient':
         return redirect('/login')
-    
+
     # ===== FIX #10: use DB_PATH =====
     conn = sqlite3.connect(DB_PATH)
     # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    
+
     cursor.execute('SELECT id, email, full_name, phone, role, age, health_conditions, location, gender, id_number, allergies, emergency_name, emergency_phone FROM users WHERE id = ?', (session['user_id'],))
     patient = cursor.fetchone()
-    
+
     if patient is None:
         flash('User record not found. Please log in again.', 'error')
         session.clear()
         conn.close()
         return redirect('/login')
-    
+
     cursor.execute('''
-    SELECT id, clinic_name, appointment_date, appointment_time, status, reason 
-    FROM appointments 
-    WHERE patient_email = ? 
+    SELECT id, clinic_name, appointment_date, appointment_time, status, reason
+    FROM appointments
+    WHERE patient_email = ?
     ORDER BY appointment_date DESC, appointment_time DESC
     ''', (session['email'],))
     appointments = cursor.fetchall()
     conn.close()
-    
+
     age = patient['age'] if patient['age'] else 0
     health_conditions = patient['health_conditions'] if patient['health_conditions'] else ''
     health_count = len([c for c in health_conditions.split(',') if c.strip()]) if health_conditions else 0
-    
-    # ===== FIX #9: use health score starting at 0 =====
+
+    # ===== FIX #9: HEALTH SCORE — starts at 0, based on real user data =====
+    # Breakdown (max 100):
+    #  - Profile completeness: up to 30 points
+    #  - Completed appointments: up to 40 points
+    #  - Checked-in appointments: up to 15 points
+    #  - Regular booking bonus: up to 15 points
+    #  - No-show penalty: up to -30
+    #  - Cancelled penalty: up to -10
     profile_complete = bool(age and patient['location'])
     has_id = bool(patient['id_number'])
     has_emergency = bool(patient['emergency_name'] and patient['emergency_phone'])
     has_allergies = patient['allergies'] or ''
+
     health_score = calculate_health_score(
         age, health_conditions, appointments,
         profile_complete=profile_complete,
@@ -2284,15 +2292,43 @@ def patient_dashboard():
         has_allergies=has_allergies
     )
     health_score_category = get_health_score_category(health_score)
-    # Keep risk_score/risk_category names so the existing template still works
+
+    # Give the dashboard a short explanation for the tooltip
+    score_breakdown = []
+    if age and 1 <= age <= 120:
+        score_breakdown.append("Age provided (+5)")
+    if profile_complete:
+        score_breakdown.append("Profile complete (+10)")
+    if has_id:
+        score_breakdown.append("ID number on file (+5)")
+    if has_emergency:
+        score_breakdown.append("Emergency contact on file (+5)")
+    if health_conditions:
+        score_breakdown.append("Health conditions recorded (+5)")
+    if has_allergies:
+        score_breakdown.append("Allergies recorded (+5)")
+    completed_ct = sum(1 for a in appointments if a['status'] == 'Completed')
+    if completed_ct:
+        score_breakdown.append(f"{completed_ct} completed appointment(s) (+{min(completed_ct * 5, 40)})")
+    checked_in_ct = sum(1 for a in appointments if a['status'] == 'Checked-in')
+    if checked_in_ct:
+        score_breakdown.append(f"{checked_in_ct} checked-in appointment(s) (+{min(checked_in_ct * 3, 15)})")
+    ns_ct = sum(1 for a in appointments if a['status'] == 'No-Show')
+    if ns_ct:
+        score_breakdown.append(f"{ns_ct} no-show(s) (-{min(ns_ct * 10, 30)})")
+    cancel_ct = sum(1 for a in appointments if a['status'] == 'Cancelled')
+    if cancel_ct:
+        score_breakdown.append(f"{cancel_ct} cancelled appointment(s) (-{min(cancel_ct * 2, 10)})")
+
+    # Keep risk_score/risk_category for template backward-compat
     risk_score = health_score
     risk_category = health_score_category
     # ===== END FIX #9 =====
-    
+
     nearest_clinic = get_nearest_clinic(patient['location'] if patient['location'] else None)
     health_tip = get_random_health_tip()
     no_show_prediction = predict_no_show(session['email'])
-    
+
     lang = session.get('language', 'en')
     return render_template('patient_dashboard.html',
         user=dict(patient),
@@ -2305,6 +2341,7 @@ def patient_dashboard():
         total_appointments=len(appointments),
         health_score=health_score,
         health_score_category=health_score_category,
+        score_breakdown=score_breakdown,
         risk_score=risk_score,
         risk_category=risk_category,
         nearest_clinic=nearest_clinic,

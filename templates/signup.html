@@ -1,108 +1,442 @@
 {% extends "base.html" %}
 
-{% block title %}Create Account — MediSense{% endblock %}
+{% block title %}Sign Up - MediSense{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-4">
-                    <div class="text-center mb-4">
-                        <i class="fas fa-user-plus fa-3x text-primary mb-2"></i>
-                        <h4 class="mb-1">Create your MediSense account</h4>
-                        <p class="text-muted small mb-0">Free, secure, and takes less than a minute</p>
+        <div class="col-11 col-sm-11 col-md-8 col-lg-6">
+            <div class="signup-form">
+                <h4 class="text-center mb-4 text-white">
+                    <i class="fas fa-user-plus"></i> {{ translate_text('Create Account', lang) }}
+                </h4>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST" action="{{ url_for('signup') }}" id="signupForm">
+                    <div class="mb-3">
+                        <label for="full_name" class="form-label text-white fw-bold text-shadow">{{ translate_text('Full Name', lang) }} *</label>
+                        <input type="text" class="form-control transparent-input" id="full_name" name="full_name" required placeholder="{{ translate_text('Full Name', lang) }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label text-white fw-bold text-shadow">{{ translate_text('Email', lang) }} *</label>
+                        <input type="email" class="form-control transparent-input" id="email" name="email" required placeholder="{{ translate_text('Email', lang) }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone" class="form-label text-white fw-bold text-shadow">{{ translate_text('Phone', lang) }}</label>
+                        <input type="tel" class="form-control transparent-input" id="phone" name="phone" placeholder="{{ translate_text('Phone', lang) }}">
+                        <small class="text-white-50 text-shadow">{{ translate_text('Optional but recommended for SMS reminders', lang) }}</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="role" class="form-label text-white fw-bold text-shadow">{{ translate_text('Role', lang) }} *</label>
+                        <select class="form-select transparent-input" id="role" name="role" required onchange="toggleStaffCode()">
+                            <option value="patient">{{ translate_text('Patient', lang) }}</option>
+                            <option value="nurse">{{ translate_text('Nurse', lang) }}</option>
+                            <option value="admin">{{ translate_text('Admin', lang) }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="staff_code_section" style="display: none;">
+                        <label for="staff_code" class="form-label text-white fw-bold text-shadow">{{ translate_text('Staff Code', lang) }} *</label>
+                        <input type="password" class="form-control transparent-input" id="staff_code" name="staff_code" placeholder="{{ translate_text('Staff Code', lang) }}">
+                        <small class="text-white-50 text-shadow">{{ translate_text('Required for nurse and admin accounts. Contact your supervisor if you do not have one.', lang) }}</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label text-white fw-bold text-shadow">{{ translate_text('Password', lang) }} *</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control transparent-input" id="password" name="password" required placeholder="{{ translate_text('Password', lang) }}">
+                            <button class="btn btn-outline-light transparent-btn" type="button" id="togglePassword" title="{{ translate_text('Show/Hide Password', lang) }}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <small class="text-white-50 text-shadow">{{ translate_text('Password must be at least 6 characters', lang) }}</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label text-white fw-bold text-shadow">{{ translate_text('Confirm Password', lang) }} *</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control transparent-input" id="confirm_password" name="confirm_password" required placeholder="{{ translate_text('Confirm Password', lang) }}">
+                            <button class="btn btn-outline-light transparent-btn" type="button" id="toggleConfirmPassword" title="{{ translate_text('Show/Hide Password', lang) }}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
                     </div>
 
-                    <form method="POST" action="{{ url_for('signup') }}" id="signupForm">
-                        <div class="mb-3">
-                            <label for="full_name" class="form-label">Full Name *</label>
-                            <input type="text" class="form-control" id="full_name" name="full_name" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email *</label>
-                            <input type="email" class="form-control" id="email" name="email" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="phone" class="form-label">Phone</label>
-                            <input type="tel" class="form-control" id="phone" name="phone"
-                                   placeholder="e.g. 0821234567">
-                            <div class="form-text">Optional but recommended for SMS reminders.</div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="role" class="form-label">I am a *</label>
-                            <select class="form-select" id="role" name="role" required onchange="toggleStaffCode()">
-                                <option value="patient">Patient</option>
-                                <option value="nurse">Nurse</option>
-                                <option value="admin">Administrator</option>
-                            </select>
-                        </div>
-                        <div class="mb-3" id="staff_code_section" style="display:none;">
-                            <label for="staff_code" class="form-label">Staff Code *</label>
-                            <input type="password" class="form-control" id="staff_code" name="staff_code">
-                            <div class="form-text">Required for nurse and admin accounts.</div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Password *</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="password" name="password" required minlength="6">
-                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                            <div class="form-text">At least 6 characters.</div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="confirm_password" class="form-label">Confirm Password *</label>
-                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="6">
-                        </div>
-
-                        <div class="form-check mb-3">
-                            <input type="checkbox" class="form-check-input" id="terms" name="terms" required>
-                            <label class="form-check-label small" for="terms">
-                                I agree to the
-                                <a href="{{ url_for('view_terms') }}" target="_blank">Terms and Conditions</a>
+                    <div class="terms-wrapper mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input transparent-check" id="terms" name="terms" required>
+                            <label class="form-check-label terms-label" for="terms">
+                                {{ translate_text('I agree to the', lang) }}
+                                <a href="#" class="terms-link" data-bs-toggle="modal" data-bs-target="#termsModal" onclick="event.preventDefault();">
+                                    {{ translate_text('Terms and Conditions', lang) }}
+                                </a>
                             </label>
                         </div>
+                        <div class="invalid-feedback" id="termsFeedback">
+                            {{ translate_text('You must agree to the Terms and Conditions to continue.', lang) }}
+                        </div>
+                    </div>
 
-                        <button type="submit" class="btn btn-primary w-100 py-2">
-                            <i class="fas fa-user-plus me-2"></i>Create Account
-                        </button>
-                    </form>
+                    <button type="submit" class="btn btn-primary w-100 btn-glass">
+                        <i class="fas fa-user-plus"></i> {{ translate_text('Create Account', lang) }}
+                    </button>
+                </form>
 
-                    <hr class="my-4">
-                    <div class="text-center small">
-                        <p class="mb-0 text-muted">
-                            Already have an account?
-                            <a href="{{ url_for('login') }}">Sign in</a>
-                        </p>
+                <hr class="hr-light">
+                <div class="text-center">
+                    <p class="text-white text-shadow">{{ translate_text('Already have an account?', lang) }} <a href="{{ url_for('login') }}" class="text-white fw-bold text-shadow">{{ translate_text('Login', lang) }}</a></p>
+                </div>
+            </div>
+
+            <div class="modal fade" id="termsModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable">
+                    <div class="modal-content glass-modal">
+                        <div class="modal-header">
+                            <h5 class="modal-title">{{ translate_text('Terms and Conditions', lang) }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <h6>1. {{ translate_text('Acceptance of Terms', lang) }}</h6>
+                            <p>{{ translate_text('By creating an account, you agree to use MediSense for legitimate healthcare purposes only.', lang) }}</p>
+
+                            <h6>2. {{ translate_text('Privacy Policy', lang) }}</h6>
+                            <p>{{ translate_text('Your personal and health information will be kept confidential and used only for appointment management and healthcare services.', lang) }}</p>
+
+                            <h6>3. {{ translate_text('SMS Notifications', lang) }}</h6>
+                            <p>{{ translate_text('By providing your phone number, you agree to receive SMS reminders about your appointments.', lang) }}</p>
+
+                            <h6>4. {{ translate_text('No-Show Policy', lang) }}</h6>
+                            <p>{{ translate_text('Repeated no-shows may result in restricted access to booking services.', lang) }}</p>
+
+                            <h6>5. {{ translate_text('Medical Disclaimer', lang) }}</h6>
+                            <p>{{ translate_text('MediSense provides health information and appointment management only. It is NOT a substitute for professional medical advice, diagnosis, or treatment.', lang) }}</p>
+
+                            <h6>6. {{ translate_text('User Conduct', lang) }}</h6>
+                            <p>{{ translate_text('You agree to use MediSense for legitimate healthcare purposes only. Any misuse or abuse will result in account termination.', lang) }}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">{{ translate_text('I Understand & Agree', lang) }}</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
-<script>
-function toggleStaffCode() {
-    var role = document.getElementById('role').value;
-    var sec = document.getElementById('staff_code_section');
-    var input = document.getElementById('staff_code');
-    if (role === 'nurse' || role === 'admin') {
-        sec.style.display = 'block';
-        input.required = true;
-    } else {
-        sec.style.display = 'none';
-        input.required = false;
+<style>
+    body {
+        background: url("{{ url_for('static', filename='images/health-background.jpg') }}") no-repeat center center fixed;
+        background-size: cover;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
     }
-}
-document.getElementById('togglePassword').addEventListener('click', function() {
-    var input = document.getElementById('password');
-    var icon = this.querySelector('i');
-    if (input.type === 'password') { input.type = 'text'; icon.classList.replace('fa-eye','fa-eye-slash'); }
-    else { input.type = 'password'; icon.classList.replace('fa-eye-slash','fa-eye'); }
-});
+
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: 0;
+    }
+
+    .container { position: relative; z-index: 1; }
+
+    .signup-form {
+        padding: 30px 25px;
+        border-radius: 20px;
+        background: transparent !important;
+    }
+
+    .transparent-input {
+        background: rgba(255, 255, 255, 0.15) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        color: #ffffff !important;
+        border-radius: 10px;
+        padding: 12px 15px;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+    }
+
+    .transparent-input::placeholder { color: rgba(255, 255, 255, 0.6) !important; }
+
+    .transparent-input:focus {
+        background: rgba(255, 255, 255, 0.25) !important;
+        border-color: #3498db !important;
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.4) !important;
+        color: #ffffff !important;
+    }
+
+    .transparent-input option { color: #212529; background: #ffffff; }
+
+    .transparent-input:-webkit-autofill {
+        -webkit-box-shadow: 0 0 0 30px rgba(20, 30, 50, 0.8) inset !important;
+        -webkit-text-fill-color: #ffffff !important;
+    }
+
+    .transparent-btn {
+        background: rgba(255, 255, 255, 0.15) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        color: #ffffff !important;
+        border-radius: 0 10px 10px 0;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+    }
+
+    .transparent-btn:hover { background: rgba(255, 255, 255, 0.3) !important; color: #ffffff !important; }
+
+    .btn-glass {
+        background: rgba(52, 152, 219, 0.8) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        padding: 12px;
+        font-weight: 600;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        color: #ffffff !important;
+    }
+
+    .btn-glass:hover {
+        background: rgba(52, 152, 219, 1) !important;
+        transform: scale(1.02);
+        box-shadow: 0 0 20px rgba(52, 152, 219, 0.4);
+    }
+
+    .text-shadow { text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9); }
+    .text-white { color: #ffffff !important; }
+    .text-white-50 { color: rgba(255, 255, 255, 0.7) !important; }
+    .form-label { text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9); }
+
+    #staff_code_section {
+        background: rgba(0, 0, 0, 0.2) !important;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 4px solid rgba(52, 152, 219, 0.8);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+    }
+
+    .terms-wrapper {
+        padding: 12px 15px;
+        background: rgba(0, 0, 0, 0.25) !important;
+        border-radius: 10px;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 30px;
+        padding-left: 35px;
+        position: relative;
+        margin: 0;
+    }
+
+    .form-check-input {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        flex-shrink: 0;
+        z-index: 2;
+    }
+
+    .transparent-check {
+        background-color: rgba(255, 255, 255, 0.2) !important;
+        border: 2px solid rgba(255, 255, 255, 0.4) !important;
+        cursor: pointer;
+        border-radius: 5px !important;
+    }
+
+    .transparent-check:checked { background-color: #3498db !important; border-color: #3498db !important; }
+    .transparent-check:focus { box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.4) !important; }
+
+    .terms-label {
+        color: #ffffff !important;
+        font-weight: 500;
+        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9);
+        cursor: pointer;
+        font-size: 1rem;
+        display: inline-block;
+        padding-top: 2px;
+        margin: 0;
+        line-height: 1.5;
+        z-index: 1;
+        position: relative;
+    }
+
+    .terms-label a.terms-link {
+        color: #6cb4ee !important;
+        text-decoration: underline;
+        font-weight: 700;
+        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9);
+        cursor: pointer !important;
+        transition: color 0.2s ease;
+        display: inline-block;
+        padding: 0 2px;
+    }
+
+    .terms-label a.terms-link:hover { color: #8ec9f5 !important; text-decoration: underline; }
+
+    .invalid-feedback {
+        display: none;
+        color: #ff6b6b !important;
+        font-weight: 600;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        margin-top: 8px;
+        font-size: 0.9rem;
+    }
+
+    .invalid-feedback.show { display: block; }
+
+    .hr-light { border-top: 1px solid rgba(255, 255, 255, 0.2); margin: 20px 0; }
+
+    .alert {
+        border-radius: 10px;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+    }
+
+    .alert-danger { background: rgba(220, 53, 69, 0.8) !important; border-color: rgba(220, 53, 69, 0.3); color: #ffffff !important; }
+    .alert-success { background: rgba(40, 167, 69, 0.8) !important; border-color: rgba(40, 167, 69, 0.3); color: #ffffff !important; }
+    .alert-info { background: rgba(23, 162, 184, 0.8) !important; border-color: rgba(23, 162, 184, 0.3); color: #ffffff !important; }
+    .alert-warning { background: rgba(255, 193, 7, 0.8) !important; border-color: rgba(255, 193, 7, 0.3); color: #212529 !important; }
+    .alert .btn-close { filter: brightness(0) invert(1); }
+
+    a.text-white {
+        color: #ffffff !important;
+        text-decoration: none;
+        font-weight: 600;
+        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9);
+    }
+
+    a.text-white:hover { text-decoration: underline; color: #8ec9f5 !important; }
+
+    .modal.fade .modal-dialog { transform: scale(0.9); transition: transform 0.3s ease; }
+    .modal.show .modal-dialog { transform: scale(1); }
+
+    .glass-modal {
+        background: rgba(255, 255, 255, 0.98) !important;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .glass-modal .modal-header { border-bottom: 1px solid rgba(0, 0, 0, 0.1); padding: 20px 25px; }
+    .glass-modal .modal-body { padding: 25px; max-height: 60vh; overflow-y: auto; }
+    .glass-modal .modal-body h6 { color: #2c3e50; font-weight: 700; margin-top: 15px; margin-bottom: 8px; }
+    .glass-modal .modal-body p { color: #4a5568; line-height: 1.6; }
+    .glass-modal .modal-footer { border-top: 1px solid rgba(0, 0, 0, 0.1); padding: 15px 25px; }
+    .glass-modal .modal-footer .btn-primary { background: #3498db; border: none; padding: 10px 30px; border-radius: 10px; font-weight: 600; }
+    .glass-modal .modal-footer .btn-primary:hover { background: #2980b9; }
+
+    .content { background: transparent !important; }
+
+    body { animation: zoomIn 25s ease-in-out infinite alternate; }
+    @keyframes zoomIn { 0% { transform: scale(1); } 100% { transform: scale(1.05); } }
+
+    @media (max-width: 576px) {
+        .signup-form { padding: 20px 14px; }
+        .container { padding-left: 10px; padding-right: 10px; }
+        h4 { font-size: 1.2rem !important; }
+        .transparent-input { padding: 10px 12px; font-size: 0.95rem; }
+        .glass-modal .modal-body { padding: 15px; }
+        .terms-label { font-size: 0.9rem; }
+    }
+</style>
+
+<script>
+    function toggleStaffCode() {
+        var role = document.getElementById('role').value;
+        var staffSection = document.getElementById('staff_code_section');
+        var staffCodeInput = document.getElementById('staff_code');
+        if (role === 'nurse' || role === 'admin') {
+            staffSection.style.display = 'block';
+            staffCodeInput.required = true;
+        } else {
+            staffSection.style.display = 'none';
+            staffCodeInput.required = false;
+        }
+    }
+
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('password');
+        const icon = this.querySelector('i');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    });
+
+    document.getElementById('toggleConfirmPassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('confirm_password');
+        const icon = this.querySelector('i');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    });
+
+    document.getElementById('signupForm').addEventListener('submit', function(e) {
+        const termsCheckbox = document.getElementById('terms');
+        const feedback = document.getElementById('termsFeedback');
+
+        if (!termsCheckbox.checked) {
+            e.preventDefault();
+            feedback.classList.add('show');
+            termsCheckbox.classList.add('is-invalid');
+            setTimeout(function() {
+                feedback.classList.remove('show');
+                termsCheckbox.classList.remove('is-invalid');
+            }, 3000);
+        } else {
+            feedback.classList.remove('show');
+            termsCheckbox.classList.remove('is-invalid');
+        }
+    });
+
+    document.getElementById('terms').addEventListener('change', function() {
+        const feedback = document.getElementById('termsFeedback');
+        if (this.checked) {
+            feedback.classList.remove('show');
+            this.classList.remove('is-invalid');
+        }
+    });
+
+    document.querySelector('.terms-link').addEventListener('click', function(e) {
+        e.preventDefault();
+        var modal = new bootstrap.Modal(document.getElementById('termsModal'));
+        modal.show();
+    });
 </script>
 {% endblock %}
