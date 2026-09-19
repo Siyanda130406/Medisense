@@ -1,81 +1,316 @@
 {% extends "base.html" %}
 
-{% block title %}Ask a Question - MediSense{% endblock %}
+{% block title %}{{ translate_text('Ask a Question', lang) }} - MediSense{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ url_for('patient_dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item active">Ask a Question</li>
-        </ol>
-    </nav>
+<div class="container py-4" style="max-width: 900px;">
 
-    <div class="row justify-content-center">
-        <div class="col-lg-9">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-comments text-primary"></i> Health Chatbot</h5>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted small">Ask any health question in plain language. Answers come from our medical Q&A database.</p>
-
-                    <form method="POST">
-                        <div class="mb-3">
-                            <textarea class="form-control" name="question" rows="3" required
-                                      placeholder="e.g., What causes a headache? How do I prevent diabetes?">{{ question }}</textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-paper-plane"></i> Ask
-                        </button>
-                    </form>
-
-                    {% if answer_data %}
-                    <hr class="my-4">
-                    <div class="p-3 rounded mb-3" style="background: rgba(52,152,219,0.1);">
-                        <strong>You asked:</strong> {{ answer_data.question }}
-                    </div>
-                    {% if answer_data.corrected %}
-                    <div class="alert alert-info small mb-2">
-                        <i class="fas fa-lightbulb"></i> Searched for: <strong>{{ answer_data.corrected }}</strong>
-                    </div>
-                    {% endif %}
-
-                    {% if answer_data.found %}
-                        {% for r in answer_data.results %}
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h6 class="text-primary"><i class="fas fa-robot"></i> {{ r.question }}</h6>
-                                <p>{{ r.answer }}</p>
-                                <small class="text-muted"><i class="fas fa-tag"></i> {{ r.source }}</small>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i> No answer found. Try rephrasing, or use the <a href="{{ url_for('patient_health_symptoms') }}">Health Search</a> page.
-                    </div>
-                    {% endif %}
-                    {% endif %}
-
-                    {% if history %}
-                    <hr class="my-4">
-                    <h6 class="text-muted">Recent questions</h6>
-                    {% for h in history %}
-                    <div class="border-bottom py-2">
-                        <div class="fw-semibold small">{{ h.question }}</div>
-                        <div class="text-muted small text-truncate">{{ h.answer[:120] }}...</div>
-                        <small class="text-muted">{{ h.created_at[:16] if h.created_at else '' }}</small>
-                    </div>
-                    {% endfor %}
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="alert alert-info mt-3">
-                <i class="fas fa-shield-alt"></i> Answers are for general information only. Always consult a healthcare professional.
-            </div>
-        </div>
+    <!-- Header -->
+    <div class="text-center mb-4">
+        <h2 class="fw-bold mb-1" style="color: #2c3e50;">
+            <i class="fas fa-comments me-2" style="color: #2b6cb0;"></i>
+            {{ translate_text('Health Chatbot', lang) }}
+        </h2>
+        <p class="text-muted mb-0">{{ translate_text('Ask any health question in plain language', lang) }}</p>
     </div>
+
+    <!-- Chat window -->
+    <div class="card border-0 shadow-sm mb-3" style="border-radius: 16px; overflow: hidden;">
+        <div class="chat-window" id="chatWindow">
+
+            {% if not history and not answer_data %}
+            <!-- Welcome message -->
+            <div class="message-row bot">
+                <div class="avatar bot-avatar"><i class="fas fa-robot"></i></div>
+                <div class="bubble bot-bubble">
+                    <p class="mb-1"><strong>{{ translate_text('Hello! How can I help you today?', lang) }}</strong></p>
+                    <p class="mb-0 small text-muted">{{ translate_text('Ask me about symptoms, diseases, medicines, or general health questions.', lang) }}</p>
+                </div>
+            </div>
+
+            <div class="suggested-questions">
+                <span class="small text-muted">{{ translate_text('Try asking:', lang) }}</span>
+                <button class="chip" onclick="askQuestion('What causes a headache?')">{{ translate_text('What causes a headache?', lang) }}</button>
+                <button class="chip" onclick="askQuestion('How do I prevent diabetes?')">{{ translate_text('How do I prevent diabetes?', lang) }}</button>
+                <button class="chip" onclick="askQuestion('What is high blood pressure?')">{{ translate_text('What is high blood pressure?', lang) }}</button>
+                <button class="chip" onclick="askQuestion('Symptoms of flu')">{{ translate_text('Symptoms of flu', lang) }}</button>
+            </div>
+            {% endif %}
+
+            <!-- Previous conversation -->
+            {% for h in history %}
+            <div class="message-row user">
+                <div class="bubble user-bubble">
+                    {{ h.question }}
+                </div>
+                <div class="avatar user-avatar"><i class="fas fa-user"></i></div>
+            </div>
+
+            <div class="message-row bot">
+                <div class="avatar bot-avatar"><i class="fas fa-robot"></i></div>
+                <div class="bubble bot-bubble">
+                    <div class="answer-content" data-full="{{ h.answer|e }}">
+                        <p class="answer-short mb-0">{{ h.answer[:180] }}{% if h.answer|length > 180 %}...{% endif %}</p>
+                        <p class="answer-full d-none mb-0">{{ h.answer }}</p>
+                        {% if h.answer|length > 180 %}
+                        <button class="btn btn-link btn-sm p-0 mt-1 toggle-answer"
+                                onclick="toggleAnswer(this)" style="font-size: 0.8rem;">
+                            {{ translate_text('See more', lang) }}
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div class="source-tag"><i class="fas fa-tag me-1"></i>{{ h.source }}</div>
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Just-submitted answer -->
+            {% if answer_data %}
+            <div class="message-row user">
+                <div class="bubble user-bubble">
+                    {{ answer_data.question }}
+                </div>
+                <div class="avatar user-avatar"><i class="fas fa-user"></i></div>
+            </div>
+
+            {% if answer_data.corrected %}
+            <div class="message-row system">
+                <div class="system-bubble">
+                    <i class="fas fa-lightbulb me-1"></i>
+                    {{ translate_text('Searched for:', lang) }} <strong>{{ answer_data.corrected }}</strong>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if answer_data.found %}
+            {% for r in answer_data.results %}
+            <div class="message-row bot">
+                <div class="avatar bot-avatar"><i class="fas fa-robot"></i></div>
+                <div class="bubble bot-bubble">
+                    <p class="fw-semibold mb-2" style="color: #2c3e50;">{{ r.question }}</p>
+                    <div class="answer-content" data-full="{{ r.answer|e }}">
+                        <p class="answer-short mb-0">{{ r.answer[:180] }}{% if r.answer|length > 180 %}...{% endif %}</p>
+                        <p class="answer-full d-none mb-0">{{ r.answer }}</p>
+                        {% if r.answer|length > 180 %}
+                        <button class="btn btn-link btn-sm p-0 mt-1 toggle-answer"
+                                onclick="toggleAnswer(this)" style="font-size: 0.8rem;">
+                            {{ translate_text('See more', lang) }}
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div class="source-tag"><i class="fas fa-tag me-1"></i>{{ r.source }}</div>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="message-row bot">
+                <div class="avatar bot-avatar"><i class="fas fa-robot"></i></div>
+                <div class="bubble bot-bubble">
+                    <p class="mb-1">{{ translate_text("I couldn't find an answer for that. Try rephrasing, or ask in a different way.", lang) }}</p>
+                    <p class="mb-0 small text-muted">{{ translate_text('Example: "What causes a fever?" or "How do I treat a cold?"', lang) }}</p>
+                </div>
+            </div>
+            {% endif %}
+            {% endif %}
+
+        </div>
+
+        <!-- Input area -->
+        <form method="POST" action="{{ url_for('patient_chatbot') }}" class="chat-input-area" id="chatForm">
+            <div class="d-flex gap-2">
+                <input type="text" class="form-control" name="question" id="questionInput"
+                       placeholder="{{ translate_text('Type your health question...', lang) }}"
+                       autocomplete="off" required>
+                <button type="submit" class="btn btn-primary send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                    <span class="d-none d-md-inline ms-1">{{ translate_text('Send', lang) }}</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="alert alert-info border-0 small" style="border-radius: 12px;">
+        <i class="fas fa-shield-alt me-1"></i>
+        {{ translate_text('Answers are for general information only. Always consult a healthcare professional.', lang) }}
+    </div>
+
+    <div class="text-center mt-3">
+        <a href="{{ url_for('patient_dashboard') }}" class="btn btn-outline-secondary" style="border-radius: 20px; padding: 8px 24px;">
+            <i class="fas fa-arrow-left me-1"></i> {{ translate_text('Back to Dashboard', lang) }}
+        </a>
+    </div>
+
 </div>
+
+<style>
+    /* ===== Chat window ===== */
+    .chat-window {
+        padding: 20px 18px;
+        background: var(--bg-body);
+        max-height: 62vh;
+        overflow-y: auto;
+        scroll-behavior: smooth;
+    }
+
+    .message-row {
+        display: flex;
+        align-items: flex-end;
+        margin-bottom: 16px;
+        gap: 10px;
+    }
+    .message-row.user { justify-content: flex-end; }
+    .message-row.bot { justify-content: flex-start; }
+    .message-row.system { justify-content: center; }
+
+    .avatar {
+        width: 36px; height: 36px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+    .bot-avatar  { background: #2b6cb0; color: #fff; }
+    .user-avatar { background: #4a5568; color: #fff; }
+
+    .bubble {
+        max-width: 78%;
+        padding: 12px 16px;
+        border-radius: 16px;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        word-wrap: break-word;
+    }
+    .bot-bubble {
+        background: var(--bg-card);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        border-bottom-left-radius: 4px;
+    }
+    .user-bubble {
+        background: #2b6cb0;
+        color: #fff;
+        border-bottom-right-radius: 4px;
+    }
+
+    .system-bubble {
+        background: #fff8e1;
+        color: #7d5f00;
+        padding: 6px 14px;
+        border-radius: 14px;
+        font-size: 0.82rem;
+    }
+    [data-bs-theme="dark"] .system-bubble {
+        background: #4a3a00;
+        color: #ffd966;
+    }
+
+    .source-tag {
+        display: inline-block;
+        margin-top: 8px;
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        background: var(--bg-body);
+        padding: 2px 8px;
+        border-radius: 10px;
+    }
+
+    .toggle-answer {
+        color: #2b6cb0;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .toggle-answer:hover { text-decoration: underline; }
+
+    /* ===== Suggested questions ===== */
+    .suggested-questions {
+        margin-top: 8px;
+        margin-left: 46px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .chip {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        padding: 6px 14px;
+        border-radius: 18px;
+        font-size: 0.82rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    .chip:hover {
+        background: #2b6cb0;
+        color: #fff;
+        border-color: #2b6cb0;
+    }
+
+    /* ===== Input area ===== */
+    .chat-input-area {
+        padding: 14px 16px;
+        background: var(--bg-card);
+        border-top: 1px solid var(--border-color);
+    }
+    .chat-input-area .form-control {
+        border-radius: 20px;
+        padding: 10px 18px;
+    }
+    .send-btn {
+        border-radius: 20px;
+        padding: 8px 20px;
+        background: #2b6cb0;
+        border-color: #2b6cb0;
+    }
+
+    /* Mobile */
+    @media (max-width: 576px) {
+        .bubble { max-width: 85%; font-size: 0.9rem; }
+        .chat-window { padding: 14px 12px; max-height: 58vh; }
+        .avatar { width: 30px; height: 30px; font-size: 0.8rem; }
+        .suggested-questions { margin-left: 0; }
+    }
+</style>
+
+<script>
+    // Auto-scroll to bottom when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatWindow = document.getElementById('chatWindow');
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+
+        // Autofocus input
+        document.getElementById('questionInput').focus();
+    });
+
+    // Toggle "See more" / "See less"
+    function toggleAnswer(btn) {
+        const container = btn.closest('.answer-content');
+        const shortEl = container.querySelector('.answer-short');
+        const fullEl = container.querySelector('.answer-full');
+
+        if (fullEl.classList.contains('d-none')) {
+            shortEl.classList.add('d-none');
+            fullEl.classList.remove('d-none');
+            btn.textContent = '{{ translate_text("See less", lang) }}';
+        } else {
+            shortEl.classList.remove('d-none');
+            fullEl.classList.add('d-none');
+            btn.textContent = '{{ translate_text("See more", lang) }}';
+        }
+    }
+
+    // Fill input from suggested question chip
+    function askQuestion(q) {
+        document.getElementById('questionInput').value = q;
+        document.getElementById('chatForm').submit();
+    }
+
+    // Show a "typing" indicator and disable the send button on submit
+    document.getElementById('chatForm').addEventListener('submit', function() {
+        const btn = this.querySelector('.send-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    });
+</script>
+
 {% endblock %}

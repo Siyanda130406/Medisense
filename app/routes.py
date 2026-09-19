@@ -1787,18 +1787,40 @@ def is_short_keyword(search_term):
     return word_count <= 3
 
 def search_medical_qa(search_term, limit=6, offset=0):
-    """Search medical Q&A with pagination"""
-    if df_medical_qa is None:
+    """
+    Improved Q&A search — matches against question AND answer fields,
+    with word-level fallback so any keyword finds something.
+    """
+    if df_medical_qa is None or not search_term:
         return [], 0
-    
+
     search_lower = search_term.lower().strip()
+    # Remove common question words for better matching
+    stop_words = {'what', 'how', 'why', 'when', 'where', 'who', 'is', 'are',
+                  'the', 'a', 'an', 'of', 'to', 'for', 'in', 'on', 'at', 'do',
+                  'does', 'did', 'can', 'could', 'should', 'would', 'i', 'you'}
+    keywords = [w for w in re.findall(r'\w+', search_lower) if w not in stop_words and len(w) > 2]
+
     results = []
-    
     try:
-        matches = df_medical_qa[df_medical_qa['question'].astype(str).str.lower().str.contains(search_lower, na=False)]
+        # Pass 1: exact phrase match on question
+        mask_q = df_medical_qa['question'].astype(str).str.lower().str.contains(search_lower, na=False, regex=False)
+        matches = df_medical_qa[mask_q]
+
+        # Pass 2: exact phrase match on answer
         if matches.empty:
-            matches = df_medical_qa[df_medical_qa['answer'].astype(str).str.lower().str.contains(search_lower, na=False)]
-        
+            mask_a = df_medical_qa['answer'].astype(str).str.lower().str.contains(search_lower, na=False, regex=False)
+            matches = df_medical_qa[mask_a]
+
+        # Pass 3: keyword-based — score by how many keywords appear
+        if matches.empty and keywords:
+            def score_row(row):
+                text = (str(row.get('question', '')) + ' ' + str(row.get('answer', ''))).lower()
+                return sum(1 for kw in keywords if kw in text)
+            df_medical_qa['_score'] = df_medical_qa.apply(score_row, axis=1)
+            matches = df_medical_qa[df_medical_qa['_score'] > 0].sort_values('_score', ascending=False)
+            df_medical_qa.drop(columns=['_score'], inplace=True, errors='ignore')
+
         for _, row in matches.iterrows():
             results.append({
                 'question': row.get('question', ''),
@@ -1807,7 +1829,8 @@ def search_medical_qa(search_term, limit=6, offset=0):
             })
     except Exception as e:
         print(f"Q&A search error: {e}")
-    
+
+    # Deduplicate by question text
     unique_results = []
     seen = set()
     for r in results:
@@ -1815,10 +1838,9 @@ def search_medical_qa(search_term, limit=6, offset=0):
         if q_text and q_text not in seen:
             seen.add(q_text)
             unique_results.append(r)
-    
+
     total_count = len(unique_results)
-    paginated_results = unique_results[offset:offset+limit]
-    
+    paginated_results = unique_results[offset:offset + limit]
     return paginated_results, total_count
 
 def extract_health_terms(query):
@@ -3294,67 +3316,103 @@ def patient_health_symptoms():
 def patient_chatbot():
     if 'user_id' not in session or session.get('role') != 'patient':
         return redirect('/login')
-    
+
     question = ''
     answer_data = None
+
+    # Fetch previous conversation (latest 20 messages, oldest first)
     history = []
-    
-    # ===== FIX #10: use DB_PATH =====
-    conn = get_db_connection()
-    # ===== END FIX #10 =====
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute('''
-    SELECT question, answer, source, created_at 
-    FROM chatbot_history 
-    WHERE user_id = ? 
-    ORDER BY created_at DESC 
-    LIMIT 10
-    ''', (session['user_id'],))
-    history = cursor.fetchall()
-    conn.close()
-    
+    try:
+        conn = get_db_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT question, answer, source, created_at
+            FROM chatbot_history
+            WHERE user_id = ?
+            ORDER BY created_at ASC
+            LIMIT 40
+        ''', (session['user_id'],))
+        history = [dict(r) for r in cursor.fetchall()]
+        conn.close()
+    except Exception as e:
+        print(f"[chatbot history] {e}")
+
     if request.method == 'POST':
         question = request.form.get('question', '').strip()
         if question:
             corrected = correct_spelling(question)
             query = corrected if corrected else question
+
+            # Try QA database first
             results, _ = search_medical_qa(query, limit=3, offset=0)
-            
-            answer_data = {
-                'question': question,
-                'corrected': corrected if corrected and corrected.lower() != question.lower() else None,
-                'results': results,
-                'found': bool(results),
-            }
-            
+
+            # Fallback 1: disease database
             if not results:
                 diseases = search_master_database(query)
                 if diseases:
-                    answer_data['results'] = [{
-                        'question': f'Information about {diseases[0]["disease"]}',
-                        'answer': diseases[0].get('description', 'No description available'),
+                    d = diseases[0]
+                    answer_text = d.get('description', 'No description available.')
+                    if d.get('symptoms'):
+                        answer_text += "\n\nSymptoms: " + ", ".join(d['symptoms'][:6])
+                    if d.get('precautions'):
+                        answer_text += "\n\nPrecautions: " + str(d['precautions'])[:300]
+                    results = [{
+                        'question': f'Information about {d["disease"]}',
+                        'answer': answer_text,
                         'source': 'Disease Database',
                     }]
-                    answer_data['found'] = True
-            
-            if answer_data['found']:
+
+            # Fallback 2: medicines
+            if not results:
+                meds = search_medicines_by_disease(query)
+                if meds:
+                    m = meds[0]
+                    results = [{
+                        'question': f'Medicines for {m["disease"]}',
+                        'answer': "Commonly used: " + ", ".join(m['medicines'][:10]),
+                        'source': 'Medicine Database',
+                    }]
+
+            # Fallback 3: symptom descriptions
+            if not results:
+                symptoms = search_symptom_descriptions(query)
+                if symptoms:
+                    s = symptoms[0]
+                    results = [{
+                        'question': f'About {s["symptom"]}',
+                        'answer': s.get('description', 'No details available.'),
+                        'source': 'Symptom Database',
+                    }]
+
+            # Save to DB
+            if results:
+                answer_data = {
+                    'question': question,
+                    'corrected': corrected if corrected and corrected.lower() != question.lower() else None,
+                    'results': results,
+                    'found': True,
+                }
                 try:
-                    # ===== FIX #10: use DB_PATH =====
                     conn = get_db_connection()
-                    # ===== END FIX #10 =====
                     cursor = conn.cursor()
-                    cursor.execute('''
-                    INSERT INTO chatbot_history (user_id, question, answer, source)
-                    VALUES (?, ?, ?, ?)
-                    ''', (session['user_id'], question,
-                          answer_data['results'][0]['answer'],
-                          answer_data['results'][0]['source']))
+                    for r in results:
+                        cursor.execute('''
+                            INSERT INTO chatbot_history (user_id, question, answer, source)
+                            VALUES (?, ?, ?, ?)
+                        ''', (session['user_id'], question, r['answer'], r['source']))
                     conn.commit()
                     conn.close()
-                except:
-                    pass
-    
+                except Exception as e:
+                    print(f"[chatbot save] {e}")
+            else:
+                answer_data = {
+                    'question': question,
+                    'corrected': corrected,
+                    'results': [],
+                    'found': False,
+                }
+
     lang = session.get('language', 'en')
     return render_template('patient_chatbot.html',
         user=session,
