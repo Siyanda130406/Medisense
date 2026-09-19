@@ -5127,21 +5127,24 @@ def ussd():
 
 @app.route('/update-language', methods=['POST'])
 def update_language():
-    if 'user_id' not in session:
-        return redirect('/login')
-    
     lang = request.form.get('language', 'en')
-    if lang in ['en', 'zulu']:
-        session['language'] = lang
-        # ===== FIX #10: use DB_PATH =====
-        conn = get_db_connection()
-        # ===== END FIX #10 =====
-        cursor = conn.cursor()
+    if lang not in ['en', 'zulu']:
+        lang = 'en'
+
+    session['language'] = lang
+    session.modified = True
+
+    if 'user_id' in session:
         try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
             cursor.execute('UPDATE users SET language = ? WHERE id = ?', (lang, session['user_id']))
             conn.commit()
-        except:
-            pass
-        conn.close()
-    
-    return redirect(request.referrer or url_for('home'))
+            conn.close()
+        except Exception as e:
+            print(f"[update-language] DB save failed: {e}")
+
+    referrer = request.referrer
+    if referrer and referrer.startswith(request.host_url):
+        return redirect(referrer)
+    return redirect(url_for('home'))
