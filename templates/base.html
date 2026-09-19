@@ -7,7 +7,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* ===== ROOT VARIABLES ===== */
         :root {
             --bg-body: #f8f9fa;
             --bg-sidebar: #2c3e50;
@@ -21,7 +20,6 @@
             --sidebar-width: 250px;
         }
 
-        /* ===== DARK MODE ===== */
         [data-bs-theme="dark"] {
             --bg-body: #1a1a2e;
             --bg-sidebar: #16213e;
@@ -43,7 +41,6 @@
             transition: var(--transition);
         }
 
-        /* ===== FIX: Light mode visibility for cards, text, tables ===== */
         .text-muted { color: var(--text-muted) !important; }
         .card-body, .card-header, .card-footer { color: var(--text-primary); }
         .card-title { color: var(--text-primary); }
@@ -56,7 +53,6 @@
         p, span, div { color: inherit; }
         h1, h2, h3, h4, h5, h6 { color: inherit; }
         .modal-body, .modal-header, .modal-footer { color: var(--text-primary); }
-        /* ===== END FIX ===== */
 
         .navbar {
             background-color: var(--bg-card) !important;
@@ -167,18 +163,6 @@
         }
         .toast-body { color: var(--text-primary) !important; }
 
-        .skeleton {
-            background: linear-gradient(90deg, var(--border-color) 25%, var(--bg-body) 50%, var(--border-color) 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-            border-radius: 8px;
-            min-height: 20px;
-        }
-        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-        .skeleton-text { height: 12px; margin-bottom: 8px; border-radius: 4px; }
-        .skeleton-title { height: 24px; width: 60%; border-radius: 4px; }
-        .skeleton-card { height: 120px; border-radius: 12px; }
-
         .theme-toggle {
             background: rgba(52, 152, 219, 0.15);
             border: 2px solid #3498db;
@@ -214,17 +198,6 @@
         .skip-link:focus { top: 0; }
 
         :focus-visible { outline: 3px solid #3498db; outline-offset: 2px; }
-
-        .visually-hidden {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            border: 0;
-        }
 
         .panic-button {
             position: fixed;
@@ -271,31 +244,11 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .swipe-container { touch-action: pan-y; }
-        .swipe-indicator {
-            text-align: center;
-            padding: 8px;
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            display: none;
-        }
-
-        .high-contrast {
-            --bg-body: #000000;
-            --bg-card: #1a1a1a;
-            --text-primary: #ffffff;
-            --text-muted: #cccccc;
-            --border-color: #444444;
-        }
-
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: var(--bg-body); }
         ::-webkit-scrollbar-thumb { background: #3498db; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #2980b9; }
 
-        /* ============================================================ */
-        /* MOBILE RESPONSIVENESS - COMPLETE FIX */
-        /* ============================================================ */
         @media (max-width: 991px) {
             .container, .container-fluid {
                 padding-left: 12px !important;
@@ -341,7 +294,6 @@
             .btn { padding: 10px 16px; min-height: 44px; min-width: 44px; }
             .nav-link, .form-control, .form-select { min-height: 44px; }
             .theme-toggle { width: 40px; height: 40px; padding: 6px 10px; }
-            .swipe-indicator { display: block; }
         }
 
         @media (max-width: 576px) {
@@ -380,42 +332,23 @@
             <a class="navbar-brand" href="{{ url_for('home') }}" aria-label="MediSense Home">
                 <i class="fas fa-heartbeat" aria-hidden="true"></i> MediSense
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                     aria-controls="navbarNav" aria-expanded="false" aria-label="{{ translate_text('Toggle navigation', lang) }}">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+
                     {% if session.get('user_id') %}
-                        <li class="nav-item">
-                            <span class="nav-link" aria-label="{{ translate_text('User', lang) }}: {{ session.get('full_name', 'User') }}">
+                        <!-- Logged-in: user info -->
+                        <li class="nav-item me-2">
+                            <span class="nav-link">
                                 <i class="fas fa-user" aria-hidden="true"></i> {{ session.get('full_name', 'User') }}
                                 <span class="badge bg-secondary ms-1">{{ session.get('role', '')|title }}</span>
                             </span>
                         </li>
-                        <li class="nav-item language-selector">
-                            <form method="POST" action="{{ url_for('update_language') }}" class="d-inline" aria-label="{{ translate_text('Language selector', lang) }}">
-                                <select name="language" class="form-select form-select-sm" onchange="this.form.submit()" aria-label="{{ translate_text('Select language', lang) }}">
-                                    <option value="en" {% if lang == 'en' %}selected{% endif %}>🇬🇧 English</option>
-                                    <option value="zulu" {% if lang == 'zulu' %}selected{% endif %}>🇿🇦 isiZulu</option>
-                                </select>
-                            </form>
-                        </li>
-                        <li class="nav-item">
-                            <button class="theme-toggle" onclick="toggleTheme()" 
-                                    aria-label="{{ translate_text('Toggle dark mode', lang) }}" 
-                                    title="{{ translate_text('Toggle dark mode', lang) }}"
-                                    type="button">
-                                <i class="fas fa-moon" id="themeIcon" aria-hidden="true"></i>
-                            </button>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('logout') }}" aria-label="{{ translate_text('Logout', lang) }}">
-                                <i class="fas fa-sign-out-alt" aria-hidden="true"></i> {{ translate_text('Logout', lang) }}
-                            </a>
-                        </li>
                     {% else %}
-                        <!-- ===== FIX #3: Public access links added ===== -->
+                        <!-- Public: nav links to public pages -->
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('public_symptoms') }}">
                                 <i class="fas fa-stethoscope"></i> {{ translate_text('Symptom Check', lang) }}
@@ -431,13 +364,35 @@
                                 <i class="fas fa-first-aid"></i> {{ translate_text('First Aid', lang) }}
                             </a>
                         </li>
+                    {% endif %}
+
+                    <!-- ===== FIX: Language switcher visible for EVERYONE ===== -->
+                    <li class="nav-item language-selector">
+                        <form method="POST" action="{{ url_for('update_language') }}" class="d-inline" aria-label="{{ translate_text('Language selector', lang) }}">
+                            <select name="language" class="form-select form-select-sm" onchange="this.form.submit()" aria-label="{{ translate_text('Select language', lang) }}">
+                                <option value="en" {% if lang == 'en' %}selected{% endif %}>🇬🇧 English</option>
+                                <option value="zulu" {% if lang == 'zulu' %}selected{% endif %}>🇿🇦 isiZulu</option>
+                            </select>
+                        </form>
+                    </li>
+
+                    <!-- ===== FIX: Theme toggle visible for EVERYONE ===== -->
+                    <li class="nav-item">
+                        <button class="theme-toggle" onclick="toggleTheme()"
+                                aria-label="{{ translate_text('Toggle dark mode', lang) }}"
+                                title="{{ translate_text('Toggle dark mode', lang) }}"
+                                type="button">
+                            <i class="fas fa-moon" id="themeIcon" aria-hidden="true"></i>
+                        </button>
+                    </li>
+
+                    {% if session.get('user_id') %}
                         <li class="nav-item">
-                            <button class="theme-toggle" onclick="toggleTheme()" type="button"
-                                    aria-label="{{ translate_text('Toggle dark mode', lang) }}">
-                                <i class="fas fa-moon" id="themeIcon" aria-hidden="true"></i>
-                            </button>
+                            <a class="nav-link" href="{{ url_for('logout') }}" aria-label="{{ translate_text('Logout', lang) }}">
+                                <i class="fas fa-sign-out-alt" aria-hidden="true"></i> {{ translate_text('Logout', lang) }}
+                            </a>
                         </li>
-                        <!-- ===== END FIX #3 ===== -->
+                    {% else %}
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('login') }}" aria-label="{{ translate_text('Login', lang) }}">{{ translate_text('Login', lang) }}</a>
                         </li>
@@ -456,7 +411,7 @@
             <div class="col-md-2 sidebar" role="navigation" aria-label="{{ translate_text('Sidebar navigation', lang) }}">
                 <div class="nav flex-column">
                     {% if session.get('role') == 'patient' %}
-                        <a class="nav-link {{ 'active' if request.endpoint == 'patient_dashboard' }}" href="{{ url_for('patient_dashboard') }}" aria-current="{{ 'page' if request.endpoint == 'patient_dashboard' else 'false' }}">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'patient_dashboard' }}" href="{{ url_for('patient_dashboard') }}">
                             <i class="fas fa-home" aria-hidden="true"></i> {{ translate_text('Dashboard', lang) }}
                         </a>
                         <a class="nav-link {{ 'active' if request.endpoint == 'patient_profile' }}" href="{{ url_for('patient_profile') }}">
@@ -468,11 +423,9 @@
                         <a class="nav-link {{ 'active' if request.endpoint == 'patient_health_symptoms' }}" href="{{ url_for('patient_health_symptoms') }}">
                             <i class="fas fa-search" aria-hidden="true"></i> {{ translate_text('Health & Symptoms', lang) }}
                         </a>
-                        <!-- ===== FIX #7: Chatbot link added ===== -->
                         <a class="nav-link {{ 'active' if request.endpoint == 'patient_chatbot' }}" href="{{ url_for('patient_chatbot') }}">
                             <i class="fas fa-comments" aria-hidden="true"></i> {{ translate_text('Ask a Question', lang) }}
                         </a>
-                        <!-- ===== END FIX #7 ===== -->
                         <a class="nav-link {{ 'active' if request.endpoint == 'patient_clinics' }}" href="{{ url_for('patient_clinics') }}">
                             <i class="fas fa-map-marker-alt" aria-hidden="true"></i> {{ translate_text('Find Clinics', lang) }}
                         </a>
@@ -552,8 +505,8 @@
     </div>
 
     {% if session.get('user_id') and session.get('role') == 'patient' %}
-    <button class="panic-button" id="panicButton" 
-            onclick="emergencyPanic()" 
+    <button class="panic-button" id="panicButton"
+            onclick="emergencyPanic()"
             aria-label="{{ translate_text('Emergency panic button', lang) }}"
             title="{{ translate_text('Click for emergency help', lang) }}">
         <i class="fas fa-phone" aria-hidden="true"></i>
@@ -569,17 +522,17 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
+
     <script>
         function toggleTheme() {
             const html = document.documentElement;
             const icon = document.getElementById('themeIcon');
             const currentTheme = html.getAttribute('data-bs-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
+
             html.setAttribute('data-bs-theme', newTheme);
             localStorage.setItem('theme', newTheme);
-            
+
             if (icon) {
                 if (newTheme === 'dark') {
                     icon.classList.remove('fa-moon');
@@ -589,8 +542,8 @@
                     icon.classList.add('fa-moon');
                 }
             }
-            
-            showToast('Switched to ' + newTheme + ' mode', 'info', 'Theme');
+
+            showToast('Theme: ' + newTheme, 'info', 'Theme');
         }
 
         const savedTheme = localStorage.getItem('theme') || 'light';
@@ -617,7 +570,7 @@
                 warning: 'fa-exclamation-triangle',
                 info: 'fa-info-circle'
             };
-            
+
             const toast = document.createElement('div');
             toast.className = 'toast show';
             toast.role = 'alert';
@@ -630,9 +583,9 @@
                 </div>
                 <div class="toast-body">${message}</div>
             `;
-            
+
             container.appendChild(toast);
-            
+
             setTimeout(() => {
                 toast.classList.remove('show');
                 setTimeout(() => toast.remove(), 300);
@@ -647,9 +600,9 @@
         }
 
         function emergencyPanic() {
-            const confirmed = confirm('🚨 EMERGENCY: Do you need immediate help?\n\nAmbulance: 10177\nPolice: 10111\nNational Emergency: 112\n\nClick OK to see emergency contacts.');
+            const confirmed = confirm('EMERGENCY: Do you need immediate help?\n\nAmbulance: 10177\nPolice: 10111\nNational Emergency: 112\n\nClick OK to call Ambulance.');
             if (confirmed) {
-                showToast('🚨 Emergency Contacts: Ambulance 10177 | Police 10111 | National 112', 'danger', '⚠️ EMERGENCY');
+                showToast('Emergency Contacts: Ambulance 10177 | Police 10111 | National 112', 'danger', 'EMERGENCY');
                 window.open('tel:10177');
             }
         }
@@ -661,9 +614,6 @@
         }, 5000);
 
         document.addEventListener('keydown', function(e) {
-            if (e.altKey && e.key === '1') { window.location.href = "{{ url_for('patient_dashboard') }}"; }
-            if (e.altKey && e.key === '2') { window.location.href = "{{ url_for('patient_book') }}"; }
-            if (e.altKey && e.key === '3') { window.location.href = "{{ url_for('patient_health_symptoms') }}"; }
             if (e.key === 'Escape') {
                 document.querySelectorAll('.modal.show, .alert').forEach(el => {
                     if (el.classList.contains('modal')) {
@@ -675,16 +625,8 @@
             }
         });
 
-        let touchStartX = 0;
-        let touchEndX = 0;
-        
         document.addEventListener('touchstart', function(e) {
-            touchStartX = e.changedTouches[0].screenX;
-        }, { passive: true });
-        
-        document.addEventListener('touchend', function(e) {
-            touchEndX = e.changedTouches[0].screenX;
-            const diff = touchStartX - touchEndX;
+            // swipe handling placeholder
         }, { passive: true });
     </script>
     {% block extra_js %}{% endblock %}

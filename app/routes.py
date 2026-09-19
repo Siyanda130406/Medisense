@@ -2245,30 +2245,181 @@ def public_home():
 
 @app.route('/public/symptoms', methods=['GET', 'POST'])
 def public_symptoms():
+    """Public symptom search — uses the SAME template as logged-in patients."""
     search_result = None
-    search_term = ''
+    search_term = ""
+    search_history = []
+    featured_diseases = ['Diabetes', 'HIV/AIDS', 'Heart Attack', 'Stroke', 'Tuberculosis', 'Cancer', 'Asthma', 'Malaria']
+    trending_topics = ['Flu', 'Cough', 'Fever', 'Headache', 'COVID-19', 'Malaria']
+
+    if df_master is not None and 'disease' in df_master.columns:
+        try:
+            featured_diseases = df_master['disease'].head(8).tolist()
+        except Exception:
+            pass
+
     if request.method == 'POST':
         search_term = request.form.get('search_term', '').strip()
+
         if search_term:
+            # ===== Same logic as patient_health_symptoms =====
+            nlp_symptoms = analyze_symptoms_nlp(search_term)
+            extracted_terms = extract_health_terms(search_term)
+            all_extracted = list(set(nlp_symptoms + extracted_terms))
+            search_queries = all_extracted if all_extracted else [search_term]
+
+            corrected = None
+            has_any_result = bool(search_master_database(search_term)) or bool(search_medicines_by_disease(search_term)) or bool(search_diseases_by_medicine(search_term))
+            if not has_any_result:
+                corrected = correct_spelling(search_term)
+
             search_result = {
-                'found': False, 'search_term': search_term, 'did_you_mean': None,
-                'diseases': [], 'message': ''
+                'found': False,
+                'search_term': search_term,
+                'did_you_mean': corrected,
+                'extracted_terms': all_extracted,
+                'nlp_symptoms': nlp_symptoms,
+                'is_question': is_question(search_term),
+                'is_keyword': is_short_keyword(search_term),
+                'diseases': [],
+                'qa': [], 'qa_total': 0, 'qa_offset': 0, 'qa_limit': 0,
+                'precautions': [],
+                'symptom_descriptions': [],
+                'health_tips': [],
+                'all_symptoms': [],
+                'all_treatments': [],
+                'all_doctors': [],
+                'all_risks': [],
+                'all_urgency': [],
+                'has_disease_info': False,
+                'has_qa_info': False,
+                'has_symptom_info': False,
+                'has_precaution_info': False,
+                'has_health_tips': False,
+                'suggestions': [],
+                'has_medicine_info': False,
+                'medicines': [],
+                'all_medicines': [],
+                'has_disease_by_medicine_info': False,
+                'diseases_by_medicine': [],
+                'all_diseases_by_medicine': []
             }
-            diseases = search_master_database(search_term)
-            if diseases:
+
+            all_diseases = []
+            all_symptoms = []
+            all_precautions = []
+            all_tips = []
+
+            for query in search_queries:
+                disease_results = search_master_database(query)
+                if disease_results:
+                    all_diseases.extend(disease_results)
+                symptom_results = search_symptom_descriptions(query)
+                if symptom_results:
+                    all_symptoms.extend(symptom_results)
+                precaution_results = search_symptom_precautions(query)
+                if precaution_results:
+                    all_precautions.extend(precaution_results)
+                if df_health_tips is not None:
+                    try:
+                        tip_matches = df_health_tips[df_health_tips['tip'].astype(str).str.lower().str.contains(query.lower(), na=False)]
+                        if not tip_matches.empty:
+                            all_tips.extend(tip_matches['tip'].head(2).tolist())
+                    except Exception:
+                        pass
+
+            medicine_results = search_medicines_by_disease(search_term)
+            if medicine_results:
+                search_result['has_medicine_info'] = True
+                search_result['medicines'] = medicine_results
                 search_result['found'] = True
-                search_result['diseases'] = diseases[:3]
-            else:
-                suggestion = correct_spelling(search_term)
-                if suggestion:
-                    search_result['did_you_mean'] = suggestion
-                    search_result['message'] = f'No results for "{search_term}". Did you mean "{suggestion}"?'
+                all_meds = []
+                for item in medicine_results:
+                    all_meds.extend(item.get('medicines', []))
+                search_result['all_medicines'] = list(set(all_meds))[:10]
+
+            disease_results = search_diseases_by_medicine(search_term)
+            if disease_results:
+                search_result['has_disease_by_medicine_info'] = True
+                search_result['diseases_by_medicine'] = disease_results
+                search_result['found'] = True
+                all_dis = []
+                for item in disease_results:
+                    all_dis.extend(item.get('diseases', []))
+                search_result['all_diseases_by_medicine'] = list(set(all_dis))[:10]
+
+            unique_diseases = []
+            seen = set()
+            for d in all_diseases:
+                name = d.get('disease', '')
+                if name and name not in seen:
+                    seen.add(name)
+                    unique_diseases.append(d)
+
+            results_found = unique_diseases or all_symptoms or all_precautions or all_tips or medicine_results or disease_results
+
+            if not results_found:
+                if corrected:
+                    search_result['message'] = f"No results for '{search_term}'. Did you mean '{corrected}'?"
                 else:
-                    search_result['message'] = f'No results for "{search_term}".'
+                    suggestions = get_disease_suggestions(search_term)
+                    if suggestions:
+                        search_result['did_you_mean'] = suggestions[0]
+                        search_result['suggestions'] = suggestions
+                        search_result['message'] = f"No exact match found for '{search_term}'. Did you mean: {suggestions[0]}?"
+                    else:
+                        search_result['message'] = f"No information found for '{search_term}'. Please try a different term."
+                search_result['suggestions'] = featured_diseases[:6]
+            else:
+                search_result['found'] = True
+
+                urgency_levels = []
+                if unique_diseases:
+                    search_result['has_disease_info'] = True
+                    search_result['diseases'] = unique_diseases[:3]
+                    for d in unique_diseases:
+                        if d.get('symptoms'):
+                            for s in (d['symptoms'] if isinstance(d['symptoms'], list) else []):
+                                if s not in search_result['all_symptoms']:
+                                    search_result['all_symptoms'].append(s)
+                        if d.get('treatments'):
+                            for t in (d['treatments'] if isinstance(d['treatments'], list) else []):
+                                if t not in search_result['all_treatments']:
+                                    search_result['all_treatments'].append(t)
+                        if d.get('doctors'):
+                            for doc in (d['doctors'] if isinstance(d['doctors'], list) else []):
+                                if doc not in search_result['all_doctors']:
+                                    search_result['all_doctors'].append(doc)
+                        if d.get('risk') and d['risk'] not in search_result['all_risks']:
+                            search_result['all_risks'].append(d['risk'])
+                        if d.get('urgency') and d['urgency'] not in urgency_levels:
+                            urgency_levels.append(d['urgency'])
+
+                if all_symptoms:
+                    search_result['has_symptom_info'] = True
+                    search_result['symptom_descriptions'] = all_symptoms[:3]
+                if all_precautions:
+                    search_result['has_precaution_info'] = True
+                    search_result['precautions'] = all_precautions[:3]
+                if all_tips:
+                    search_result['has_health_tips'] = True
+                    search_result['health_tips'] = all_tips[:3]
+
+                search_result['all_symptoms'] = search_result['all_symptoms'][:10]
+                search_result['all_treatments'] = search_result['all_treatments'][:5]
+                search_result['all_doctors'] = search_result['all_doctors'][:3]
+                search_result['all_risks'] = search_result['all_risks'][:3]
+                search_result['all_urgency'] = urgency_levels[:2]
+
     lang = session.get('language', 'en')
-    return render_template('public_symptoms.html',
+    return render_template('patient_health_symptoms_enhanced.html',
+                           user={'full_name': 'Guest', 'role': 'public'},
                            search_result=search_result,
                            search_term=search_term,
+                           featured_diseases=featured_diseases,
+                           trending_topics=trending_topics,
+                           search_history=search_history,
+                           is_public=True,
                            lang=lang, translate_text=translate_text)
 
 @app.route('/public/clinics', methods=['GET', 'POST'])
@@ -2305,6 +2456,8 @@ def public_clinics():
 
 @app.route('/public/first-aid')
 def public_first_aid():
+    """Public first aid — uses the SAME template as logged-in patients."""
+    # Reuse the exact same category list used by patient_first_aid
     first_aid_categories = [
         {'id': 'heart_attack', 'icon': 'fa-heart-pulse', 'title': 'Heart Attack', 'description': 'Emergency signs & response', 'color': 'danger'},
         {'id': 'stroke', 'icon': 'fa-brain', 'title': 'Stroke', 'description': 'FAST - Face, Arms, Speech, Time', 'color': 'danger'},
@@ -2327,9 +2480,25 @@ def public_first_aid():
         {'id': 'food_poisoning', 'icon': 'fa-utensils', 'title': 'Food Poisoning', 'description': 'Symptoms and home care', 'color': 'info'},
         {'id': 'fever_management', 'icon': 'fa-thermometer', 'title': 'Fever Management', 'description': 'How to manage a fever', 'color': 'info'},
     ]
+
+    # Same data fetch as logged-in version
+    first_aid_data = []
+    if df_firstaid is not None:
+        try:
+            for _, row in df_firstaid.iterrows():
+                q = row.iloc[0] if len(row) > 0 else ''
+                a = row.iloc[1] if len(row) > 1 else ''
+                if q and a:
+                    first_aid_data.append({'question': str(q)[:200], 'answer': str(a)[:300]})
+        except Exception:
+            pass
+
     lang = session.get('language', 'en')
-    return render_template('public_first_aid.html',
+    return render_template('patient_first_aid.html',
+                           user={'full_name': 'Guest', 'role': 'public'},
+                           first_aid_data=first_aid_data[:10] if first_aid_data else [],
                            first_aid_categories=first_aid_categories,
+                           is_public=True,
                            lang=lang, translate_text=translate_text)
 
 # ============================================================
