@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Welcome to MediSense{% endblock %}
+{% block title %}{{ translate_text('Welcome to MediSense', lang) }}{% endblock %}
 
 {% block content %}
 <div class="container py-4 py-lg-5">
@@ -10,21 +10,20 @@
             <!-- ==================== HERO ==================== -->
             <div class="hero-panel text-center mb-4">
                 <i class="fas fa-heartbeat fa-3x mb-3" style="color: #63b3ed;"></i>
-                <h1 class="hero-title mb-3">Healthcare, in your pocket.</h1>
+                <h1 class="hero-title mb-3">{{ translate_text('Healthcare, in your pocket.', lang) }}</h1>
                 <p class="hero-sub mb-4">
-                    MediSense helps South Africans understand symptoms, find clinics,
-                    book appointments, and get first aid — in English and isiZulu.
+                    {{ translate_text('MediSense helps South Africans understand symptoms, find clinics, book appointments, and get first aid — in English and isiZulu.', lang) }}
                 </p>
                 <div class="d-flex gap-2 justify-content-center flex-wrap">
                     <a href="{{ url_for('public_symptoms') }}" class="btn-hero-primary">
-                        <i class="fas fa-stethoscope me-2"></i>Check Symptoms
+                        <i class="fas fa-stethoscope me-2"></i>{{ translate_text('Check Symptoms', lang) }}
                     </a>
                     <a href="{{ url_for('signup') }}" class="btn-hero-secondary">
-                        <i class="fas fa-user-plus me-2"></i>Create Account
+                        <i class="fas fa-user-plus me-2"></i>{{ translate_text('Create Account', lang) }}
                     </a>
                 </div>
                 <p class="hero-small mt-3 mb-0">
-                    <i class="fas fa-lock me-1"></i>No sign-up needed to try basic features.
+                    <i class="fas fa-lock me-1"></i>{{ translate_text('No sign-up needed to try basic features.', lang) }}
                 </p>
             </div>
 
@@ -34,7 +33,7 @@
                     <a href="{{ url_for('public_symptoms') }}" class="text-decoration-none">
                         <div class="quick-tile quick-tile-blue">
                             <i class="fas fa-notes-medical"></i>
-                            <span>Symptom Check</span>
+                            <span>{{ translate_text('Symptom Check', lang) }}</span>
                         </div>
                     </a>
                 </div>
@@ -42,7 +41,7 @@
                     <a href="{{ url_for('public_clinics') }}" class="text-decoration-none">
                         <div class="quick-tile quick-tile-green">
                             <i class="fas fa-map-location-dot"></i>
-                            <span>Find Clinics</span>
+                            <span>{{ translate_text('Find Clinics', lang) }}</span>
                         </div>
                     </a>
                 </div>
@@ -50,7 +49,7 @@
                     <a href="{{ url_for('public_first_aid') }}" class="text-decoration-none">
                         <div class="quick-tile quick-tile-red">
                             <i class="fas fa-kit-medical"></i>
-                            <span>First Aid</span>
+                            <span>{{ translate_text('First Aid', lang) }}</span>
                         </div>
                     </a>
                 </div>
@@ -58,7 +57,7 @@
                     <a href="{{ url_for('login') }}" class="text-decoration-none">
                         <div class="quick-tile quick-tile-slate">
                             <i class="fas fa-right-to-bracket"></i>
-                            <span>Sign In</span>
+                            <span>{{ translate_text('Sign In', lang) }}</span>
                         </div>
                     </a>
                 </div>
@@ -69,20 +68,20 @@
                 <i class="fas fa-hospital fa-2x"></i>
                 <div>
                     <div class="stat-number">{{ clinics_count }}</div>
-                    <div class="stat-label">Clinics across South Africa</div>
+                    <div class="stat-label">{{ translate_text('Clinics across South Africa', lang) }}</div>
                 </div>
             </div>
 
             <!-- ==================== FEATURES ==================== -->
-            <h2 class="section-title mb-3">What MediSense does</h2>
+            <h2 class="section-title mb-3">{{ translate_text('What MediSense does', lang) }}</h2>
             <div class="row g-3 mb-4">
                 <div class="col-md-6 col-lg-4">
                     <div class="feature-card">
                         <div class="feature-icon" style="background: #ebf4ff; color: #2b6cb0;">
                             <i class="fas fa-stethoscope"></i>
                         </div>
-                        <h6 class="feature-title">Symptom Checker</h6>
-                        <p class="feature-text">Describe how you feel in plain language. Get possible conditions, urgency, and next steps.</p>
+                        <h6 class="feature-title">{{ translate_text('Symptom Checker', lang) }}</h6>
+                        <p class="feature-text">{{ translate_text('Describe how you feel in plain language. Get possible conditions, urgency, and next steps.', lang) }}</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
@@ -90,8 +89,8 @@
                         <div class="feature-icon" style="background: #faf5ff; color: #6b46c1;">
                             <i class="fas fa-pills"></i>
                         </div>
-                        <h6 class="feature-title">Medicine Search</h6>
-                        <p class="feature-text">Search medicines by disease, or find what a medicine treats — two-way search.</p>
+                        <h6 class="feature-title">{{ translate_text('Medicine Search', lang) }}</h6>
+                        <p class="feature-text">{{ translate_text('Search medicines by disease, or find what a medicine treats — two-way search.', lang) }}</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
@@ -99,8 +98,8 @@
                         <div class="feature-icon" style="background: #f0fff4; color: #2f855a;">
                             <i class="fas fa-map-location-dot"></i>
                         </div>
-                        <h6 class="feature-title">Find Clinics</h6>
-                        <p class="feature-text">Search by province, city, or area. Get directions in Google Maps.</p>
+                        <h6 class="feature-title">{{ translate_text('Find Clinics', lang) }}</h6>
+                        <p class="feature-text">{{ translate_text('Search by province, city, or area. Get directions in Google Maps.', lang) }}</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
@@ -108,8 +107,8 @@
                         <div class="feature-icon" style="background: #fffaf0; color: #b7791f;">
                             <i class="fas fa-calendar-check"></i>
                         </div>
-                        <h6 class="feature-title">Book Appointments</h6>
-                        <p class="feature-text">Real-time slots. No double bookings. Automatic no-show detection.</p>
+                        <h6 class="feature-title">{{ translate_text('Book Appointments', lang) }}</h6>
+                        <p class="feature-text">{{ translate_text('Real-time slots. No double bookings. Automatic no-show detection.', lang) }}</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
@@ -117,8 +116,8 @@
                         <div class="feature-icon" style="background: #fff5f5; color: #c53030;">
                             <i class="fas fa-kit-medical"></i>
                         </div>
-                        <h6 class="feature-title">First Aid Guide</h6>
-                        <p class="feature-text">Step-by-step instructions for 20+ emergencies: heart attack, stroke, choking, and more.</p>
+                        <h6 class="feature-title">{{ translate_text('First Aid Guide', lang) }}</h6>
+                        <p class="feature-text">{{ translate_text('Step-by-step instructions for 20+ emergencies: heart attack, stroke, choking, and more.', lang) }}</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
@@ -126,22 +125,22 @@
                         <div class="feature-icon" style="background: #ebf8ff; color: #2c5282;">
                             <i class="fas fa-comments"></i>
                         </div>
-                        <h6 class="feature-title">Ask a Question</h6>
-                        <p class="feature-text">Sign in and ask health questions in plain language. Get answers from our medical Q&A database.</p>
+                        <h6 class="feature-title">{{ translate_text('Ask a Question', lang) }}</h6>
+                        <p class="feature-text">{{ translate_text('Sign in and ask health questions in plain language. Get answers from our medical Q&A database.', lang) }}</p>
                     </div>
                 </div>
             </div>
 
             <!-- ==================== BOTTOM CTA ==================== -->
             <div class="cta-panel text-center">
-                <h3 class="cta-title mb-2">Ready to take charge of your health?</h3>
-                <p class="cta-text mb-4">Create a free account to book appointments, track symptoms, and more.</p>
+                <h3 class="cta-title mb-2">{{ translate_text('Ready to take charge of your health?', lang) }}</h3>
+                <p class="cta-text mb-4">{{ translate_text('Create a free account to book appointments, track symptoms, and more.', lang) }}</p>
                 <div class="d-flex gap-2 justify-content-center flex-wrap">
                     <a href="{{ url_for('signup') }}" class="btn-hero-primary">
-                        <i class="fas fa-user-plus me-2"></i>Create Free Account
+                        <i class="fas fa-user-plus me-2"></i>{{ translate_text('Create Free Account', lang) }}
                     </a>
                     <a href="{{ url_for('login') }}" class="btn-hero-secondary">
-                        Sign In
+                        {{ translate_text('Sign In', lang) }}
                     </a>
                 </div>
             </div>
@@ -151,7 +150,6 @@
 </div>
 
 <style>
-/* ==================== BACKGROUND (matches login/signup) ==================== */
 body {
     background: url("{{ url_for('static', filename='images/health-background.jpg') }}") no-repeat center center fixed;
     background-size: cover;
@@ -169,7 +167,6 @@ body::before {
 .container { position: relative; z-index: 1; }
 .content { background: transparent !important; }
 
-/* ==================== HERO ==================== */
 .hero-panel {
     padding: 40px 24px 32px;
     border-radius: 20px;
@@ -198,7 +195,6 @@ body::before {
     font-size: 0.85rem;
 }
 
-/* ==================== BIG BRIGHT BUTTONS ==================== */
 .btn-hero-primary {
     display: inline-flex;
     align-items: center;
@@ -244,7 +240,6 @@ body::before {
     color: #2c5282 !important;
 }
 
-/* ==================== QUICK TILES ==================== */
 .quick-tile {
     display: flex;
     flex-direction: column;
@@ -284,7 +279,6 @@ body::before {
 .quick-tile-slate  { border-left-color: #4a5568; }
 .quick-tile-slate i{ color: #4a5568; }
 
-/* ==================== CLINICS STAT BANNER ==================== */
 .stat-banner {
     display: flex;
     align-items: center;
@@ -308,7 +302,6 @@ body::before {
     color: rgba(255, 255, 255, 0.9);
 }
 
-/* ==================== FEATURES ==================== */
 .section-title {
     color: #ffffff;
     font-weight: 700;
@@ -352,7 +345,6 @@ body::before {
     margin: 0;
 }
 
-/* ==================== BOTTOM CTA ==================== */
 .cta-panel {
     padding: 36px 24px;
     border-radius: 20px;
@@ -370,7 +362,6 @@ body::before {
     font-size: 0.95rem;
 }
 
-/* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
     .hero-panel { padding: 28px 18px 24px; }
     .hero-title { font-size: 1.7rem; }
@@ -395,7 +386,6 @@ body::before {
     .cta-title { font-size: 1.15rem; }
 }
 
-/* ==================== DARK MODE ==================== */
 [data-bs-theme="dark"] .feature-card {
     background: #1e2a4a;
     border-color: #2a3a5a;
@@ -418,7 +408,6 @@ body::before {
 }
 [data-bs-theme="dark"] .quick-tile span { color: #f7fafc; }
 
-/* ==================== ZOOM ANIMATION (matches login) ==================== */
 body { animation: zoomIn 25s ease-in-out infinite alternate; }
 @keyframes zoomIn {
     0%   { transform: scale(1); }
