@@ -33,12 +33,6 @@
                         <span class="d-none d-md-inline">{{ translate_text('Search', lang) }}</span>
                     </button>
                 </div>
-                <div class="text-center mt-2">
-                    <small class="text-muted">
-                        <i class="fas fa-lightbulb text-warning me-1"></i>
-                        {{ translate_text('We correct spelling mistakes automatically', lang) }}
-                    </small>
-                </div>
             </form>
 
             {% if search_history %}
@@ -96,12 +90,12 @@
             </span>
         </div>
 
+        <!-- ===== DISEASES ===== -->
         {% if search_result.has_disease_info and search_result.diseases %}
         <div class="mb-4">
             <h6 class="fw-bold mb-3" style="color: #2c3e50;">
                 <i class="fas fa-clipboard-pulse me-2" style="color: #2b6cb0;"></i>
                 {{ translate_text('Diseases', lang) }}
-                <span class="badge bg-light text-dark ms-2" style="font-weight: 500;">{{ search_result.diseases|length }}</span>
             </h6>
             <div class="row g-3">
                 {% for disease in search_result.diseases %}
@@ -116,20 +110,24 @@
                                 </span>
                             </div>
                             <p class="text-muted small mb-2" style="line-height: 1.5;">
-                                {{ disease.description[:130] }}{% if disease.description|length > 130 %}...{% endif %}
+                                {{ disease.description }}
                             </p>
 
                             {% if disease.symptoms %}
                             <div class="mb-2">
                                 <small class="text-muted" style="font-size: 0.7rem;">{{ translate_text('Symptoms', lang) }}:</small>
                                 <div class="mt-1">
-                                    {% for s in disease.symptoms[:3] %}
+                                    {% for s in disease.symptoms[:6] %}
                                     <span class="badge bg-light text-dark me-1 mb-1" style="font-weight: 500; font-size: 0.7rem;">{{ s }}</span>
                                     {% endfor %}
-                                    {% if disease.symptoms|length > 3 %}
-                                    <span class="badge bg-light text-muted" style="font-weight: 500; font-size: 0.7rem;">+{{ disease.symptoms|length - 3 }}</span>
-                                    {% endif %}
                                 </div>
+                            </div>
+                            {% endif %}
+
+                            {% if disease.precautions and disease.precautions != 'No precautions available' %}
+                            <div class="mb-2">
+                                <small class="text-muted" style="font-size: 0.7rem;">{{ translate_text('Precautions', lang) }}:</small>
+                                <p class="text-muted small mb-0 mt-1" style="line-height: 1.5;">{{ disease.precautions }}</p>
                             </div>
                             {% endif %}
 
@@ -147,15 +145,15 @@
         </div>
         {% endif %}
 
+        <!-- ===== MEDICINES ===== -->
         {% if search_result.has_medicine_info and search_result.medicines %}
         <div class="mb-4">
             <h6 class="fw-bold mb-3" style="color: #2c3e50;">
                 <i class="fas fa-pills me-2" style="color: #6b46c1;"></i>
                 {{ translate_text('Medicines that treat', lang) }} "{{ search_term }}"
-                <span class="badge bg-light text-dark ms-2" style="font-weight: 500;">{{ search_result.medicines|length }}</span>
             </h6>
             <div class="row g-3">
-                {% for item in search_result.medicines[:6] %}
+                {% for item in search_result.medicines[:3] %}
                 <div class="col-md-6 col-lg-4">
                     <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
                         <div class="card-body p-3">
@@ -164,16 +162,10 @@
                                 {{ item.disease }}
                             </h6>
                             <div>
-                                {% for med in item.medicines[:5] %}
+                                {% for med in item.medicines[:8] %}
                                 <span class="badge bg-light text-dark me-1 mb-1" style="font-weight: 500; font-size: 0.72rem; padding: 4px 10px;">{{ med }}</span>
                                 {% endfor %}
-                                {% if item.medicines|length > 5 %}
-                                <span class="badge bg-light text-muted" style="font-weight: 500; font-size: 0.72rem;">+{{ item.medicines|length - 5 }}</span>
-                                {% endif %}
                             </div>
-                            <small class="text-muted d-block mt-2" style="font-size: 0.7rem;">
-                                {{ item.medicines|length }} {{ translate_text('medicines found', lang) }}
-                            </small>
                         </div>
                     </div>
                 </div>
@@ -182,6 +174,7 @@
         </div>
         {% endif %}
 
+        <!-- ===== DISEASES BY MEDICINE ===== -->
         {% if search_result.has_disease_by_medicine_info and search_result.diseases_by_medicine %}
         <div class="mb-4">
             <h6 class="fw-bold mb-3" style="color: #2c3e50;">
@@ -189,7 +182,7 @@
                 {{ translate_text('Diseases treated by', lang) }} "{{ search_term }}"
             </h6>
             <div class="row g-3">
-                {% for item in search_result.diseases_by_medicine[:6] %}
+                {% for item in search_result.diseases_by_medicine[:3] %}
                 <div class="col-md-6 col-lg-4">
                     <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
                         <div class="card-body p-3">
@@ -198,7 +191,7 @@
                                 {{ item.medicine }}
                             </h6>
                             <div>
-                                {% for d in item.diseases[:5] %}
+                                {% for d in item.diseases[:8] %}
                                 <span class="badge bg-light text-dark me-1 mb-1" style="font-weight: 500; font-size: 0.72rem; padding: 4px 10px;">{{ d }}</span>
                                 {% endfor %}
                             </div>
@@ -210,6 +203,7 @@
         </div>
         {% endif %}
 
+        <!-- ===== SYMPTOM DESCRIPTIONS ===== -->
         {% if search_result.has_symptom_info and search_result.symptom_descriptions %}
         <div class="mb-4">
             <h6 class="fw-bold mb-3" style="color: #2c3e50;">
@@ -222,7 +216,7 @@
                     <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
                         <div class="card-body p-3">
                             <h6 class="fw-bold mb-1" style="color: #2c3e50; font-size: 0.9rem;">{{ s.symptom }}</h6>
-                            <p class="text-muted small mb-0" style="line-height: 1.5;">{{ s.description[:100] }}{% if s.description|length > 100 %}...{% endif %}</p>
+                            <p class="text-muted small mb-0" style="line-height: 1.5;">{{ s.description }}</p>
                         </div>
                     </div>
                 </div>
@@ -231,6 +225,7 @@
         </div>
         {% endif %}
 
+        <!-- ===== PRECAUTIONS ===== -->
         {% if search_result.has_precaution_info and search_result.precautions %}
         <div class="mb-4">
             <h6 class="fw-bold mb-3" style="color: #2c3e50;">
@@ -243,7 +238,7 @@
                     <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; border-left: 4px solid #d69e2e !important;">
                         <div class="card-body p-3">
                             <h6 class="fw-bold mb-1" style="color: #2c3e50; font-size: 0.9rem;">{{ p.condition }}</h6>
-                            <p class="text-muted small mb-0" style="line-height: 1.5;">{{ p.precaution[:140] }}{% if p.precaution|length > 140 %}...{% endif %}</p>
+                            <p class="text-muted small mb-0" style="line-height: 1.5;">{{ p.precaution }}</p>
                         </div>
                     </div>
                 </div>
@@ -252,6 +247,7 @@
         </div>
         {% endif %}
 
+        <!-- ===== HEALTH TIPS ===== -->
         {% if search_result.has_health_tips and search_result.health_tips %}
         <div class="mb-4">
             <h6 class="fw-bold mb-3" style="color: #2c3e50;">
@@ -263,7 +259,7 @@
                     {% for tip in search_result.health_tips %}
                     <div class="d-flex align-items-start mb-2">
                         <i class="fas fa-check-circle text-success me-2 mt-1"></i>
-                        <span class="text-muted small" style="line-height: 1.5;">{{ tip[:180] }}{% if tip|length > 180 %}...{% endif %}</span>
+                        <span class="text-muted small" style="line-height: 1.5;">{{ tip }}</span>
                     </div>
                     {% endfor %}
                 </div>

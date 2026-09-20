@@ -87,14 +87,7 @@
                 <div class="avatar user-avatar"><i class="fas fa-user"></i></div>
             </div>
 
-            {% if answer_data.corrected %}
-            <div class="message-row system">
-                <div class="system-bubble">
-                    <i class="fas fa-lightbulb me-1"></i>
-                    {{ translate_text('Searched for', lang) }} <strong>{{ answer_data.corrected }}</strong>
-                </div>
-            </div>
-            {% endif %}
+    
 
             {% if answer_data.found %}
             {% for r in answer_data.results %}

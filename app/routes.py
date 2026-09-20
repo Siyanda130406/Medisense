@@ -1939,8 +1939,16 @@ def extract_health_terms(query):
 
     return list(set(extracted))[:5]
 
-def get_urgency_level(symptoms, disease_info):
-    emergency_keywords = ['chest pain', 'shortness of breath', 'difficulty breathing', 'severe headache', 
+def get_urgency_level(symptoms, disease_info, risk_category=None):
+    # If we have a risk category from the DB, use it
+    if risk_category and risk_category != 'Unknown':
+        if risk_category == 'High':
+            return 'Urgent'
+        elif risk_category == 'Moderate':
+            return 'Urgent'
+        return 'Routine'
+    
+    emergency_keywords = ['chest pain', 'shortness of breath', 'difficulty breathing', 'severe headache',
                          'unconscious', 'bleeding', 'stroke', 'heart attack', 'seizure', 'allergic reaction']
     urgent_keywords = ['high fever', 'persistent cough', 'vomiting', 'diarrhea', 'pain', 'infection']
     
@@ -1997,7 +2005,7 @@ def search_master_database(search_term):
                 'precautions': row.get('precautions', 'No precautions available'),
                 'doctors': doctors,
                 'risk': row.get('risk_category', 'Unknown'),
-                'urgency': urgency
+                'urgency': get_urgency_level(str(symptoms), disease_name, row.get('risk_category')),
             })
     except Exception as e:
         print(f"Search error: {e}")
