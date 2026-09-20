@@ -39,10 +39,10 @@ DB_PATH = os.path.join(_get_db_dir(), 'medisense_users.db')
 
 # ===== FIX: SQLite concurrency — WAL + timeout to prevent hangs =====
 def get_db_connection():
-    conn = sqlite3.connect(DB_PATH, timeout=30.0)
+    conn = sqlite3.connect(DB_PATH, timeout=60.0)
     try:
         conn.execute("PRAGMA journal_mode=WAL;")
-        conn.execute("PRAGMA busy_timeout=30000;")
+        conn.execute("PRAGMA busy_timeout=60000;")
         conn.execute("PRAGMA synchronous=NORMAL;")
     except Exception:
         pass
@@ -78,6 +78,8 @@ base_dir = os.path.dirname(os.path.dirname(__file__))
 # Load all datasets
 df_master = safe_load_csv(os.path.join(base_dir, 'data', 'processed', 'master_disease_database.csv'))
 df_health_tips = safe_load_csv(os.path.join(base_dir, 'data', 'processed', 'health_tips.csv'))
+# ===== Curated chatbot Q&A (better answers than MedQuAD) =====
+df_chatbot_qa = safe_load_csv(os.path.join(base_dir, 'data', 'processed', 'chatbot_qa.csv'))
 df_medical_qa = safe_load_csv(os.path.join(base_dir, 'data', 'processed', 'medical_qa_database.csv'))
 df_symptom_precautions = safe_load_csv(os.path.join(base_dir, 'data', 'processed', 'symptom_precautions_combined.csv'))
 df_symptom_descriptions = safe_load_csv(os.path.join(base_dir, 'data', 'processed', 'symptom_descriptions.csv'))
@@ -1786,88 +1788,133 @@ def is_short_keyword(search_term):
     word_count = len(search_term.strip().split())
     return word_count <= 3
 
-def search_medical_qa(search_term, limit=6, offset=0):
+def search_medical_qa(search_term, limit=3, offset=0):
     """
-    Improved Q&A search — matches against question AND answer fields,
-    with word-level fallback so any keyword finds something.
+    Relevance-ranked Q&A search.
+    Tries curated chatbot_qa.csv first, then falls back to MedQuAD.
     """
-    if df_medical_qa is None or not search_term:
+    if not search_term:
         return [], 0
 
     search_lower = search_term.lower().strip()
-    # Remove common question words for better matching
-    stop_words = {'what', 'how', 'why', 'when', 'where', 'who', 'is', 'are',
-                  'the', 'a', 'an', 'of', 'to', 'for', 'in', 'on', 'at', 'do',
-                  'does', 'did', 'can', 'could', 'should', 'would', 'i', 'you'}
-    keywords = [w for w in re.findall(r'\w+', search_lower) if w not in stop_words and len(w) > 2]
+
+    STOP_WORDS = {
+        'what', 'how', 'why', 'when', 'where', 'who', 'whom', 'whose',
+        'is', 'are', 'was', 'were', 'be', 'been', 'being',
+        'the', 'a', 'an', 'of', 'to', 'for', 'in', 'on', 'at', 'by', 'with',
+        'do', 'does', 'did', 'can', 'could', 'should', 'would', 'will',
+        'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'us', 'them',
+        'and', 'or', 'but', 'if', 'so', 'as', 'than', 'that', 'this',
+        'about', 'get', 'got', 'have', 'has', 'had',
+        'my', 'your', 'his', 'her', 'our', 'their',
+    }
+
+    words = re.findall(r"[a-z0-9']+", search_lower)
+    keywords = [w for w in words if w not in STOP_WORDS and len(w) > 2]
+    if not keywords:
+        keywords = [search_lower]
+
+    def score_row(row, qcol, acol, tcol=None):
+        q = str(row.get(qcol, '')).lower()
+        a = str(row.get(acol, '')).lower()
+        t = str(row.get(tcol, '')).lower() if tcol else ''
+
+        score = 0
+        if search_lower in q:
+            score += 100
+        if tcol and search_lower in t:
+            score += 80
+        if search_lower in a:
+            score += 40
+
+        for kw in keywords:
+            if kw in q:
+                score += 20
+            if tcol and kw in t:
+                score += 15
+            if kw in a:
+                score += 3
+
+        return score
 
     results = []
-    try:
-        # Pass 1: exact phrase match on question
-        mask_q = df_medical_qa['question'].astype(str).str.lower().str.contains(search_lower, na=False, regex=False)
-        matches = df_medical_qa[mask_q]
 
-        # Pass 2: exact phrase match on answer
-        if matches.empty:
-            mask_a = df_medical_qa['answer'].astype(str).str.lower().str.contains(search_lower, na=False, regex=False)
-            matches = df_medical_qa[mask_a]
+    # ===== Try curated chatbot_qa first =====
+    if df_chatbot_qa is not None and len(df_chatbot_qa) > 0:
+        try:
+            df_chatbot_qa['_score'] = df_chatbot_qa.apply(
+                lambda r: score_row(r, 'question', 'answer', 'tags'), axis=1)
+            matched = df_chatbot_qa[df_chatbot_qa['_score'] >= 20].copy()
+            matched = matched.sort_values('_score', ascending=False)
+            df_chatbot_qa.drop(columns=['_score'], inplace=True, errors='ignore')
 
-        # Pass 3: keyword-based — score by how many keywords appear
-        if matches.empty and keywords:
-            def score_row(row):
-                text = (str(row.get('question', '')) + ' ' + str(row.get('answer', ''))).lower()
-                return sum(1 for kw in keywords if kw in text)
-            df_medical_qa['_score'] = df_medical_qa.apply(score_row, axis=1)
-            matches = df_medical_qa[df_medical_qa['_score'] > 0].sort_values('_score', ascending=False)
+            for _, row in matched.iterrows():
+                results.append({
+                    'question': row.get('question', ''),
+                    'answer': row.get('answer', ''),
+                    'source': 'MediSense Guide',
+                    'score': int(row['_score']),
+                })
+        except Exception as e:
+            print(f"[curated QA] {e}")
+
+    # ===== Fall back to MedQuAD =====
+    if not results and df_medical_qa is not None:
+        try:
+            df_medical_qa['_score'] = df_medical_qa.apply(
+                lambda r: score_row(r, 'question', 'answer', None), axis=1)
+            matched = df_medical_qa[df_medical_qa['_score'] >= 40].copy()
+            matched = matched.sort_values('_score', ascending=False)
             df_medical_qa.drop(columns=['_score'], inplace=True, errors='ignore')
 
-        for _, row in matches.iterrows():
-            results.append({
-                'question': row.get('question', ''),
-                'answer': row.get('answer', ''),
-                'source': row.get('source', 'Medical Q&A')
-            })
-    except Exception as e:
-        print(f"Q&A search error: {e}")
+            for _, row in matched.iterrows():
+                results.append({
+                    'question': row.get('question', ''),
+                    'answer': row.get('answer', ''),
+                    'source': row.get('source', 'Medical Q&A'),
+                    'score': int(row['_score']),
+                })
+        except Exception as e:
+            print(f"[MedQuAD QA] {e}")
 
-    # Deduplicate by question text
-    unique_results = []
+    # Deduplicate by question
     seen = set()
+    unique = []
     for r in results:
-        q_text = r.get('question', '')
-        if q_text and q_text not in seen:
-            seen.add(q_text)
-            unique_results.append(r)
+        q = r.get('question', '')
+        if q and q not in seen:
+            seen.add(q)
+            unique.append(r)
 
-    total_count = len(unique_results)
-    paginated_results = unique_results[offset:offset + limit]
-    return paginated_results, total_count
+    total = len(unique)
+    return unique[offset:offset + limit], total
+
 
 def extract_health_terms(query):
     if not query:
         return []
-    
+
     query_lower = query.lower().strip()
     extracted = []
     health_terms = set()
-    
+
     if df_master is not None and 'disease' in df_master.columns:
         for disease in df_master['disease'].dropna():
             health_terms.add(disease.lower().strip())
-    
+
     if df_symptom_descriptions is not None:
         for symptom in df_symptom_descriptions['symptom'].dropna():
             health_terms.add(symptom.lower().strip())
-    
+
     if df_symptom_precautions is not None:
         for condition in df_symptom_precautions['condition'].dropna():
             health_terms.add(condition.lower().strip())
-    
+
     nlp_symptoms = analyze_symptoms_nlp(query)
     for symptom in nlp_symptoms:
         if symptom not in extracted:
             extracted.append(symptom)
-    
+
     words = query_lower.split()
     for i in range(len(words)):
         for j in range(2, 4):
@@ -1875,18 +1922,21 @@ def extract_health_terms(query):
                 phrase = ' '.join(words[i:i+j])
                 if phrase in health_terms and phrase not in extracted:
                     extracted.append(phrase)
-    
+
     for word in words:
         word_clean = word.strip('.,!?()[]"\'')
         if word_clean in health_terms and word_clean not in extracted:
             extracted.append(word_clean)
-    
+
     if not extracted:
-        common = ['flu', 'fever', 'cough', 'headache', 'pain', 'cold', 'diabetes', 'asthma', 'allergy', 'infection', 'virus', 'disease', 'symptom', 'treatment', 'doctor', 'hospital', 'clinic', 'medicine', 'tb', 'hiv', 'covid']
+        common = ['flu', 'fever', 'cough', 'headache', 'pain', 'cold',
+                  'diabetes', 'asthma', 'allergy', 'infection', 'virus',
+                  'disease', 'symptom', 'treatment', 'doctor', 'hospital',
+                  'clinic', 'medicine', 'tb', 'hiv', 'covid']
         for term in common:
             if term in query_lower and term not in extracted:
                 extracted.append(term)
-    
+
     return list(set(extracted))[:5]
 
 def get_urgency_level(symptoms, disease_info):
@@ -3320,7 +3370,7 @@ def patient_chatbot():
     question = ''
     answer_data = None
 
-    # Fetch previous conversation (latest 20 messages, oldest first)
+    # Fetch previous conversation
     history = []
     try:
         conn = get_db_connection()
@@ -3344,37 +3394,27 @@ def patient_chatbot():
             corrected = correct_spelling(question)
             query = corrected if corrected else question
 
-            # Try QA database first
-            results, _ = search_medical_qa(query, limit=3, offset=0)
+            # ===== Primary: Q&A database (now scored) =====
+            results, _ = search_medical_qa(query, limit=2, offset=0)
 
-            # Fallback 1: disease database
+            # ===== Fallback 1: Disease DB (only if QA found nothing) =====
             if not results:
                 diseases = search_master_database(query)
                 if diseases:
                     d = diseases[0]
-                    answer_text = d.get('description', 'No description available.')
+                    parts = [d.get('description', '')]
                     if d.get('symptoms'):
-                        answer_text += "\n\nSymptoms: " + ", ".join(d['symptoms'][:6])
-                    if d.get('precautions'):
-                        answer_text += "\n\nPrecautions: " + str(d['precautions'])[:300]
+                        parts.append("\n\nSymptoms: " + ", ".join(d['symptoms'][:6]))
+                    if d.get('precautions') and d['precautions'] != 'No precautions available':
+                        parts.append("\n\nPrecautions: " + str(d['precautions'])[:300])
+                    answer_text = "\n".join(p for p in parts if p)
                     results = [{
                         'question': f'Information about {d["disease"]}',
                         'answer': answer_text,
                         'source': 'Disease Database',
                     }]
 
-            # Fallback 2: medicines
-            if not results:
-                meds = search_medicines_by_disease(query)
-                if meds:
-                    m = meds[0]
-                    results = [{
-                        'question': f'Medicines for {m["disease"]}',
-                        'answer': "Commonly used: " + ", ".join(m['medicines'][:10]),
-                        'source': 'Medicine Database',
-                    }]
-
-            # Fallback 3: symptom descriptions
+            # ===== Fallback 2: Symptom descriptions =====
             if not results:
                 symptoms = search_symptom_descriptions(query)
                 if symptoms:
@@ -3385,7 +3425,7 @@ def patient_chatbot():
                         'source': 'Symptom Database',
                     }]
 
-            # Save to DB
+            # Save + respond
             if results:
                 answer_data = {
                     'question': question,

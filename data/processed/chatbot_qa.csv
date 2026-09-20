@@ -1,0 +1,613 @@
+question,answer,tags
+What causes a headache?,"Headaches can be caused by tension, migraines, dehydration, stress, lack of sleep, eye strain, sinus infections, or high blood pressure. If headaches are frequent or severe, see a doctor.",headache head pain
+How do I treat a headache?,"Rest in a quiet dark room. Drink water. Take paracetamol or ibuprofen if needed. Apply a cold or warm compress. Avoid screen glare and stress. Seek medical help if the headache is sudden and severe.",headache head pain treat relief
+What is a migraine?,"A migraine is a severe headache often on one side of the head. It can come with nausea, vomiting, and sensitivity to light or sound. Migraines can last hours to days.",migraine headache
+How do I treat a migraine?,"Rest in a dark quiet room. Apply a cold compress. Take pain relievers early. Avoid triggers like certain foods, stress, or lack of sleep. See a doctor if migraines are frequent.",migraine treat headache
+What is a tension headache?,"A tension headache feels like a tight band around the head. It is usually caused by stress, poor posture, or eye strain. It is the most common type of headache.",tension headache stress
+What is a cluster headache?,"Cluster headaches are severe headaches on one side of the head, often around the eye. They come in clusters over weeks or months. They are more common in men.",cluster headache
+What is HIV?,"HIV (Human Immunodeficiency Virus) attacks the body's immune system. If untreated, it can lead to AIDS. It is spread through unprotected sex, shared needles, or from mother to child. With treatment, people with HIV can live long healthy lives.",hiv aids immune virus
+How is HIV transmitted?,"HIV spreads through unprotected sex, sharing needles, blood transfusions with infected blood, and from mother to child during pregnancy, birth, or breastfeeding. It is NOT spread by hugging, kissing, or sharing food.",hiv aids transmission spread
+How do I prevent HIV?,"Use condoms consistently. Never share needles. Get tested regularly. If you're at high risk, ask your doctor about PrEP (pre-exposure prophylaxis). Pregnant women should get tested early.",hiv aids prevent prevention
+What is AIDS?,"AIDS (Acquired Immunodeficiency Syndrome) is the most advanced stage of HIV infection. It happens when the immune system is severely damaged. With modern treatment, most people with HIV do not progress to AIDS.",aids hiv immune
+What is diabetes?,"Diabetes is a chronic condition where the body cannot properly regulate blood sugar. Type 1 is when the body doesn't make insulin. Type 2 is when the body doesn't use insulin well. Symptoms include thirst, frequent urination, fatigue, and blurred vision.",diabetes sugar blood glucose
+What causes diabetes?,"Type 1 diabetes is caused by an autoimmune reaction. Type 2 diabetes is linked to genetics, obesity, poor diet, lack of exercise, and age. Managing weight, diet, and activity reduces risk.",diabetes cause causes
+How do I prevent diabetes?,"Maintain a healthy weight. Eat a balanced diet low in sugar and processed foods. Exercise at least 30 minutes most days. Get regular blood sugar checks if you're at risk.",diabetes prevent prevention
+What are symptoms of diabetes?,"Increased thirst, frequent urination, extreme fatigue, blurred vision, slow-healing wounds, and unexplained weight loss.",diabetes symptoms
+How is diabetes treated?,"Type 1 is treated with insulin. Type 2 is managed with diet, exercise, oral medication, and sometimes insulin. Regular monitoring of blood sugar is essential.",diabetes treat treatment
+What is high blood pressure?,"High blood pressure (hypertension) means the force of blood against your artery walls is too high. It usually has no symptoms but damages the heart, brain, and kidneys over time. Normal is below 120/80.",blood pressure hypertension high
+How do I lower my blood pressure?,"Reduce salt. Exercise regularly. Lose excess weight. Limit alcohol. Quit smoking. Manage stress. Take medication if prescribed. Monitor your BP at home.",blood pressure hypertension lower
+What is low blood pressure?,"Low blood pressure (hypotension) is when blood pressure is below 90/60. It can cause dizziness, fainting, and fatigue. It is only a problem if it causes symptoms.",blood pressure hypotension low
+What is asthma?,"Asthma is a chronic condition where airways narrow and swell, making breathing difficult. Symptoms include wheezing, coughing, chest tightness, and shortness of breath. Triggers include dust, pollen, cold air, and exercise.",asthma breathing wheeze
+How do I treat an asthma attack?,"Sit upright. Use your reliever inhaler (usually blue). Take 1 puff every 30-60 seconds up to 10 puffs. If no improvement, call emergency services. Stay calm.",asthma attack treat treatment
+What is tuberculosis?,"Tuberculosis (TB) is a bacterial infection that usually affects the lungs. Symptoms include a cough lasting more than 2 weeks, chest pain, night sweats, weight loss, and coughing blood. It is curable with 6 months of treatment.",tb tuberculosis lung
+How is TB treated?,"TB is treated with a combination of antibiotics for 6-9 months. It is very important to complete the full course. Missing doses can lead to drug-resistant TB.",tb tuberculosis treat treatment
+How is TB spread?,"TB spreads through the air when an infected person coughs or sneezes. It is not spread by touching surfaces or sharing food.",tb tuberculosis spread
+What is malaria?,"Malaria is a serious disease caused by a parasite spread through mosquito bites. Symptoms include fever, chills, sweating, headache, and nausea. It can be fatal if not treated quickly.",malaria mosquito fever
+How do I prevent malaria?,"Use insect repellent. Sleep under a mosquito net. Take antimalarial medication if travelling to high-risk areas. Wear long sleeves in the evening.",malaria prevent prevention mosquito
+What are symptoms of the flu?,"Flu symptoms include fever, cough, sore throat, runny nose, body aches, headache, chills, and fatigue. Symptoms usually come on suddenly and last 5-7 days.",flu influenza symptoms
+How do I treat the flu?,"Rest. Drink plenty of fluids. Take paracetamol or ibuprofen for fever and aches. Stay home to avoid spreading it. See a doctor if symptoms are severe or last more than 10 days.",flu influenza treat treatment
+What is COVID-19?,"COVID-19 is a respiratory illness caused by the SARS-CoV-2 virus. Symptoms include fever, cough, shortness of breath, fatigue, and loss of taste or smell. It spreads through droplets in the air.",covid coronavirus covid19
+How do I prevent COVID-19?,"Get vaccinated. Wash hands frequently. Wear a mask in crowded indoor spaces. Maintain distance from sick people. Improve ventilation indoors.",covid coronavirus prevent prevention
+What are symptoms of COVID-19?,"Fever, dry cough, tiredness, loss of taste or smell, sore throat, headache, body aches, and shortness of breath.",covid symptoms
+What is long COVID?,"Long COVID is when symptoms continue for weeks or months after the initial infection. Common symptoms include fatigue, brain fog, and shortness of breath.",covid long covid
+What is cancer?,"Cancer is a disease where abnormal cells grow uncontrollably. It can affect almost any part of the body. Treatment depends on the type and stage, and may include surgery, chemotherapy, or radiation.",cancer tumour tumor
+What causes cancer?,"Cancer is caused by genetic mutations that build up over time. Risk factors include smoking, alcohol, poor diet, sun exposure, some viruses, and family history. Not all cancers have a known cause.",cancer cause causes
+How can I prevent cancer?,"Don't smoke. Limit alcohol. Eat a healthy diet. Exercise. Protect skin from the sun. Get recommended cancer screenings. Get vaccinated against HPV and hepatitis B.",cancer prevent prevention
+What are signs of cancer?,"Unexplained weight loss, persistent fatigue, lumps, changes in skin, unusual bleeding, persistent cough, and changes in bowel habits.",cancer signs symptoms
+What is lung cancer?,"Lung cancer starts in the lungs. Symptoms include a persistent cough, coughing blood, chest pain, and shortness of breath. Smoking is the biggest risk factor.",lung cancer
+What is breast cancer?,"Breast cancer starts in the breast tissue. Signs include a lump, change in nipple, or skin dimpling. Regular self-exams and mammograms help early detection.",breast cancer
+What is prostate cancer?,"Prostate cancer affects the prostate gland in men. Symptoms include difficulty urinating, weak urine flow, and blood in urine or semen. Regular check-ups help early detection.",prostate cancer
+What is cervical cancer?,"Cervical cancer affects the cervix. It is often caused by HPV. Regular Pap smears and HPV vaccination help prevent it.",cervical cancer
+What is skin cancer?,"Skin cancer is cancer that starts in the skin. Look for new moles, changes in existing moles, or sores that don't heal. Sun protection reduces risk.",skin cancer melanoma
+What is leukaemia?,"Leukaemia is cancer of the blood and bone marrow. Symptoms include fatigue, frequent infections, easy bruising, and weight loss.",leukaemia leukemia blood cancer
+What is a stroke?,"A stroke happens when blood flow to part of the brain is cut off. Signs: FAST — Face drooping, Arm weakness, Speech difficulty, Time to call emergency. Every minute counts.",stroke brain fast
+What should I do if someone is having a stroke?,"Call emergency services immediately. Note the time symptoms started. Keep the person calm. Do NOT give food or drink. Do not give aspirin unless told by a medical professional.",stroke emergency fast
+What are stroke warning signs?,"FAST: Face drooping, Arm weakness, Speech difficulty, Time to call emergency. Other signs include sudden vision loss, severe headache, and trouble walking.",stroke signs warning
+What is a heart attack?,"A heart attack happens when blood flow to the heart is blocked. Symptoms: chest pain, pressure or tightness, pain in arm jaw or back, shortness of breath, sweating, nausea.",heart attack cardiac
+What should I do if someone is having a heart attack?,"Call emergency services. Make them sit and rest. Loosen tight clothing. Give aspirin if available and they're not allergic. If unconscious, start CPR.",heart attack cardiac emergency
+What are heart attack symptoms in women?,"Women may have less obvious symptoms: fatigue, shortness of breath, nausea, and pain in the jaw, neck, or back. Chest pain is common but not always present.",heart attack women
+What is heart failure?,"Heart failure means the heart can't pump blood as well as it should. Symptoms include shortness of breath, swelling in legs, and fatigue.",heart failure heart
+What is angina?,"Angina is chest pain caused by reduced blood flow to the heart. It is often a warning sign of heart disease.",angina chest pain
+What is arrhythmia?,"Arrhythmia is an irregular heartbeat. Symptoms include palpitations, dizziness, and fainting.",arrhythmia heart
+What is a blood clot?,"A blood clot is a clump of blood that becomes solid. If it blocks a blood vessel, it can cause a stroke, heart attack, or pulmonary embolism.",blood clot thrombosis
+What is high cholesterol?,"Cholesterol is a waxy substance in your blood. Too much can clog arteries and lead to heart disease. High cholesterol usually has no symptoms.",cholesterol heart
+How do I lower my cholesterol?,"Eat less saturated and trans fat. Exercise. Lose weight. Quit smoking. Eat more fibre. Take medication if prescribed.",cholesterol lower treat
+What is pneumonia?,"Pneumonia is an infection of the lungs. Symptoms include cough, fever, chills, difficulty breathing, and chest pain. It can be caused by bacteria, viruses, or fungi. Treatment depends on the cause.",pneumonia lung infection
+What is bronchitis?,"Bronchitis is inflammation of the bronchial tubes. Symptoms include persistent cough, mucus production, chest discomfort, and mild fever. Most cases are viral and clear up in 2-3 weeks.",bronchitis cough lung
+What is emphysema?,"Emphysema is a lung disease where the air sacs are damaged. It is most often caused by smoking. Symptoms include shortness of breath and a chronic cough.",emphysema lung copd
+What is COPD?,"COPD (Chronic Obstructive Pulmonary Disease) is a group of lung diseases that make breathing difficult. It is usually caused by smoking. Symptoms include cough, wheezing, and shortness of breath.",copd lung
+What is a fever?,"A fever is a body temperature above 38°C (100.4°F). It's usually a sign the body is fighting an infection. Most fevers are not dangerous and go away on their own.",fever temperature high
+How do I treat a fever?,"Rest. Drink plenty of fluids. Take paracetamol to lower temperature. Wear light clothing. See a doctor if fever is above 39.5°C, lasts more than 3 days, or comes with severe symptoms.",fever treat treatment temperature
+What causes a cough?,"Coughs are caused by colds, flu, allergies, asthma, smoking, acid reflux, or infections. A cough lasting more than 3 weeks should be checked by a doctor.",cough causes
+How do I treat a cough?,"Drink warm fluids. Use honey (for adults and children over 1). Try steam inhalation. Avoid smoke. See a doctor if the cough lasts more than 3 weeks or brings up blood.",cough treat treatment
+What is whooping cough?,"Whooping cough (pertussis) is a bacterial infection that causes severe coughing fits. It is prevented by vaccination.",whooping cough pertussis
+What is a sore throat?,"A sore throat is pain or irritation in the throat. It is often caused by a cold or flu. Gargling warm salt water helps.",sore throat
+How do I treat a sore throat?,"Gargle warm salt water. Drink warm fluids. Suck on lozenges. Take paracetamol for pain. See a doctor if it lasts more than a week or comes with a high fever.",sore throat treat
+What is strep throat?,"Strep throat is a bacterial infection of the throat. Symptoms include severe sore throat, fever, and swollen glands. It needs antibiotics.",strep throat
+What is tonsillitis?,"Tonsillitis is inflammation of the tonsils. Symptoms include sore throat, difficulty swallowing, and fever. It can be viral or bacterial.",tonsillitis throat
+What is diarrhoea?,"Diarrhoea is when you pass loose or watery stools 3 or more times a day. It can be caused by infection, food poisoning, or medication. Most cases clear up within a few days.",diarrhoea diarrhea stomach
+How do I treat diarrhoea?,"Drink plenty of fluids and oral rehydration salts. Eat bland foods. Avoid dairy. See a doctor if there's blood in stool, if it lasts more than 2 days, or if you can't keep fluids down.",diarrhoea diarrhea treat
+What is food poisoning?,"Food poisoning happens when you eat contaminated food. Symptoms include nausea, vomiting, diarrhoea, stomach cramps, and fever. It usually clears up within 48 hours.",food poisoning stomach
+How do I treat food poisoning?,"Rest and drink fluids. Avoid solid food until vomiting stops. Eat bland foods when you feel better. Seek medical help if symptoms are severe or last more than 3 days.",food poisoning treat
+What is gastroenteritis?,"Gastroenteritis (stomach flu) is inflammation of the stomach and intestines. Symptoms include diarrhoea, vomiting, and stomach cramps. It usually clears up on its own.",gastroenteritis stomach flu
+What is nausea?,"Nausea is the feeling of wanting to vomit. It can be caused by infection, pregnancy, medication, or motion sickness.",nausea
+What causes vomiting?,"Vomiting can be caused by infection, food poisoning, pregnancy, migraine, medication, or a blocked intestine.",vomiting
+How do I treat vomiting?,"Stop solid food for a few hours. Sip small amounts of water or rehydration fluid. Gradually return to bland food. See a doctor if vomiting lasts more than 24 hours or there is blood.",vomiting treat
+What is constipation?,"Constipation is when you have fewer than 3 bowel movements a week, or they are hard to pass. It can be caused by low fibre, dehydration, or medication.",constipation
+How do I treat constipation?,"Drink more water. Eat more fibre (fruit, vegetables, whole grains). Exercise. Try prunes or a mild laxative if needed. See a doctor if it lasts more than 2 weeks.",constipation treat
+What is irritable bowel syndrome?,"IBS is a common gut condition causing cramps, bloating, diarrhoea, or constipation. It is not dangerous but can affect quality of life.",ibs bowel
+What is a stomach ulcer?,"A stomach ulcer is a sore on the lining of the stomach. It is often caused by H. pylori bacteria or long-term use of painkillers. Symptoms include burning pain and nausea.",ulcer stomach
+What is acid reflux?,"Acid reflux is when stomach acid flows back into the food pipe. It causes heartburn and a sour taste. Frequent reflux is called GERD.",reflux gerd heartburn
+What is appendicitis?,"Appendicitis is inflammation of the appendix. Symptoms include pain starting near the belly button and moving to the lower right, nausea, and fever. It is a medical emergency.",appendicitis
+What is a hernia?,"A hernia is when an organ pushes through a weak spot in the muscle. Symptoms include a bulge, pain, or discomfort. Some hernias need surgery.",hernia
+What is gallstones?,"Gallstones are hard pieces of material that form in the gallbladder. They can cause pain in the upper right abdomen, nausea, and jaundice.",gallstones
+What is kidney stones?,"Kidney stones are hard deposits that form in the kidneys. Symptoms include severe pain in the back or side, blood in urine, and painful urination.",kidney stones
+What is a urinary tract infection?,"A UTI is an infection in the urinary system. Symptoms include burning when urinating, frequent urination, cloudy urine, and lower belly pain. It is treated with antibiotics.",uti urinary infection
+What is a bladder infection?,"A bladder infection is a type of UTI. Symptoms include pelvic pain, frequent urination, and burning. It needs antibiotics.",bladder uti
+What is a kidney infection?,"A kidney infection is a serious UTI that has spread to the kidneys. Symptoms include fever, back pain, and nausea. It needs prompt medical treatment.",kidney infection
+What is anaemia?,"Anaemia means you don't have enough healthy red blood cells. Symptoms include fatigue, weakness, pale skin, and shortness of breath. Common causes are iron deficiency, blood loss, or chronic disease.",anaemia anemia blood
+How do I treat anaemia?,"Eat iron-rich foods like red meat, spinach, and beans. Take iron supplements if prescribed. Treat the underlying cause. See a doctor for severe symptoms.",anaemia anemia treat
+What is sickle cell disease?,"Sickle cell disease is an inherited blood disorder. Red blood cells become crescent-shaped and block blood flow, causing pain and other complications.",sickle cell blood
+What is haemophilia?,"Haemophilia is a bleeding disorder where blood doesn't clot properly. It is usually inherited.",haemophilia bleeding
+What is leukaemia?,"Leukaemia is cancer of the blood and bone marrow. Symptoms include fatigue, frequent infections, easy bruising, and weight loss.",leukaemia blood cancer
+What is arthritis?,"Arthritis is inflammation of one or more joints. Symptoms include pain, stiffness, swelling, and reduced movement. Common types are osteoarthritis and rheumatoid arthritis.",arthritis joint pain
+How do I treat arthritis?,"Exercise gently. Maintain a healthy weight. Use hot or cold packs. Take pain relievers if needed. See a doctor for medication or physical therapy.",arthritis treat joint
+What is osteoarthritis?,"Osteoarthritis is the most common form of arthritis. It happens when the cartilage between bones wears down. It usually affects knees, hips, and hands.",osteoarthritis joint
+What is rheumatoid arthritis?,"Rheumatoid arthritis is an autoimmune disease where the body attacks its own joints. It causes pain, swelling, and stiffness, often on both sides of the body.",rheumatoid arthritis
+What is gout?,"Gout is a type of arthritis caused by too much uric acid. It causes sudden severe pain, often in the big toe.",gout
+What is osteoporosis?,"Osteoporosis is when bones become weak and brittle. It is more common in women after menopause. It increases the risk of fractures.",osteoporosis bones
+What is a muscle strain?,"A strain is an injury to a muscle or tendon. Symptoms include pain, swelling, and muscle weakness. Rest and gentle stretching help.",strain muscle
+What is a sprain?,"A sprain is an injury to a ligament. Symptoms include pain, swelling, and bruising. Rest, Ice, Compression, and Elevation (RICE) helps.",sprain ankle
+What is a fracture?,"A fracture is a broken bone. Symptoms include pain, swelling, bruising, and inability to move the limb. Do not try to straighten it — get medical help.",fracture broken bone
+How do I treat a fracture?,"Do not move the injured area. Apply a cold pack. Keep the limb still. Call for help or go to the emergency room.",fracture broken treat
+What is a burn?,"A burn is damage to skin from heat, chemicals, electricity, or radiation. First-degree burns are red and painful. Second-degree burns blister. Third-degree burns are serious — call emergency services.",burn fire
+How do I treat a burn?,"Cool the burn under running cool water for 10-20 minutes. Do not use ice. Cover with a clean non-stick dressing. Do not break blisters. Seek help for large or deep burns.",burn treat
+What should I do for a burn from a chemical?,"Remove contaminated clothing. Flush the area with cool running water for 20 minutes. Cover with a clean dressing. Get medical help.",burn chemical
+What should I do for a burn from electricity?,"Turn off the power first. Do not touch the person until the power is off. Call emergency services. Check for breathing. Cover burns with a clean dressing. Do not use water on electrical burns.",burn electrical emergency
+What should I do for a sunburn?,"Get out of the sun. Cool the skin with cool water or a cool compress. Drink water. Apply aloe vera or moisturiser. Take pain relievers if needed. Avoid sun until healed.",sunburn
+What is a blister?,"A blister is a small pocket of fluid in the upper layer of skin. It is usually caused by friction, burns, or infection. Do not pop it.",blister
+What is a cut?,"A cut is a break in the skin. Clean it with water, apply pressure to stop bleeding, and cover with a bandage.",cut wound
+What should I do for a deep cut?,"Apply firm pressure with a clean cloth. Add more cloth on top — do not remove. Elevate the wound if possible. Keep pressure until bleeding stops. Call emergency services if bleeding is heavy or won't stop.",bleeding cut emergency
+What is a scrape?,"A scrape is a minor wound where the skin is rubbed off. Wash with soap and water, apply antibiotic ointment, and cover with a bandage.",scrape wound
+What should I do for a wound infection?,"See a doctor. Signs of infection include redness, swelling, warmth, pus, and fever. You may need antibiotics.",wound infection
+What is a nosebleed?,"A nosebleed is bleeding from the nose. It is common and usually not serious. Causes include dry air, picking the nose, or injury.",nosebleed nose
+How do I stop a nosebleed?,"Sit upright and lean forward. Pinch the soft part of the nose for 10-15 minutes. Breathe through your mouth. Apply a cold pack to the bridge. Seek help if it doesn't stop.",nosebleed nose treat
+What is a bruise?,"A bruise is bleeding under the skin caused by injury. It changes colour as it heals. Most bruises heal within 2 weeks.",bruise
+What is a nose fracture?,"A nose fracture is a broken nose. Symptoms include pain, swelling, bruising, and difficulty breathing through the nose. See a doctor.",nose fracture
+What is a black eye?,"A black eye is bruising around the eye caused by injury. Apply a cold pack for 15-20 minutes at a time. See a doctor if vision is affected.",black eye
+What is a head injury?,"A head injury can range from a mild bump to a serious brain injury. Seek emergency help for loss of consciousness, confusion, vomiting, or severe headache.",head injury
+What is a concussion?,"A concussion is a mild brain injury caused by a blow to the head. Symptoms include headache, confusion, dizziness, and memory problems. Rest is important.",concussion
+What is a spinal injury?,"A spinal injury is damage to the spinal cord. It can cause paralysis and loss of sensation. Do NOT move the person — call emergency services.",spinal injury
+What is a broken rib?,"A broken rib is a fracture of one of the ribs. Symptoms include pain when breathing, coughing, or moving. Seek help if breathing is difficult.",rib fracture
+What is a broken arm?,"A broken arm is a fracture of one of the bones in the arm. Symptoms include pain, swelling, and inability to move the arm. Immobilise and get medical help.",arm fracture
+What is a broken leg?,"A broken leg is a fracture of one of the bones in the leg. Symptoms include pain, swelling, and inability to walk. Immobilise and get medical help.",leg fracture
+What is a dislocated joint?,"A dislocated joint is when bones are forced out of their normal position. Symptoms include severe pain, swelling, and deformity. Do NOT try to push it back in — get medical help.",dislocation joint
+What is a pulled muscle?,"A pulled muscle is a strain. Rest, ice, compression, and elevation help. Avoid using the muscle until it heals.",pulled muscle
+What is a torn ligament?,"A torn ligament is a serious sprain. Symptoms include pain, swelling, and instability. It may need surgery.",torn ligament
+What is tendonitis?,"Tendonitis is inflammation of a tendon. It causes pain and swelling near a joint. Rest and ice help.",tendonitis
+What is plantar fasciitis?,"Plantar fasciitis is inflammation of the tissue on the bottom of the foot. It causes heel pain, especially in the morning.",plantar fasciitis foot
+What is a migraine aura?,"A migraine aura is a warning sign before a migraine. It can include flashing lights, blind spots, or tingling. It usually lasts 20-60 minutes.",migraine aura
+What is vertigo?,"Vertigo is a feeling that you or the world is spinning. It can be caused by inner ear problems. See a doctor if it's frequent.",vertigo dizziness
+What is dizziness?,"Dizziness is a feeling of lightheadedness or unsteadiness. It can be caused by dehydration, low blood pressure, or inner ear problems.",dizziness
+What is fainting?,"Fainting (syncope) is a brief loss of consciousness. It is usually caused by a temporary drop in blood flow to the brain. See a doctor if it happens often.",fainting
+What is a seizure?,"A seizure is a sudden burst of electrical activity in the brain. Symptoms vary — from staring spells to full-body convulsions. Call emergency services if it lasts more than 5 minutes.",seizure epilepsy
+What should I do for a seizure?,"Clear the area. Cushion the head. Do NOT restrain the person. Do NOT put anything in their mouth. Time the seizure. Call emergency services if it lasts more than 5 minutes.",seizure epilepsy emergency
+What is epilepsy?,"Epilepsy is a brain disorder that causes repeated seizures. It is usually managed with medication.",epilepsy seizure
+What is a stroke?,"A stroke happens when blood flow to part of the brain is cut off. Signs: FAST — Face drooping, Arm weakness, Speech difficulty, Time to call emergency.",stroke brain fast
+What is a TIA?,"A TIA (transient ischaemic attack) is a mini-stroke. Symptoms last minutes to hours then go away. It is a warning sign — see a doctor right away.",tia mini stroke
+What is dementia?,"Dementia is a group of symptoms affecting memory, thinking, and social abilities. Alzheimer's is the most common cause.",dementia alzheimers
+What is Alzheimer's disease?,"Alzheimer's is a progressive brain disease that affects memory and thinking. It is the most common cause of dementia.",alzheimers dementia
+What is Parkinson's disease?,"Parkinson's disease is a brain disorder that causes shaking, stiffness, and difficulty with balance and coordination.",parkinsons
+What is multiple sclerosis?,"MS is a disease where the immune system attacks the protective covering of nerves. It causes problems with vision, balance, and muscle control.",ms multiple sclerosis
+What is motor neurone disease?,"MND is a group of diseases that affect the nerves controlling muscles. It causes weakness and eventually paralysis.",mnd motor neurone
+What is cerebral palsy?,"Cerebral palsy is a group of disorders affecting movement and posture. It is caused by damage to the developing brain, often before birth.",cerebral palsy
+What is spina bifida?,"Spina bifida is a birth defect where the spine doesn't form properly. It can cause physical and intellectual disabilities.",spina bifida
+What is down syndrome?,"Down syndrome is a genetic condition caused by an extra copy of chromosome 21. It causes intellectual disability and characteristic physical features.",down syndrome
+What is autism?,"Autism (ASD) is a developmental condition that affects communication and behaviour. It appears in early childhood.",autism asd
+What is ADHD?,"ADHD (Attention Deficit Hyperactivity Disorder) is a condition that affects focus, impulse control, and activity levels. It is often diagnosed in childhood.",adhd
+What is depression?,"Depression is a mental health condition with persistent sadness, loss of interest, low energy, and difficulty concentrating. It is a real illness and it is treatable.",depression mental sad
+How do I treat depression?,"Talk to a doctor or counsellor. Consider therapy and medication. Exercise. Get enough sleep. Stay connected with people. Reach out for help — you are not alone.",depression treat mental
+What is anxiety?,"Anxiety is a feeling of worry, fear, or unease that is hard to control. Symptoms include restlessness, rapid heartbeat, sweating, and trouble concentrating. Treatment includes therapy and sometimes medication.",anxiety worry stress
+How do I treat anxiety?,"Try deep breathing, meditation, or yoga. Exercise regularly. Limit caffeine and alcohol. Talk to a therapist if it affects daily life.",anxiety treat
+What is a panic attack?,"A panic attack is a sudden episode of intense fear with physical symptoms like racing heart, sweating, and difficulty breathing. It usually peaks within 10 minutes.",panic attack anxiety
+What should I do for a panic attack?,"Stay calm. Breathe slowly and deeply. Remind the person they are safe. Stay with them. Do not crowd them. Symptoms usually pass within 10-20 minutes.",panic attack anxiety
+What is bipolar disorder?,"Bipolar disorder causes extreme mood swings from depression to mania. It is managed with medication and therapy.",bipolar mental
+What is schizophrenia?,"Schizophrenia is a mental health condition that affects how a person thinks, feels, and behaves. Symptoms include hallucinations, delusions, and disorganised thinking.",schizophrenia mental
+What is PTSD?,"PTSD (Post-Traumatic Stress Disorder) is a mental health condition that develops after a traumatic event. Symptoms include flashbacks, nightmares, and severe anxiety.",ptsd trauma mental
+What is OCD?,"OCD (Obsessive-Compulsive Disorder) is a mental health condition with unwanted thoughts (obsessions) and repetitive behaviours (compulsions).",ocd mental
+What is insomnia?,"Insomnia is difficulty falling or staying asleep. It can be caused by stress, caffeine, medication, or medical conditions. Long-term insomnia can affect your health.",insomnia sleep
+How do I treat insomnia?,"Keep a regular sleep schedule. Avoid caffeine late in the day. Limit screen time before bed. Exercise during the day. Talk to a doctor if it lasts more than a few weeks.",insomnia sleep treat
+How can I sleep better?,"Go to bed and wake up at the same time. Keep the room dark and cool. Avoid screens before bed. Avoid caffeine in the afternoon. Exercise during the day.",sleep rest
+What is narcolepsy?,"Narcolepsy is a sleep disorder that causes sudden sleep attacks and extreme daytime sleepiness.",narcolepsy sleep
+What is sleep apnoea?,"Sleep apnoea is when breathing stops briefly during sleep. Symptoms include loud snoring and daytime fatigue. It needs medical treatment.",sleep apnoea
+How can I reduce stress?,"Try deep breathing, meditation, or yoga. Exercise regularly. Talk to someone you trust. Take breaks. Spend time in nature. Avoid alcohol and drugs.",stress mental
+What is burnout?,"Burnout is a state of physical and emotional exhaustion caused by prolonged stress, often related to work. Symptoms include fatigue, cynicism, and reduced performance.",burnout stress
+What is dehydration?,"Dehydration is when your body loses more water than it takes in. Symptoms include thirst, dark urine, dry mouth, fatigue, and dizziness. Severe dehydration can be life-threatening.",dehydration water
+How do I treat dehydration?,"Drink water or oral rehydration salts. Avoid caffeine and alcohol. Rest. Seek emergency help if the person is confused or cannot keep fluids down.",dehydration water treat
+How much water should I drink?,"Most adults need about 6-8 glasses (1.5-2 litres) of water a day. More if you exercise or live in a hot climate.",water hydration
+What is a healthy diet?,"A healthy diet includes fruits, vegetables, whole grains, lean proteins, and healthy fats. Limit sugar, salt, and processed foods. Drink plenty of water.",diet nutrition healthy
+How much exercise do I need?,"Adults should aim for at least 150 minutes of moderate exercise or 75 minutes of vigorous exercise per week, plus strength training twice a week.",exercise fitness
+What is obesity?,"Obesity is having too much body fat, measured by BMI. It increases the risk of diabetes, heart disease, and other conditions.",obesity weight
+How can I lose weight safely?,"Eat a balanced diet with fewer calories. Exercise regularly. Aim to lose 0.5-1 kg per week. Avoid crash diets. See a doctor or dietitian if needed.",weight loss
+What is a healthy BMI?,"A healthy BMI is between 18.5 and 24.9. Below 18.5 is underweight. 25-29.9 is overweight. 30+ is obese.",bmi weight
+What is a vitamin D deficiency?,"Vitamin D deficiency can cause fatigue, bone pain, and muscle weakness. Get sunlight, eat fortified foods, and take supplements if needed.",vitamin d deficiency
+What is iron deficiency?,"Iron deficiency is when the body doesn't have enough iron. It causes anaemia with fatigue, pale skin, and shortness of breath. Treat with iron-rich foods and supplements.",iron deficiency anaemia
+What is a calcium deficiency?,"Calcium deficiency can cause weak bones, muscle cramps, and tingling. Get calcium from dairy, leafy greens, and fortified foods.",calcium deficiency
+What is a vitamin B12 deficiency?,"B12 deficiency causes fatigue, numbness, and memory problems. It is common in vegetarians and older adults. Treat with supplements or injections.",b12 deficiency
+What is folic acid?,"Folic acid (folate) is a B vitamin important for cell growth. It is especially important during pregnancy to prevent birth defects.",folic acid
+What is a probiotic?,"Probiotics are good bacteria that help digestion and gut health. They are found in yoghurt, kefir, and supplements.",probiotic gut
+What is an antibiotic?,"Antibiotics are medicines that kill bacteria. They do not work against viruses like colds or flu. Always finish the full course.",antibiotic
+What is antibiotic resistance?,"Antibiotic resistance is when bacteria become resistant to antibiotics. It happens when antibiotics are overused or misused. It is a global health threat.",antibiotic resistance
+What is a vaccine?,"A vaccine teaches the immune system to fight a specific disease. It is one of the most effective ways to prevent illness.",vaccine
+What vaccines do children need?,"Children need vaccines for measles, mumps, rubella, polio, diphtheria, tetanus, whooping cough, hepatitis B, and more. Follow your country's schedule.",vaccines children
+What is a flu shot?,"A flu shot is a yearly vaccine against influenza. It is recommended for most people over 6 months old, especially those at high risk.",flu shot vaccine
+What is HPV vaccine?,"The HPV vaccine protects against human papillomavirus, which can cause cervical and other cancers. It is recommended for preteens and young adults.",hpv vaccine
+What is a Pap smear?,"A Pap smear is a test that checks for cervical cancer. It is recommended every 3 years for women 21-65.",pap smear cervical
+What is a mammogram?,"A mammogram is an X-ray of the breast used to screen for breast cancer. It is recommended every 1-2 years for women over 40 or 50.",mammogram breast
+What is a prostate exam?,"A prostate exam checks the prostate for abnormalities. It is usually done with a physical exam and a PSA blood test.",prostate exam
+What is a blood pressure test?,"A blood pressure test measures the force of blood against your artery walls. Normal is below 120/80. It is a quick and painless test.",blood pressure test
+What is a blood test?,"A blood test involves taking a small sample of blood to check for various conditions. It is a common diagnostic tool.",blood test
+What is an X-ray?,"An X-ray is an imaging test that uses radiation to see inside the body. It is often used to check for broken bones.",xray x-ray
+What is an MRI?,"An MRI uses magnets and radio waves to create detailed images of the body. It is used to check organs, joints, and the brain.",mri
+What is a CT scan?,"A CT scan uses X-rays to create detailed cross-sectional images of the body. It is faster than an MRI.",ct scan
+What is an ultrasound?,"An ultrasound uses sound waves to create images. It is often used in pregnancy and to check organs.",ultrasound
+What is an ECG?,"An ECG (electrocardiogram) measures the electrical activity of the heart. It is used to detect heart problems.",ecg ekg
+What is an endoscopy?,"An endoscopy is a procedure where a flexible tube with a camera is used to look inside the body, often the stomach or colon.",endoscopy
+What is a biopsy?,"A biopsy is when a small sample of tissue is removed to check for disease, often cancer.",biopsy
+What is chemotherapy?,"Chemotherapy is a cancer treatment that uses drugs to kill cancer cells. It can cause side effects like nausea, hair loss, and fatigue.",chemotherapy cancer
+What is radiation therapy?,"Radiation therapy uses high-energy rays to kill cancer cells. It is often used alongside other treatments.",radiation therapy
+What is surgery?,"Surgery is a medical procedure where a doctor operates on the body. It can be used to diagnose, treat, or prevent disease.",surgery
+What is anaesthesia?,"Anaesthesia is medicine that blocks pain during surgery. There are different types: local, regional, and general.",anaesthesia
+What is physiotherapy?,"Physiotherapy is treatment that uses exercise, massage, and other techniques to improve movement and reduce pain.",physiotherapy
+What is occupational therapy?,"Occupational therapy helps people with daily activities, especially after injury or illness.",occupational therapy
+What is speech therapy?,"Speech therapy helps people with speech, language, and swallowing problems.",speech therapy
+What is counselling?,"Counselling is talking therapy that helps people work through emotional and psychological problems.",counselling
+What is cognitive behavioural therapy?,"CBT is a type of therapy that helps change negative thought patterns. It is effective for depression, anxiety, and other conditions.",cbt therapy
+What is mindfulness?,"Mindfulness is being present in the moment without judgement. It helps reduce stress and improve mental health.",mindfulness
+What is yoga?,"Yoga is a practice that combines poses, breathing, and meditation. It improves flexibility, strength, and mental wellbeing.",yoga
+What is meditation?,"Meditation is a practice of focusing the mind to achieve calmness and clarity. It reduces stress and improves focus.",meditation
+What is acupuncture?,"Acupuncture is a traditional Chinese medicine where thin needles are inserted into the skin. It is used for pain relief.",acupuncture
+What is homeopathy?,"Homeopathy is a form of alternative medicine. There is little scientific evidence that it works.",homeopathy
+What is herbal medicine?,"Herbal medicine uses plants for healing. Some herbs have proven benefits, but others can be dangerous or interact with medicines.",herbal
+What is traditional medicine?,"Traditional medicine refers to healing practices passed down through generations. In South Africa, traditional healers (sangomas and inyangas) are widely used.",traditional medicine
+What is a sangoma?,"A sangoma is a traditional healer in Southern Africa who communicates with ancestors. They are consulted for many health and life issues.",sangoma traditional
+What is an inyanga?,"An inyanga is a traditional herbalist in Southern Africa. They use plants and natural remedies for healing.",inyanga traditional
+What is muthi?,"Muthi is traditional medicine in Southern Africa. It can be herbal or animal-based. Some muthi is safe, but some can be harmful.",muthi traditional
+What is a wet nurse?,"A wet nurse is a woman who breastfeeds another woman's child. This was common historically but is rare today.",wet nurse
+What is breastfeeding?,"Breastfeeding provides babies with the ideal nutrition and antibodies. It is recommended exclusively for the first 6 months.",breastfeeding
+How long should I breastfeed?,"Exclusive breastfeeding is recommended for the first 6 months. Continue breastfeeding alongside solid foods until at least 2 years.",breastfeeding
+What is formula feeding?,"Formula feeding is an alternative to breastfeeding. Modern formulas provide good nutrition but lack the antibodies of breast milk.",formula
+How do I introduce solid foods?,"Start at around 6 months with soft, mashed foods. Introduce one food at a time to watch for allergies.",solid food baby
+What is colic?,"Colic is when a baby cries for more than 3 hours a day, 3 days a week, for 3 weeks. The cause is unknown but it usually improves by 3-4 months.",colic baby
+What is teething?,"Teething is when a baby's first teeth come through. It can cause drooling, irritability, and gum pain. It usually starts around 6 months.",teething baby
+What is cradle cap?,"Cradle cap is a common skin condition in babies with yellow, crusty patches on the scalp. It usually clears up on its own.",cradle cap baby
+What is nappy rash?,"Nappy rash is red, irritated skin in the nappy area. It is caused by moisture and irritation. Keep the area clean and dry.",nappy rash baby
+What is jaundice in newborns?,"Newborn jaundice is a yellowing of the skin and eyes. It is common and usually harmless, but severe cases need treatment.",jaundice newborn
+What is cot death?,"Cot death (SIDS) is the sudden unexplained death of a baby under 1 year. Put babies on their back to sleep to reduce risk.",sids cot death
+What is immunisation?,"Immunisation is the process of making someone immune to a disease, usually through vaccination.",immunisation
+What is herd immunity?,"Herd immunity is when enough people are vaccinated to protect those who can't be vaccinated.",herd immunity
+What is a pandemic?,"A pandemic is a global outbreak of a disease. COVID-19 is a recent example.",pandemic
+What is an epidemic?,"An epidemic is a rapid spread of a disease in a specific area.",epidemic
+What is an endemic?,"An endemic disease is one that is always present in a population, like malaria in some regions.",endemic
+What is a quarantine?,"Quarantine is separating people who may have been exposed to a disease to prevent spread.",quarantine
+What is isolation?,"Isolation is separating people who are sick to prevent spread of disease.",isolation
+What is contact tracing?,"Contact tracing is finding people who may have been in contact with an infected person.",contact tracing
+What is social distancing?,"Social distancing is keeping space between people to reduce disease spread.",social distancing
+What is hand hygiene?,"Hand hygiene means washing hands with soap and water or using sanitiser. It is one of the best ways to prevent infection.",hand hygiene
+How do I wash my hands properly?,"Wet hands. Apply soap. Rub for at least 20 seconds. Cover all surfaces including between fingers and under nails. Rinse. Dry with a clean towel.",hand washing
+What is a face mask?,"A face mask covers the nose and mouth to reduce the spread of germs. It is especially useful in crowded indoor spaces.",face mask
+What is PPE?,"PPE (Personal Protective Equipment) is gear worn to protect against infection, like gloves, masks, and gowns.",ppe
+What is sterilisation?,"Sterilisation is the process of killing all microorganisms on equipment. It is important in hospitals and clinics.",sterilisation
+What is disinfection?,"Disinfection is killing most germs on surfaces. It is important for preventing infection.",disinfection
+What is a wound dressing?,"A wound dressing is a covering for a wound to keep it clean and prevent infection.",wound dressing
+What is a bandage?,"A bandage is a strip of material used to cover wounds, support injuries, or hold dressings in place.",bandage
+What is a sling?,"A sling supports an injured arm. It is usually made from a triangle of cloth.",sling arm
+What is a splint?,"A splint is a rigid support used to keep an injured limb still. It is used for fractures and sprains.",splint
+What is a crutch?,"A crutch is a support used to help someone walk when they can't put weight on a leg.",crutch
+What is a wheelchair?,"A wheelchair is a chair with wheels used by people who can't walk or have difficulty walking.",wheelchair
+What is physiotherapy?,"Physiotherapy uses exercise and techniques to improve movement and reduce pain.",physiotherapy
+What is hydrotherapy?,"Hydrotherapy is physiotherapy in water. The buoyancy helps reduce stress on joints.",hydrotherapy
+What is a hearing aid?,"A hearing aid is a small device that amplifies sound for people with hearing loss.",hearing aid
+What is a cochlear implant?,"A cochlear implant is a device that provides sound signals directly to the hearing nerve.",cochlear implant
+What is a guide dog?,"A guide dog is a trained dog that helps a blind or visually impaired person.",guide dog
+What is sign language?,"Sign language is a visual language using hand movements and facial expressions. It is used by deaf people.",sign language
+What is braille?,"Braille is a system of raised dots that blind people read with their fingers.",braille
+What is a prosthetic?,"A prosthetic is an artificial body part, like a limb or eye.",prosthetic
+What is an orthotic?,"An orthotic is a device that supports or corrects a body part, like shoe insoles.",orthotic
+What is a pacemaker?,"A pacemaker is a small device implanted in the chest to help control the heartbeat.",pacemaker
+What is a stent?,"A stent is a small mesh tube placed in an artery to keep it open.",stent
+What is a transplant?,"A transplant is when an organ or tissue is moved from one person to another. Common transplants include kidney, liver, and heart.",transplant
+What is a blood transfusion?,"A blood transfusion is when blood is given to a patient through a vein. It is used to replace blood lost through injury or illness.",blood transfusion
+What is dialysis?,"Dialysis is a treatment that filters waste from the blood when the kidneys fail. It is done several times a week.",dialysis kidney
+What is a ventilator?,"A ventilator is a machine that helps a person breathe. It is used in serious illness or surgery.",ventilator
+What is CPR?,"CPR (Cardiopulmonary Resuscitation) is a life-saving technique to restart breathing and heartbeat. Push hard and fast on the chest.",cpr
+How do I perform CPR on an adult?,"Check for response. Call emergency services. Place hands in the centre of the chest. Push hard and fast at least 100-120 times per minute. Depth about 5-6 cm. Continue until help arrives.",cpr emergency
+How do I perform CPR on a child?,"Give 5 rescue breaths then 30 chest compressions at a rate of 100-120 per minute. Continue 30:2 until help arrives.",cpr child emergency
+How do I perform CPR on a baby?,"Give 5 rescue breaths then 30 chest compressions using two fingers at a rate of 100-120 per minute. Continue until help arrives.",cpr baby emergency
+What is the recovery position?,"The recovery position is used for someone who is unconscious but breathing. Lay them on their side with one arm forward and their head tilted back slightly to keep the airway open.",recovery position unconscious
+What is the Heimlich maneuver?,"The Heimlich maneuver is a first-aid technique for choking. Stand behind the person, make a fist above the navel, and thrust inward and upward.",heimlich choking
+What should I do for a choking adult?,"Ask if they can speak. If not, perform the Heimlich maneuver: stand behind them, make a fist above the navel, and thrust inward and upward. If unconscious, start CPR and call emergency services.",choking emergency
+What should I do for a choking baby?,"Lay the baby face down on your forearm. Give 5 back blows between the shoulder blades. Turn over and give 5 chest thrusts. Repeat until the object comes out. Call emergency services.",choking baby emergency
+What should I do for someone who is choking and pregnant?,"Use chest thrusts instead of abdominal thrusts. Stand behind them, put your arms under their armpits, and thrust the lower chest. Call emergency services if needed.",choking pregnant
+What should I do for a snake bite?,"Keep the person calm and still. Do not cut or suck the wound. Do not apply a tourniquet. Keep the bitten limb below heart level. Get medical help immediately.",snake bite emergency
+What should I do for a dog bite?,"Wash the wound with soap and water. Apply pressure to stop bleeding. Cover with a clean dressing. See a doctor — you may need antibiotics or a tetanus shot.",dog bite wound
+What should I do for a bee sting?,"Remove the stinger by scraping it sideways. Wash the area. Apply a cold pack. Take an antihistamine if needed. Seek emergency help if there's swelling of the face or difficulty breathing.",bee sting
+What should I do for a tick bite?,"Remove the tick with fine tweezers close to the skin. Pull straight up gently. Do not squeeze the body. Clean the area. Watch for a rash or fever in the next 1-2 weeks.",tick bite
+What should I do for a fever in a child?,"Give paracetamol or ibuprofen for children (dose by weight). Keep them hydrated. Dress them lightly. Seek medical help if the child is under 3 months, has a fever above 39°C, is inconsolable, or has a rash.",fever child baby
+What should I do for a child with diarrhoea?,"Give oral rehydration salts. Continue breastfeeding. Avoid sugary drinks. See a doctor if there is blood in the stool or signs of dehydration.",diarrhoea child
+What should I do for ear pain?,"Apply a warm compress. Take pain relievers. Do not put anything in the ear. See a doctor if there's discharge, hearing loss, or the pain is severe.",ear pain
+What should I do for a toothache?,"Rinse with warm salt water. Apply a cold pack. Take pain relievers. See a dentist as soon as possible.",toothache dental
+What should I do for a backache?,"Rest but avoid bed rest for more than 2 days. Apply heat or cold. Take pain relievers. Gentle stretching helps. See a doctor if pain is severe or lasts more than 6 weeks.",backache back pain
+What should I do for a sprained ankle?,"Rest. Ice for 15-20 minutes every 2-3 hours. Compress with a bandage. Elevate above heart level. See a doctor if you can't bear weight.",sprain ankle
+What should I do for a knocked-out tooth?,"Handle the tooth by the crown, not the root. Rinse gently with milk or saline. Try to place it back in the socket. If you can't, keep it in milk or saliva and see a dentist immediately.",tooth dental emergency
+What should I do for something stuck in the eye?,"Do not rub the eye. Try to blink or flush with clean water. If the object doesn't come out, cover the eye and see a doctor. Do not try to remove an object embedded in the eye.",eye object
+What should I do for an insect in the ear?,"Tilt the head to the affected side. If it's a live insect, pour a small amount of warm oil or water in the ear to float it out. Do not use cotton buds. See a doctor if it doesn't come out.",insect ear
+What should I do for a panic attack?,"Stay calm. Breathe slowly and deeply. Remind the person they are safe. Stay with them. Do not crowd them. Symptoms usually pass within 10-20 minutes.",panic attack anxiety
+What should I do for heat exhaustion?,"Move to a cool place. Lie down and elevate the feet. Drink cool water or a sports drink. Apply cool compresses. If symptoms don't improve in 30 minutes, seek medical help.",heat exhaustion
+What should I do for heat stroke?,"This is a medical emergency. Call emergency services. Move the person to a cool place. Remove excess clothing. Apply cool water and fan them. Do not give fluids if they are confused.",heat stroke emergency
+What should I do for hypothermia?,"Move to a warm place. Remove wet clothing. Wrap in blankets. Give warm drinks if conscious. Handle gently. Seek emergency help if confused or unconscious.",hypothermia cold
+What should I do for an overdose?,"Call emergency services immediately. Do not try to make them vomit. Keep them awake if possible. Note what was taken and how much. Bring any containers or packaging.",overdose poison emergency
+What should I do for someone who is suicidal?,"Take it seriously. Stay with them. Listen without judgement. Remove any dangerous items. Call a crisis line or emergency services. Do not leave them alone.",suicide mental crisis
+What should I do for someone who fainted?,"Lay them flat and raise the legs. Loosen tight clothing. Ensure fresh air. When they wake up, give them water. If they don't wake up, call emergency services.",faint fainting
+What should I do for someone having a diabetic emergency?,"If conscious, give sugar or a sweet drink. If unconscious, do NOT give anything by mouth. Call emergency services. Monitor breathing.",diabetic emergency sugar
+What is a sexually transmitted infection?,"An STI is an infection passed through sexual contact. Common ones include chlamydia, gonorrhoea, syphilis, and HIV. Many are curable with treatment.",sti std sexual
+How do I prevent STIs?,"Use condoms. Get tested regularly. Limit sexual partners. Get vaccinated against HPV and hepatitis B. Talk openly with partners.",sti std prevent
+What is chlamydia?,"Chlamydia is a common STI. Many people have no symptoms. When they do, they include discharge and burning when urinating. It is easily treated with antibiotics.",chlamydia sti
+What is gonorrhoea?,"Gonorrhoea is a bacterial STI. Symptoms include discharge and painful urination. It is treated with antibiotics. Untreated, it can cause serious complications.",gonorrhoea sti
+What is syphilis?,"Syphilis is a bacterial STI. It starts with a painless sore then progresses through stages. It is curable with penicillin. Early treatment is important.",syphilis sti
+What is genital herpes?,"Genital herpes is a viral STI. It causes painful blisters or sores. It is not curable but can be managed with medication.",herpes sti
+What is hepatitis B?,"Hepatitis B is a viral infection of the liver. It spreads through blood and body fluids. A vaccine exists. Chronic infection can lead to liver damage.",hepatitis b liver
+What is hepatitis C?,"Hepatitis C is a viral infection of the liver. It spreads mainly through blood. Modern treatment can cure it in most people.",hepatitis c liver
+What is cirrhosis?,"Cirrhosis is scarring of the liver. It is often caused by long-term alcohol use, hepatitis, or fatty liver disease.",cirrhosis liver
+What is fatty liver disease?,"Fatty liver disease is when fat builds up in the liver. It is often linked to obesity, diabetes, and alcohol use.",fatty liver
+What is a hangover?,"A hangover is the after-effect of drinking too much alcohol. Symptoms include headache, nausea, and fatigue. Drink water and rest.",hangover
+What is alcohol poisoning?,"Alcohol poisoning is a serious and sometimes fatal condition. Symptoms include confusion, vomiting, slow breathing, and low body temperature. Call emergency services.",alcohol poisoning
+What is drug addiction?,"Drug addiction is a chronic disease where a person can't stop using drugs despite harm. Treatment includes therapy, medication, and support groups.",addiction drug
+What is smoking?,"Smoking is inhaling tobacco smoke. It causes cancer, heart disease, and lung disease. Quitting at any age improves health.",smoking
+How do I quit smoking?,"Set a quit date. Use nicotine patches or gum. Avoid triggers. Get support from friends or a quit program. Talk to a doctor about medication.",quit smoking
+What is passive smoking?,"Passive smoking is breathing in someone else's smoke. It also causes health problems, especially in children.",passive smoking
+What is vaping?,"Vaping is using an e-cigarette. It is less harmful than smoking but not risk-free. It is not recommended for non-smokers.",vaping
+What is alcohol?,"Alcohol is a depressant drug. Moderate drinking may be safe for some adults, but heavy drinking causes health problems.",alcohol
+How much alcohol is safe?,"There is no completely safe level of alcohol. If you drink, keep it to no more than 1-2 drinks per day and avoid binge drinking.",alcohol safe
+What is a calorie?,"A calorie is a unit of energy in food. The average adult needs 1800-2500 calories a day, depending on age, sex, and activity.",calorie
+What is protein?,"Protein is a nutrient that builds and repairs tissues. Good sources include meat, fish, eggs, beans, and nuts.",protein
+What is a carbohydrate?,"Carbohydrates are the body's main source of energy. They are found in grains, fruits, vegetables, and sugar.",carbohydrate carbs
+What is fat?,"Fat is a nutrient that provides energy and helps absorb vitamins. Healthy fats come from olive oil, nuts, and fish. Limit saturated and trans fats.",fat
+What is fibre?,"Fibre is the part of plant food that isn't digested. It helps with digestion and prevents constipation. Good sources include fruits, vegetables, and whole grains.",fibre fiber
+What is sugar?,"Sugar is a simple carbohydrate. Too much added sugar can cause weight gain, diabetes, and tooth decay. Limit sugary drinks and snacks.",sugar
+What is salt?,"Salt (sodium) is a mineral. Too much salt raises blood pressure. Aim for less than 5g of salt a day.",salt sodium
+What is a food label?,"A food label shows nutritional information like calories, fat, sugar, and salt. Use it to make healthier choices.",food label
+What is a balanced diet?,"A balanced diet includes a variety of foods from all food groups: fruits, vegetables, grains, protein, and dairy.",balanced diet
+What is a vegetarian diet?,"A vegetarian diet excludes meat but includes plant foods, dairy, and eggs. It can be healthy with planning.",vegetarian
+What is a vegan diet?,"A vegan diet excludes all animal products. It needs careful planning to get enough B12, iron, and calcium.",vegan
+What is fasting?,"Fasting is not eating for a period. It can be for religious, health, or medical reasons. Some fasts need medical supervision.",fasting
+What is Ramadan?,"Ramadan is a month of fasting in Islam. Muslims don't eat or drink from dawn to sunset. People with health conditions may be exempt.",ramadan
+What is a detox?,"A detox is a diet or program claimed to remove toxins from the body. Most are not scientifically proven.",detox
+What is a superfood?,"A superfood is a food claimed to have exceptional health benefits. The term is more marketing than science.",superfood
+What is organic food?,"Organic food is grown without synthetic pesticides or fertilisers. It is not necessarily more nutritious than regular food.",organic
+What is GMO food?,"GMO food is genetically modified. There is scientific consensus that approved GMOs are safe to eat.",gmo
+What is food safety?,"Food safety is handling, preparing, and storing food to prevent illness. Wash hands, cook food thoroughly, and refrigerate leftovers.",food safety
+How do I store food safely?,"Keep cold food below 5°C. Keep hot food above 60°C. Refrigerate leftovers within 2 hours. Don't eat food that smells or looks off.",food storage
+How long can I keep leftovers?,"Most leftovers are safe for 3-4 days in the fridge. Reheat thoroughly before eating.",leftovers
+What is a use-by date?,"A use-by date is the last day food is safe to eat. Do not eat food after its use-by date.",use by date
+What is a best-before date?,"A best-before date is about quality, not safety. Food may still be safe after this date.",best before date
+What is a food allergy?,"A food allergy is when the body reacts badly to certain foods like peanuts, shellfish, or milk. Symptoms include hives, swelling, difficulty breathing, and stomach upset. It can be life-threatening.",allergy food
+How do I treat a food allergy reaction?,"Avoid the trigger food. Use antihistamines for mild reactions. Use an epinephrine auto-injector for severe reactions and call emergency services.",allergy food treat
+What is lactose intolerance?,"Lactose intolerance is when the body can't digest lactose (milk sugar). Symptoms include bloating, gas, and diarrhoea.",lactose
+What is coeliac disease?,"Coeliac disease is an autoimmune reaction to gluten. It damages the small intestine. Treatment is a strict gluten-free diet.",coeliac celiac gluten
+What is gluten?,"Gluten is a protein found in wheat, barley, and rye. Some people need to avoid it for medical reasons.",gluten
+What is diabetes insipidus?,"Diabetes insipidus is a rare condition where the body produces too much urine. It is not related to diabetes mellitus.",diabetes insipidus
+What is thyroid disease?,"Thyroid disease affects the thyroid gland. Hypothyroidism causes fatigue and weight gain. Hyperthyroidism causes weight loss and rapid heartbeat.",thyroid
+What is a goitre?,"A goitre is an enlarged thyroid gland. It can be caused by iodine deficiency or other conditions.",goitre
+What is iodine?,"Iodine is a mineral needed for thyroid function. It is found in seafood, dairy, and iodised salt.",iodine
+What is a hormone?,"A hormone is a chemical messenger in the body. It controls many functions like growth, metabolism, and mood.",hormone
+What is cortisol?,"Cortisol is a stress hormone. It helps the body respond to stress. Too much or too little causes health problems.",cortisol
+What is insulin?,"Insulin is a hormone that controls blood sugar. People with type 1 diabetes need insulin injections.",insulin
+What is adrenaline?,"Adrenaline is a hormone that prepares the body for 'fight or flight'. It increases heart rate and energy.",adrenaline
+What is testosterone?,"Testosterone is the main male sex hormone. It affects muscle, mood, and sex drive.",testosterone
+What is oestrogen?,"Oestrogen is the main female sex hormone. It affects the menstrual cycle, bones, and mood.",oestrogen estrogen
+What is menopause?,"Menopause is when a woman stops having periods, usually between 45 and 55. Symptoms include hot flushes, mood changes, and sleep problems.",menopause
+What is a period?,"A period (menstruation) is the monthly bleeding from the uterus. It usually lasts 3-7 days.",period menstruation
+What is PMS?,"PMS (Premenstrual Syndrome) is symptoms before a period, like mood swings, bloating, and breast tenderness.",pms
+What is endometriosis?,"Endometriosis is when tissue like the uterus lining grows outside the uterus. It causes pain and can affect fertility.",endometriosis
+What is PCOS?,"PCOS (Polycystic Ovary Syndrome) is a hormonal condition in women. Symptoms include irregular periods, acne, and weight gain.",pcos
+What is a pregnancy test?,"A pregnancy test checks for the hormone hCG in urine or blood. It can be done at home or by a doctor.",pregnancy test
+How do I know if I'm pregnant?,"Common signs include a missed period, nausea, breast tenderness, and fatigue. Take a pregnancy test or see a doctor.",pregnancy
+What should I eat during pregnancy?,"Eat a balanced diet with plenty of fruits, vegetables, and whole grains. Take folic acid. Avoid alcohol, raw meat, and unpasteurised dairy.",pregnancy diet
+What is prenatal care?,"Prenatal care is medical care during pregnancy. It includes regular check-ups, tests, and advice.",prenatal
+What is labour?,"Labour is the process of giving birth. It starts with contractions and ends with delivery of the baby.",labour labor
+What is a caesarean?,"A caesarean is when a baby is delivered by surgery. It is done when vaginal birth is not safe.",caesarean c-section
+What is a miscarriage?,"A miscarriage is the loss of a pregnancy before 20 weeks. It is common and usually not the mother's fault.",miscarriage
+What is an ectopic pregnancy?,"An ectopic pregnancy is when the embryo implants outside the uterus. It is dangerous and needs urgent treatment.",ectopic
+What is infertility?,"Infertility is not being able to get pregnant after 1 year of trying. It can affect men and women.",infertility
+What is IVF?,"IVF (In Vitro Fertilisation) is a fertility treatment where eggs are fertilised outside the body then implanted.",ivf
+What is contraception?,"Contraception is preventing pregnancy. Options include condoms, pills, injections, implants, and IUDs.",contraception birth control
+What is the pill?,"The pill is a hormonal contraceptive taken daily. It is very effective when used correctly.",pill contraception
+What is an IUD?,"An IUD is a small device placed in the uterus to prevent pregnancy. It can last 3-10 years.",iud
+What is a condom?,"A condom is a barrier contraceptive. It also protects against STIs. Use a new one every time.",condom
+What is emergency contraception?,"Emergency contraception (the morning-after pill) prevents pregnancy after unprotected sex. It works best if taken within 72 hours.",emergency contraception
+What is sterilisation?,"Sterilisation is a permanent form of contraception. For women, it is tubal ligation. For men, it is a vasectomy.",sterilisation
+What is a vasectomy?,"A vasectomy is a permanent male sterilisation. It is a minor procedure that blocks sperm from leaving the body.",vasectomy
+What is a tubal ligation?,"A tubal ligation is permanent female sterilisation. It blocks the fallopian tubes.",tubal ligation
+What is breastfeeding?,"Breastfeeding provides babies with ideal nutrition and antibodies. It is recommended exclusively for the first 6 months.",breastfeeding
+What is weaning?,"Weaning is the process of introducing solid foods and reducing milk feeds. It usually starts around 6 months.",weaning
+What is a growth chart?,"A growth chart tracks a child's height, weight, and head size over time. It helps detect growth problems.",growth chart
+What is a milestone?,"A milestone is a skill a child is expected to develop by a certain age, like walking or talking.",milestone
+What is immunisation schedule?,"The immunisation schedule lists the vaccines a child should get and when. Follow your country's schedule.",immunisation schedule
+What is a newborn screening?,"Newborn screening is a set of tests done on a newborn to check for certain conditions.",newborn screening
+What is a paediatrician?,"A paediatrician is a doctor who specialises in children's health.",paediatrician
+What is an obstetrician?,"An obstetrician is a doctor who specialises in pregnancy and childbirth.",obstetrician
+What is a gynaecologist?,"A gynaecologist is a doctor who specialises in women's reproductive health.",gynaecologist
+What is a dermatologist?,"A dermatologist is a doctor who specialises in skin, hair, and nails.",dermatologist
+What is a cardiologist?,"A cardiologist is a doctor who specialises in the heart.",cardiologist
+What is a neurologist?,"A neurologist is a doctor who specialises in the brain and nerves.",neurologist
+What is a psychiatrist?,"A psychiatrist is a doctor who specialises in mental health.",psychiatrist
+What is a psychologist?,"A psychologist is a professional who studies behaviour and mental processes. They often provide therapy.",psychologist
+What is a dentist?,"A dentist is a professional who cares for teeth and gums.",dentist
+What is an optometrist?,"An optometrist is a professional who tests vision and prescribes glasses.",optometrist
+What is an optician?,"An optician is a professional who makes and fits glasses and contact lenses.",optician
+What is an audiologist?,"An audiologist is a professional who tests hearing and fits hearing aids.",audiologist
+What is a pharmacist?,"A pharmacist is a professional who dispenses medicines and gives advice on their use.",pharmacist
+What is a physiotherapist?,"A physiotherapist is a professional who helps people improve movement and manage pain.",physiotherapist
+What is a dietitian?,"A dietitian is a professional who gives advice on nutrition and diet.",dietitian
+What is a nutritionist?,"A nutritionist is a professional who advises on food and health. Regulation varies by country.",nutritionist
+What is a social worker?,"A social worker is a professional who helps people with personal and social problems.",social worker
+What is a home carer?,"A home carer is someone who helps people with daily tasks in their own home.",home carer
+What is palliative care?,"Palliative care is care for people with serious illness. It focuses on comfort and quality of life.",palliative
+What is hospice?,"Hospice is care for people at the end of life. It focuses on comfort, not cure.",hospice
+What is euthanasia?,"Euthanasia is intentionally ending a life to relieve suffering. It is illegal in most countries.",euthanasia
+What is a living will?,"A living will states your wishes for medical care if you can't speak for yourself.",living will
+What is an advance directive?,"An advance directive is a legal document about your medical wishes if you become unable to decide.",advance directive
+What is informed consent?,"Informed consent is when a patient agrees to treatment after understanding the risks and benefits.",informed consent
+What is patient confidentiality?,"Patient confidentiality is the duty of healthcare workers to keep patient information private.",confidentiality
+What is medical ethics?,"Medical ethics is the study of moral issues in healthcare. It covers consent, confidentiality, and end-of-life care.",ethics
+What is a clinical trial?,"A clinical trial is a research study to test new treatments. Participants are volunteers.",clinical trial
+What is a placebo?,"A placebo is a fake treatment used in clinical trials. It helps researchers measure the real effect of a treatment.",placebo
+What is a double-blind study?,"A double-blind study is when neither the participants nor the researchers know who gets the real treatment.",double blind
+What is evidence-based medicine?,"Evidence-based medicine is using the best available research to guide medical decisions.",evidence based
+What is a systematic review?,"A systematic review is a summary of all research on a specific question.",systematic review
+What is a meta-analysis?,"A meta-analysis combines results from many studies to get a stronger conclusion.",meta analysis
+What is a randomised controlled trial?,"An RCT is a study where participants are randomly assigned to different treatments. It is the gold standard for testing.",rct
+What is peer review?,"Peer review is when experts check research before it is published.",peer review
+What is a preprint?,"A preprint is a research paper shared before peer review.",preprint
+What is a retraction?,"A retraction is when a published paper is withdrawn because of errors or misconduct.",retraction
+What is a pandemic?,"A pandemic is a global outbreak of a disease. COVID-19 is a recent example.",pandemic
+What is an epidemic?,"An epidemic is a rapid spread of a disease in a specific area.",epidemic
+What is a zoonotic disease?,"A zoonotic disease spreads from animals to humans. Examples include rabies and COVID-19.",zoonotic
+What is a vector?,"A vector is an organism that spreads disease, like a mosquito spreading malaria.",vector
+What is an incubation period?,"The incubation period is the time between exposure to a germ and the start of symptoms.",incubation
+What is a carrier?,"A carrier is someone who has a disease but doesn't show symptoms and can spread it to others.",carrier
+What is an asymptomatic case?,"An asymptomatic case is someone who has a disease but no symptoms. They can still spread it.",asymptomatic
+What is a super spreader?,"A super spreader is someone who infects many other people.",super spreader
+What is R0?,"R0 (R-naught) is the average number of people one infected person will infect in a susceptible population.",r0
+What is herd immunity?,"Herd immunity is when enough people are immune to a disease to protect those who can't be vaccinated.",herd immunity
+What is a variant?,"A variant is a version of a virus with genetic changes. Some variants spread more easily.",variant
+What is a mutation?,"A mutation is a change in the genetic material of a virus or cell.",mutation
+What is a PCR test?,"A PCR test detects genetic material from a virus. It is very accurate but takes longer.",pcr test
+What is a rapid test?,"A rapid test gives results in minutes. It is less accurate than a PCR test but faster.",rapid test
+What is an antibody test?,"An antibody test checks if you have had an infection in the past.",antibody test
+What is a swab test?,"A swab test collects a sample from the nose or throat to test for infection.",swab test
+What is contact tracing?,"Contact tracing is finding people who may have been in contact with an infected person.",contact tracing
+What is a lockdown?,"A lockdown is when people are required to stay home to slow the spread of disease.",lockdown
+What is a curfew?,"A curfew is a rule that people must stay indoors during certain hours.",curfew
+What is a state of emergency?,"A state of emergency is when a government takes special powers during a crisis.",state of emergency
+What is the WHO?,"The WHO (World Health Organization) is a UN agency that coordinates international public health.",who
+What is the CDC?,"The CDC (Centers for Disease Control and Prevention) is a US agency that protects public health.",cdc
+What is the NICD?,"The NICD (National Institute for Communicable Diseases) is a South African public health institute.",nicd
+What is the Department of Health?,"The Department of Health is the government department responsible for health services in South Africa.",department of health
+What is a medical aid?,"A medical aid is private health insurance in South Africa. It covers private healthcare costs.",medical aid
+What is NHI?,"NHI (National Health Insurance) is a proposed South African system to provide universal healthcare.",nhi
+What is a public clinic?,"A public clinic is a government-funded health facility. Services are free or low-cost.",public clinic
+What is a private hospital?,"A private hospital is a for-profit health facility. It usually requires medical aid or cash payment.",private hospital
+What is an emergency room?,"An emergency room (ER) is a hospital department for serious, life-threatening conditions.",emergency room
+What is a trauma centre?,"A trauma centre is a hospital equipped to handle serious injuries.",trauma centre
+What is an ambulance?,"An ambulance is a vehicle that takes sick or injured people to hospital. In South Africa, call 10177.",ambulance
+What is a paramedic?,"A paramedic is a trained professional who provides emergency medical care.",paramedic
+What is triage?,"Triage is sorting patients by urgency. The most serious cases are seen first.",triage
+What is a referral?,"A referral is when a doctor sends a patient to a specialist or another facility.",referral
+What is a chronic condition?,"A chronic condition is a long-term illness like diabetes, asthma, or HIV. It usually needs ongoing care.",chronic
+What is an acute condition?,"An acute condition is a short-term illness like a cold or flu. It usually resolves on its own.",acute
+What is a terminal illness?,"A terminal illness is one that cannot be cured and will likely cause death. Palliative care helps.",terminal
+What is a relapse?,"A relapse is when symptoms return after a period of improvement.",relapse
+What is remission?,"Remission is when symptoms of a disease reduce or disappear, especially in cancer.",remission
+What is a prognosis?,"A prognosis is a prediction of how a disease will progress and the likely outcome.",prognosis
+What is a diagnosis?,"A diagnosis is identifying a disease based on symptoms, tests, and examination.",diagnosis
+What is a differential diagnosis?,"A differential diagnosis is a list of possible conditions that could explain the symptoms.",differential diagnosis
+What is a second opinion?,"A second opinion is advice from another doctor about your condition or treatment.",second opinion
+What is a cure?,"A cure is a treatment that eliminates a disease completely.",cure
+What is a treatment?,"A treatment is medical care given to manage or cure a condition.",treatment
+What is a symptom?,"A symptom is a sign of illness that a person feels or notices.",symptom
+What is a sign?,"A sign is something a doctor can observe, like a rash or high blood pressure.",sign
+What is a syndrome?,"A syndrome is a group of symptoms that occur together and characterise a condition.",syndrome
+What is a disorder?,"A disorder is a disturbance in normal function. It may or may not have a known cause.",disorder
+What is a disease?,"A disease is a condition that impairs normal body function.",disease
+What is an infection?,"An infection is when germs enter the body and multiply. It can be bacterial, viral, fungal, or parasitic.",infection
+What is inflammation?,"Inflammation is the body's response to injury or infection. Signs include redness, heat, swelling, and pain.",inflammation
+What is an immune response?,"An immune response is how the body fights infection and disease.",immune
+What is an antibody?,"An antibody is a protein the body makes to fight a specific germ.",antibody
+What is an antigen?,"An antigen is a substance that triggers an immune response.",antigen
+What is a vaccine?,"A vaccine teaches the immune system to fight a specific disease. It is one of the most effective ways to prevent illness.",vaccine
+What is immunisation?,"Immunisation is the process of making someone immune to a disease, usually through vaccination.",immunisation
+What is a booster?,"A booster is an extra dose of a vaccine to strengthen immunity.",booster
+What is an adverse reaction?,"An adverse reaction is a harmful response to a medicine or vaccine. Report serious reactions to a doctor.",adverse reaction
+What is a side effect?,"A side effect is an unwanted effect of a medicine. Most are mild and temporary.",side effect
+What is a drug interaction?,"A drug interaction is when one medicine affects another. Always tell your doctor what you are taking.",drug interaction
+What is an allergy?,"An allergy is when the immune system reacts to something harmless, like pollen or peanuts.",allergy
+What is anaphylaxis?,"Anaphylaxis is a severe allergic reaction. Symptoms include swelling, difficulty breathing, and low blood pressure. It is a medical emergency.",anaphylaxis
+What is asthma?,"Asthma is a condition where the airways narrow, making it hard to breathe. Symptoms include wheezing, coughing, and shortness of breath. It can be managed with inhalers.",asthma breathing
+What is eczema?,"Eczema is a skin condition that causes dry, itchy, and inflamed patches. It often runs in families and is linked to allergies. It is not contagious.",eczema skin rash
+How do I treat eczema?,"Moisturise daily. Avoid harsh soaps. Use mild cleansers. Apply prescribed creams during flare-ups. Avoid scratching.",eczema skin treat
+What is psoriasis?,"Psoriasis is a skin condition where skin cells build up quickly, forming scales and red patches. It is not contagious. It can be linked to stress and genetics.",psoriasis skin
+What is acne?,"Acne is a skin condition with pimples, blackheads, and whiteheads. It is common in teenagers. Treatments include creams and antibiotics.",acne skin
+How do I treat acne?,"Wash gently twice a day. Use non-comedogenic products. Try benzoyl peroxide or salicylic acid. See a doctor for severe acne.",acne treat
+What is a fungal infection?,"A fungal infection is caused by fungi. Examples include athlete's foot, ringworm, and yeast infections. They are treated with antifungal creams.",fungal
+What is ringworm?,"Ringworm is a fungal infection that causes a ring-shaped rash. It is not caused by a worm. It is treated with antifungal cream.",ringworm
+What is athlete's foot?,"Athlete's foot is a fungal infection between the toes. It causes itching and peeling. Keep feet dry and use antifungal cream.",athletes foot
+What is a yeast infection?,"A yeast infection is a common fungal infection. Symptoms include itching, burning, and discharge. It is not a sexually transmitted infection and is easily treated.",yeast infection fungal
+What is a cold sore?,"Cold sores are small painful blisters near the mouth caused by the herpes simplex virus. They are contagious. They usually heal within 1-2 weeks.",cold sore herpes
+What is shingles?,"Shingles is a painful rash caused by the same virus as chickenpox. It usually affects one side of the body. See a doctor early.",shingles
+What is chickenpox?,"Chickenpox is a viral infection with itchy blisters. It is usually mild in children. A vaccine prevents it.",chickenpox
+What is measles?,"Measles is a highly contagious viral infection. Symptoms include fever, cough, and a rash. A vaccine prevents it.",measles
+What is mumps?,"Mumps is a viral infection that causes swelling of the salivary glands. A vaccine prevents it.",mumps
+What is rubella?,"Rubella (German measles) is a viral infection. It is usually mild but dangerous in pregnancy. A vaccine prevents it.",rubella
+What is polio?,"Polio is a viral infection that can cause paralysis. A vaccine has nearly eliminated it worldwide.",polio
+What is tetanus?,"Tetanus is a bacterial infection that causes muscle stiffness and spasms. It is prevented by vaccination.",tetanus
+What is diphtheria?,"Diphtheria is a bacterial infection that causes a thick covering in the throat. It is prevented by vaccination.",diphtheria
+What is pertussis?,"Pertussis (whooping cough) is a bacterial infection with severe coughing fits. It is prevented by vaccination.",pertussis
+What is Hib?,"Hib (Haemophilus influenzae type b) is a bacterium that can cause serious infections. It is prevented by vaccination.",hib
+What is pneumococcal disease?,"Pneumococcal disease is caused by bacteria that can cause pneumonia and meningitis. It is prevented by vaccination.",pneumococcal
+What is rotavirus?,"Rotavirus is a virus that causes severe diarrhoea in children. It is prevented by vaccination.",rotavirus
+What is HPV?,"HPV (Human Papillomavirus) is a common virus that can cause cervical and other cancers. It is prevented by vaccination.",hpv
+What is meningitis?,"Meningitis is inflammation of the membranes around the brain and spinal cord. Symptoms include severe headache, fever, stiff neck, nausea, and sensitivity to light. It can be life-threatening — seek help immediately.",meningitis brain emergency
+What is encephalitis?,"Encephalitis is inflammation of the brain. Symptoms include fever, headache, confusion, and seizures. It is a medical emergency.",encephalitis
+What is sepsis?,"Sepsis is the body's extreme response to an infection. Symptoms include fever, rapid heart rate, confusion, and difficulty breathing. It is a medical emergency.",sepsis emergency infection
+What is septic shock?,"Septic shock is a severe form of sepsis with dangerously low blood pressure. It is life-threatening.",septic shock
+What is toxic shock syndrome?,"TSS is a rare but serious condition caused by bacterial toxins. It is linked to tampon use and skin infections. Symptoms include fever, rash, and low blood pressure.",tss
+What is MRSA?,"MRSA is a type of bacteria resistant to many antibiotics. It can cause serious infections.",mrsa
+What is C. diff?,"C. diff is a bacterium that causes diarrhoea, often after antibiotic use. It can be serious.",c diff
+What is E. coli?,"E. coli is a bacterium. Some types cause food poisoning. Others are harmless.",e coli
+What is salmonella?,"Salmonella is a bacterium that causes food poisoning. Symptoms include diarrhoea, fever, and cramps.",salmonella
+What is listeria?,"Listeria is a bacterium that causes food poisoning. It is especially dangerous in pregnancy.",listeria
+What is cholera?,"Cholera is a bacterial infection that causes severe diarrhoea and dehydration. It is spread through contaminated water.",cholera
+What is typhoid?,"Typhoid is a bacterial infection spread through contaminated food and water. Symptoms include fever, abdominal pain, and rash.",typhoid
+What is hepatitis A?,"Hepatitis A is a viral infection of the liver. It spreads through contaminated food and water. A vaccine exists.",hepatitis a
+What is yellow fever?,"Yellow fever is a viral infection spread by mosquitoes. It can cause fever, jaundice, and bleeding. A vaccine exists.",yellow fever
+What is dengue fever?,"Dengue fever is a viral infection spread by mosquitoes. Symptoms include high fever, severe headache, and joint pain.",dengue
+What is zika virus?,"Zika virus is spread by mosquitoes. It usually causes mild illness but can cause birth defects if contracted during pregnancy.",zika
+What is Ebola?,"Ebola is a severe viral infection with fever, bleeding, and organ failure. It spreads through contact with bodily fluids.",ebola
+What is rabies?,"Rabies is a viral infection spread by animal bites. Once symptoms appear, it is almost always fatal. A vaccine exists.",rabies
+What is tetanus?,"Tetanus is a bacterial infection that causes muscle stiffness and spasms. It is prevented by vaccination.",tetanus
+What is anthrax?,"Anthrax is a bacterial infection. It can affect the skin, lungs, or gut. It is rare and treatable with antibiotics.",anthrax
+What is plague?,"Plague is a bacterial infection spread by fleas. It can be serious but is treatable with antibiotics.",plague
+What is leprosy?,"Leprosy is a bacterial infection that affects the skin and nerves. It is curable with multi-drug therapy.",leprosy
+What is bilharzia?,"Bilharzia (schistosomiasis) is a parasitic infection spread by snails in fresh water. Symptoms include fever and blood in urine. It is treatable.",bilharzia
+What is hookworm?,"Hookworm is a parasitic worm that lives in the small intestine. It causes anaemia and fatigue. It is treated with medication.",hookworm
+What is tapeworm?,"Tapeworm is a parasitic worm that lives in the gut. It is usually caught from undercooked meat. It is treated with medication.",tapeworm
+What is roundworm?,"Roundworm is a parasitic worm that lives in the gut. It causes abdominal pain and malnutrition. It is treated with medication.",roundworm
+What is threadworm?,"Threadworm (pinworm) is a common parasitic worm in children. It causes itching around the anus. It is treated with medication.",threadworm
+What is scabies?,"Scabies is a skin infestation by tiny mites. It causes intense itching and a rash. It is treated with a cream and by washing bedding.",scabies
+What is head lice?,"Head lice are tiny insects that live on the scalp. They cause itching. They are treated with medicated shampoo.",head lice
+What is a mosquito net?,"A mosquito net is a net hung over a bed to protect against mosquito bites. It helps prevent malaria.",mosquito net
+What is insect repellent?,"Insect repellent is a substance applied to skin or clothing to keep insects away.",insect repellent
+What is a vaccine?,"A vaccine teaches the immune system to fight a specific disease. It is one of the most effective ways to prevent illness.",vaccine
+What is herd immunity?,"Herd immunity is when enough people are immune to a disease to protect those who can't be vaccinated.",herd immunity
+What is a booster?,"A booster is an extra dose of a vaccine to strengthen immunity.",booster
+What is a flu shot?,"A flu shot is a yearly vaccine against influenza. It is recommended for most people over 6 months old, especially those at high risk.",flu shot vaccine
+What is a vaccine passport?,"A vaccine passport is a document showing you have been vaccinated. It is used for travel or entry to certain places.",vaccine passport
+What is a mask?,"A mask covers the nose and mouth to reduce the spread of germs. It is especially useful in crowded indoor spaces.",mask
+What is social distancing?,"Social distancing is keeping space between people to reduce disease spread.",social distancing
+What is hand hygiene?,"Hand hygiene means washing hands with soap and water or using sanitiser. It is one of the best ways to prevent infection.",hand hygiene
+How do I wash my hands properly?,"Wet hands. Apply soap. Rub for at least 20 seconds. Cover all surfaces including between fingers and under nails. Rinse. Dry with a clean towel.",hand washing
+What is cough etiquette?,"Cough etiquette is covering your mouth when you cough or sneeze. Use a tissue or your elbow.",cough etiquette
+What is PPE?,"PPE (Personal Protective Equipment) is gear worn to protect against infection, like gloves, masks, and gowns.",ppe
+What is a lockdown?,"A lockdown is when people are required to stay home to slow the spread of disease.",lockdown
+What is a state of emergency?,"A state of emergency is when a government takes special powers during a crisis.",state of emergency
+What is contact tracing?,"Contact tracing is finding people who may have been in contact with an infected person.",contact tracing
+What is quarantine?,"Quarantine is separating people who may have been exposed to a disease to prevent spread.",quarantine
+What is isolation?,"Isolation is separating people who are sick to prevent spread of disease.",isolation
+What is a super spreader?,"A super spreader is someone who infects many other people.",super spreader
+What is R0?,"R0 (R-naught) is the average number of people one infected person will infect in a susceptible population.",r0
+What is a variant?,"A variant is a version of a virus with genetic changes. Some variants spread more easily.",variant
+What is a mutation?,"A mutation is a change in the genetic material of a virus or cell.",mutation
+What is a PCR test?,"A PCR test detects genetic material from a virus. It is very accurate but takes longer.",pcr test
+What is a rapid test?,"A rapid test gives results in minutes. It is less accurate than a PCR test but faster.",rapid test
+What is an antibody test?,"An antibody test checks if you have had an infection in the past.",antibody test
+What is a swab test?,"A swab test collects a sample from the nose or throat to test for infection.",swab test
+What is a blood test?,"A blood test involves taking a small sample of blood to check for various conditions. It is a common diagnostic tool.",blood test
+What is an X-ray?,"An X-ray is an imaging test that uses radiation to see inside the body. It is often used to check for broken bones.",xray
+What is an MRI?,"An MRI uses magnets and radio waves to create detailed images of the body. It is used to check organs, joints, and the brain.",mri
+What is a CT scan?,"A CT scan uses X-rays to create detailed cross-sectional images of the body. It is faster than an MRI.",ct scan
+What is an ultrasound?,"An ultrasound uses sound waves to create images. It is often used in pregnancy and to check organs.",ultrasound
+What is an ECG?,"An ECG (electrocardiogram) measures the electrical activity of the heart. It is used to detect heart problems.",ecg
+What is an endoscopy?,"An endoscopy is a procedure where a flexible tube with a camera is used to look inside the body, often the stomach or colon.",endoscopy
+What is a biopsy?,"A biopsy is when a small sample of tissue is removed to check for disease, often cancer.",biopsy
+What is chemotherapy?,"Chemotherapy is a cancer treatment that uses drugs to kill cancer cells. It can cause side effects like nausea, hair loss, and fatigue.",chemotherapy
+What is radiation therapy?,"Radiation therapy uses high-energy rays to kill cancer cells. It is often used alongside other treatments.",radiation
+What is surgery?,"Surgery is a medical procedure where a doctor operates on the body. It can be used to diagnose, treat, or prevent disease.",surgery
+What is anaesthesia?,"Anaesthesia is medicine that blocks pain during surgery. There are different types: local, regional, and general.",anaesthesia
+What is physiotherapy?,"Physiotherapy is treatment that uses exercise, massage, and other techniques to improve movement and reduce pain.",physiotherapy
+What is occupational therapy?,"Occupational therapy helps people with daily activities, especially after injury or illness.",occupational therapy
+What is speech therapy?,"Speech therapy helps people with speech, language, and swallowing problems.",speech therapy
+What is counselling?,"Counselling is talking therapy that helps people work through emotional and psychological problems.",counselling
+What is CBT?,"CBT (Cognitive Behavioural Therapy) is a type of therapy that helps change negative thought patterns. It is effective for depression, anxiety, and other conditions.",cbt
+What is mindfulness?,"Mindfulness is being present in the moment without judgement. It helps reduce stress and improve mental health.",mindfulness
+What is yoga?,"Yoga is a practice that combines poses, breathing, and meditation. It improves flexibility, strength, and mental wellbeing.",yoga
+What is meditation?,"Meditation is a practice of focusing the mind to achieve calmness and clarity. It reduces stress and improves focus.",meditation
+What is acupuncture?,"Acupuncture is a traditional Chinese medicine where thin needles are inserted into the skin. It is used for pain relief.",acupuncture
+What is homeopathy?,"Homeopathy is a form of alternative medicine. There is little scientific evidence that it works.",homeopathy
+What is herbal medicine?,"Herbal medicine uses plants for healing. Some herbs have proven benefits, but others can be dangerous or interact with medicines.",herbal
+What is traditional medicine?,"Traditional medicine refers to healing practices passed down through generations. In South Africa, traditional healers (sangomas and inyangas) are widely used.",traditional medicine
+What is a sangoma?,"A sangoma is a traditional healer in Southern Africa who communicates with ancestors. They are consulted for many health and life issues.",sangoma
+What is an inyanga?,"An inyanga is a traditional herbalist in Southern Africa. They use plants and natural remedies for healing.",inyanga
+What is muthi?,"Muthi is traditional medicine in Southern Africa. It can be herbal or animal-based. Some muthi is safe, but some can be harmful.",muthi
+What is a medical aid?,"A medical aid is private health insurance in South Africa. It covers private healthcare costs.",medical aid
+What is NHI?,"NHI (National Health Insurance) is a proposed South African system to provide universal healthcare.",nhi
+What is a public clinic?,"A public clinic is a government-funded health facility. Services are free or low-cost.",public clinic
+What is a private hospital?,"A private hospital is a for-profit health facility. It usually requires medical aid or cash payment.",private hospital
+What is an emergency room?,"An emergency room (ER) is a hospital department for serious, life-threatening conditions.",emergency room
+What is a trauma centre?,"A trauma centre is a hospital equipped to handle serious injuries.",trauma centre
+What is an ambulance?,"An ambulance is a vehicle that takes sick or injured people to hospital. In South Africa, call 10177.",ambulance
+What is a paramedic?,"A paramedic is a trained professional who provides emergency medical care.",paramedic
+What is triage?,"Triage is sorting patients by urgency. The most serious cases are seen first.",triage
+What is a referral?,"A referral is when a doctor sends a patient to a specialist or another facility.",referral
+What is a chronic condition?,"A chronic condition is a long-term illness like diabetes, asthma, or HIV. It usually needs ongoing care.",chronic
+What is an acute condition?,"An acute condition is a short-term illness like a cold or flu. It usually resolves on its own.",acute
+What is a terminal illness?,"A terminal illness is one that cannot be cured and will likely cause death. Palliative care helps.",terminal
+What is a relapse?,"A relapse is when symptoms return after a period of improvement.",relapse
+What is remission?,"Remission is when symptoms of a disease reduce or disappear, especially in cancer.",remission
+What is a prognosis?,"A prognosis is a prediction of how a disease will progress and the likely outcome.",prognosis
+What is a diagnosis?,"A diagnosis is identifying a disease based on symptoms, tests, and examination.",diagnosis
+What is a differential diagnosis?,"A differential diagnosis is a list of possible conditions that could explain the symptoms.",differential diagnosis
+What is a second opinion?,"A second opinion is advice from another doctor about your condition or treatment.",second opinion
+What is a cure?,"A cure is a treatment that eliminates a disease completely.",cure
+What is a treatment?,"A treatment is medical care given to manage or cure a condition.",treatment
+What is a symptom?,"A symptom is a sign of illness that a person feels or notices.",symptom
+What is a sign?,"A sign is something a doctor can observe, like a rash or high blood pressure.",sign
+What is a syndrome?,"A syndrome is a group of symptoms that occur together and characterise a condition.",syndrome
+What is a disorder?,"A disorder is a disturbance in normal function. It may or may not have a known cause.",disorder
+What is a disease?,"A disease is a condition that impairs normal body function.",disease
+What is an infection?,"An infection is when germs enter the body and multiply. It can be bacterial, viral, fungal, or parasitic.",infection
+What is inflammation?,"Inflammation is the body's response to injury or infection. Signs include redness, heat, swelling, and pain.",inflammation
+What is an immune response?,"An immune response is how the body fights infection and disease.",immune
+What is an antibody?,"An antibody is a protein the body makes to fight a specific germ.",antibody
+What is an antigen?,"An antigen is a substance that triggers an immune response.",antigen

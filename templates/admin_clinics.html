@@ -52,7 +52,7 @@
                                             <a href="{{ url_for('admin_clinic_edit', clinic_id=clinic.Clinic_ID) }}" class="btn btn-sm btn-outline-primary" title="{{ translate_text('Edit', lang) }}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <form method="POST" action="{{ url_for('admin_clinic_delete', clinic_id=clinic.Clinic_ID) }}" style="display:inline;" onsubmit="return confirm('{{ translate_text("Delete this clinic? This action cannot be undone.", lang) }}')">
+                                            <form method="POST" action="{{ url_for('admin_clinic_delete', clinic_id=clinic.Clinic_ID) }}" style="display:inline;" onsubmit="return confirm('{{ translate_text('Delete this clinic? This action cannot be undone.', lang) }}')">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ translate_text('Delete', lang) }}">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
