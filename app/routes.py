@@ -3395,7 +3395,8 @@ def patient_chatbot():
             query = corrected if corrected else question
 
             # ===== Primary: Q&A database (now scored) =====
-            results, _ = search_medical_qa(query, limit=2, offset=0)
+            results, _ = search_medical_qa(query, limit=1, offset=0)
+            results = results[:1]
 
             # ===== Fallback 1: Disease DB (only if QA found nothing) =====
             if not results:

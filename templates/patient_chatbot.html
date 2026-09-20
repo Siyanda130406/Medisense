@@ -5,7 +5,6 @@
 {% block content %}
 <div class="container py-4" style="max-width: 920px;">
 
-    <!-- ===== HEADER ===== -->
     <div class="text-center mb-4">
         <div class="chat-header-icon">
             <i class="fas fa-comments"></i>
@@ -16,13 +15,11 @@
         <p class="text-muted mb-0">{{ translate_text('Ask any health question in plain language', lang) }}</p>
     </div>
 
-    <!-- ===== CHAT WINDOW ===== -->
     <div class="chat-container">
 
         <div class="chat-window" id="chatWindow">
 
             {% if not history and not answer_data %}
-            <!-- Welcome -->
             <div class="message-row bot">
                 <div class="avatar bot-avatar"><i class="fas fa-user-md"></i></div>
                 <div class="bubble bot-bubble">
@@ -54,7 +51,6 @@
             </div>
             {% endif %}
 
-            <!-- Previous conversation -->
             {% for h in history %}
             <div class="message-row user">
                 <div class="bubble user-bubble">
@@ -83,7 +79,6 @@
             </div>
             {% endfor %}
 
-            <!-- New answer -->
             {% if answer_data %}
             <div class="message-row user">
                 <div class="bubble user-bubble">
@@ -139,7 +134,6 @@
 
         </div>
 
-        <!-- ===== INPUT ===== -->
         <form method="POST" action="{{ url_for('patient_chatbot') }}" class="chat-input-area" id="chatForm">
             <div class="input-group">
                 <input type="text" class="form-control" name="question" id="questionInput"
@@ -154,13 +148,11 @@
 
     </div>
 
-    <!-- ===== DISCLAIMER ===== -->
     <div class="disclaimer">
         <i class="fas fa-shield-halved"></i>
         <span>{{ translate_text('Answers are for general information only. Always consult a healthcare professional for medical decisions.', lang) }}</span>
     </div>
 
-    <!-- ===== BACK BUTTON ===== -->
     <div class="text-center mt-3">
         <a href="{{ url_for('patient_dashboard') }}" class="btn btn-outline-secondary rounded-pill px-4">
             <i class="fas fa-arrow-left me-1"></i> {{ translate_text('Back to Dashboard', lang) }}
@@ -170,7 +162,6 @@
 </div>
 
 <style>
-/* ==================== HEADER ICON ==================== */
 .chat-header-icon {
     width: 64px;
     height: 64px;
@@ -184,7 +175,6 @@
     box-shadow: 0 8px 24px rgba(43, 108, 176, 0.35);
 }
 
-/* ==================== CHAT CONTAINER ==================== */
 .chat-container {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -193,19 +183,16 @@
     box-shadow: 0 10px 32px rgba(0, 0, 0, 0.08);
 }
 
-/* ==================== CHAT WINDOW ==================== */
 .chat-window {
     padding: 24px 20px;
-    background: linear-gradient(180deg, var(--bg-body) 0%, var(--bg-body) 100%);
+    background: var(--bg-body);
     max-height: 62vh;
     overflow-y: auto;
     scroll-behavior: smooth;
 }
 .chat-window::-webkit-scrollbar { width: 6px; }
 .chat-window::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
-.chat-window::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
 
-/* ==================== MESSAGE ROWS ==================== */
 .message-row {
     display: flex;
     align-items: flex-end;
@@ -216,7 +203,6 @@
 .message-row.bot { justify-content: flex-start; }
 .message-row.system { justify-content: center; }
 
-/* ==================== AVATARS ==================== */
 .avatar {
     width: 38px;
     height: 38px;
@@ -236,7 +222,6 @@
     background: linear-gradient(135deg, #4a5568, #2d3748);
 }
 
-/* ==================== BUBBLES ==================== */
 .bubble {
     max-width: 78%;
     padding: 14px 18px;
@@ -244,7 +229,6 @@
     font-size: 0.95rem;
     line-height: 1.6;
     word-wrap: break-word;
-    position: relative;
 }
 .bot-bubble {
     background: var(--bg-card);
@@ -259,7 +243,6 @@
     border-bottom-right-radius: 4px;
     box-shadow: 0 4px 14px rgba(43, 108, 176, 0.28);
 }
-
 .system-bubble {
     background: #fff8e1;
     color: #7d5f00;
@@ -274,7 +257,6 @@
     border-color: #744210;
 }
 
-/* ==================== SOURCE TAG ==================== */
 .source-tag {
     display: inline-block;
     margin-top: 10px;
@@ -286,7 +268,6 @@
     border: 1px solid var(--border-color);
 }
 
-/* ==================== SEE MORE BUTTON ==================== */
 .toggle-answer {
     display: inline-block;
     background: none;
@@ -297,16 +278,12 @@
     padding: 4px 0;
     margin-top: 6px;
     cursor: pointer;
-    transition: color 0.15s ease;
 }
 .toggle-answer:hover { color: #2c5282; text-decoration: underline; }
 .toggle-answer i { font-size: 0.7rem; transition: transform 0.2s ease; }
 .toggle-answer.expanded i { transform: rotate(180deg); }
 
-/* ==================== SUGGESTIONS ==================== */
-.suggestions-wrap {
-    margin: 8px 0 20px 48px;
-}
+.suggestions-wrap { margin: 8px 0 20px 48px; }
 .suggestions-label {
     font-size: 0.78rem;
     color: var(--text-muted);
@@ -345,7 +322,6 @@
     color: #90cdf4;
 }
 
-/* ==================== INPUT AREA ==================== */
 .chat-input-area {
     padding: 16px 18px;
     background: var(--bg-card);
@@ -358,7 +334,6 @@
     border: 1.5px solid var(--border-color);
     background: var(--bg-body);
     color: var(--text-primary);
-    transition: all 0.15s ease;
 }
 .chat-input-area .form-control:focus {
     border-color: #2b6cb0;
@@ -373,22 +348,15 @@
     color: #fff;
     font-weight: 600;
     margin-left: 8px;
-    transition: all 0.15s ease;
     box-shadow: 0 4px 12px rgba(43, 108, 176, 0.28);
 }
 .send-btn:hover {
     background: linear-gradient(135deg, #2c5282, #1a365d);
     transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(43, 108, 176, 0.4);
     color: #fff;
 }
-.send-btn:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    transform: none;
-}
+.send-btn:disabled { opacity: 0.7; cursor: not-allowed; }
 
-/* ==================== DISCLAIMER ==================== */
 .disclaimer {
     margin-top: 20px;
     padding: 14px 20px;
@@ -408,7 +376,6 @@
     color: #bee3f8;
 }
 
-/* ==================== MOBILE ==================== */
 @media (max-width: 768px) {
     .chat-window { padding: 18px 14px; max-height: 58vh; }
     .bubble { max-width: 82%; font-size: 0.9rem; padding: 12px 16px; }
@@ -420,7 +387,6 @@
     .send-btn { padding: 12px 16px; }
     .chat-header-icon { width: 56px; height: 56px; font-size: 1.5rem; }
 }
-
 @media (max-width: 576px) {
     .chat-window { padding: 14px 10px; }
     .bubble { max-width: 86%; }
@@ -432,7 +398,6 @@
     document.addEventListener('DOMContentLoaded', function() {
         const chatWindow = document.getElementById('chatWindow');
         if (chatWindow) chatWindow.scrollTop = chatWindow.scrollHeight;
-
         const qInput = document.getElementById('questionInput');
         if (qInput) qInput.focus();
     });
