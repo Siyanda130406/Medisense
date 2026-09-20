@@ -3394,11 +3394,15 @@ def patient_chatbot():
             corrected = correct_spelling(question)
             query = corrected if corrected else question
 
-            # ===== Primary: Q&A database (now scored) =====
+            # Only mark as corrected if actually different
+            if corrected and corrected.strip().lower() == question.strip().lower():
+                corrected = None
+
+            # Primary: Q&A database — single best answer only
             results, _ = search_medical_qa(query, limit=1, offset=0)
             results = results[:1]
 
-            # ===== Fallback 1: Disease DB (only if QA found nothing) =====
+            # Fallback 1: Disease DB
             if not results:
                 diseases = search_master_database(query)
                 if diseases:
@@ -3415,7 +3419,7 @@ def patient_chatbot():
                         'source': 'Disease Database',
                     }]
 
-            # ===== Fallback 2: Symptom descriptions =====
+            # Fallback 2: Symptom descriptions
             if not results:
                 symptoms = search_symptom_descriptions(query)
                 if symptoms:
@@ -3428,20 +3432,20 @@ def patient_chatbot():
 
             # Save + respond
             if results:
+                top = results[0]
                 answer_data = {
                     'question': question,
-                    'corrected': corrected if corrected and corrected.lower() != question.lower() else None,
-                    'results': results,
+                    'corrected': corrected,
+                    'results': [top],
                     'found': True,
                 }
                 try:
                     conn = get_db_connection()
                     cursor = conn.cursor()
-                    for r in results:
-                        cursor.execute('''
-                            INSERT INTO chatbot_history (user_id, question, answer, source)
-                            VALUES (?, ?, ?, ?)
-                        ''', (session['user_id'], question, r['answer'], r['source']))
+                    cursor.execute('''
+                        INSERT INTO chatbot_history (user_id, question, answer, source)
+                        VALUES (?, ?, ?, ?)
+                    ''', (session['user_id'], question, top['answer'], top['source']))
                     conn.commit()
                     conn.close()
                 except Exception as e:
