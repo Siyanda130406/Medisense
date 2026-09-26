@@ -1368,6 +1368,21 @@ def init_database():
     ''')
     # ===== END FIX #7 =====
     
+    # ===== USSD sessions table (persistent state for Africa's Talking) =====
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS ussd_sessions (
+        session_id TEXT PRIMARY KEY,
+        phone_number TEXT,
+        clinic_name TEXT,
+        appointment_date TEXT,
+        appointment_time TEXT,
+        available_times TEXT,
+        reason TEXT,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+    # ===== END USSD sessions =====
+    
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS terms_versions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -5396,131 +5411,313 @@ def admin_check_no_shows():
 # ============================================================
 
 @app.route('/ussd', methods=['GET', 'POST'])
+def _ussd_clean_phone(phone):
+    """Normalize AT phone numbers: +27821234567 -> 0821234567"""
+    if not phone:
+        return ''
+    digits = re.sub(r'\D', '', str(phone))
+    if digits.startswith('27') and len(digits) == 11:
+        return '0' + digits[2:]
+    return digits
+
+def _ussd_get_session(session_id):
+    conn = get_db_connection()
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM ussd_sessions WHERE session_id = ?", (session_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def _ussd_create_session(session_id, phone_number):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT OR REPLACE INTO ussd_sessions (session_id, phone_number, updated_at)
+        VALUES (?, ?, CURRENT_TIMESTAMP)
+    """, (session_id, phone_number))
+    conn.commit()
+    conn.close()
+
+def _ussd_update_session(session_id, **kwargs):
+    if not kwargs:
+        return
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    fields = ", ".join(f"{k} = ?" for k in kwargs.keys())
+    values = list(kwargs.values()) + [session_id]
+    cursor.execute(f"UPDATE ussd_sessions SET {fields}, updated_at = CURRENT_TIMESTAMP WHERE session_id = ?", values)
+    conn.commit()
+    conn.close()
+
+@app.route('/ussd', methods=['GET', 'POST'])
 def ussd():
-    if request.method == 'GET':
-        text = request.args.get('text', '')
-    else:
+    # AT sends POST form-data. Accept GET for manual testing in the AT simulator.
+    if request.method == 'POST':
+        session_id = request.values.get('sessionId', '')
+        phone_number = request.values.get('phoneNumber', '')
         text = request.values.get('text', '')
-    
+    else:
+        session_id = request.args.get('sessionId', 'test-session')
+        phone_number = request.args.get('phoneNumber', '+27000000000')
+        text = request.args.get('text', '')
+
     parts = text.split('*') if text else []
     level = len(parts)
-    
+    phone_clean = _ussd_clean_phone(phone_number)
+
+    # Ensure session exists
+    if not _ussd_get_session(session_id):
+        _ussd_create_session(session_id, phone_clean)
+
+    # ==================== LEVEL 0: Main Menu ====================
     if text == "":
-        return "CON Welcome to MediSense\n1. Book Appointment\n2. Check Symptoms\n3. My Appointments\n4. Find Clinic\n5. Health Info\n6. Emergency"
-    
+        return (
+            "CON Welcome to MediSense\n"
+            "1. Book Appointment\n"
+            "2. Check Symptoms\n"
+            "3. My Appointments\n"
+            "4. Find Clinic\n"
+            "5. Emergency Contacts"
+        )
+
+    # ==================== OPTION 1: Book Appointment ====================
     if parts[0] == "1":
+
+        # Level 1: choose clinic
         if level == 1:
-            clinics = get_clinics_list()
-            response = "CON Select clinic:\n"
-            for i, clinic in enumerate(clinics[:5], 1):
-                response += f"{i}. {clinic}\n"
-            return response
+            clinics = get_clinics_list()[:5]
+            if not clinics:
+                return "END No clinics available. Please try again later."
+            lines = ["CON Select clinic:"]
+            for i, c in enumerate(clinics, 1):
+                lines.append(f"{i}. {c}")
+            return "\n".join(lines)
+
+        # Level 2: chose clinic, choose date
         elif level == 2:
-            clinics = get_clinics_list()
+            clinics = get_clinics_list()[:5]
             try:
-                clinic_index = int(parts[1]) - 1
-                if 0 <= clinic_index < len(clinics):
-                    session['ussd_clinic'] = clinics[clinic_index]
-                    return "CON Select date:\n1. Today\n2. Tomorrow"
-            except:
-                pass
-            return "END Invalid selection. Please try again."
+                idx = int(parts[1]) - 1
+                if idx < 0 or idx >= len(clinics):
+                    return "END Invalid clinic selection. Please try again."
+                clinic_name = clinics[idx]
+            except (ValueError, IndexError):
+                return "END Invalid clinic selection."
+
+            _ussd_update_session(session_id, clinic_name=clinic_name)
+
+            return (
+                "CON Select date:\n"
+                "1. Today\n"
+                "2. Tomorrow\n"
+                "3. Day after tomorrow"
+            )
+
+        # Level 3: chose date, choose time
         elif level == 3:
-            if parts[2] == "1":
-                session['ussd_date'] = datetime.now().strftime('%Y-%m-%d')
-            elif parts[2] == "2":
-                session['ussd_date'] = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
-            else:
+            sess = _ussd_get_session(session_id) or {}
+            clinic_name = sess.get('clinic_name') or ''
+            if not clinic_name:
+                return "END Session expired. Please dial again."
+
+            date_map = {'1': 0, '2': 1, '3': 2}
+            try:
+                days_ahead = date_map[parts[2]]
+            except KeyError:
                 return "END Invalid date selection."
-            return "CON Select time:\n1. 08:00\n2. 09:00\n3. 10:00\n4. 11:00\n5. 14:00\n6. 15:00"
+
+            chosen_date = (datetime.now() + timedelta(days=days_ahead)).strftime('%Y-%m-%d')
+            _ussd_update_session(session_id, appointment_date=chosen_date)
+
+            available_times = get_available_times(clinic_name, chosen_date)
+            common_times = ['08:00', '09:00', '10:00', '11:00', '14:00', '15:00']
+            filtered = [t for t in common_times if t in available_times]
+            if not filtered:
+                filtered = available_times[:6]
+
+            if not filtered:
+                return "END No available slots on that day. Please try another date."
+
+            _ussd_update_session(session_id, available_times=",".join(filtered))
+
+            lines = ["CON Select time:"]
+            for i, t in enumerate(filtered, 1):
+                lines.append(f"{i}. {t}")
+            return "\n".join(lines)
+
+        # Level 4: chose time, ask for reason
         elif level == 4:
-            time_map = {'1': '08:00', '2': '09:00', '3': '10:00', '4': '11:00', '5': '14:00', '6': '15:00'}
-            time = time_map.get(parts[3])
-            if not time:
+            sess = _ussd_get_session(session_id) or {}
+            available = (sess.get('available_times') or '').split(',')
+            try:
+                idx = int(parts[3]) - 1
+                if idx < 0 or idx >= len(available) or not available[idx]:
+                    return "END Invalid time selection."
+                chosen_time = available[idx]
+            except (ValueError, IndexError):
                 return "END Invalid time selection."
-            clinic = session.get('ussd_clinic', 'Clinic')
-            date = session.get('ussd_date', datetime.now().strftime('%Y-%m-%d'))
-            return f"END Appointment confirmed!\nClinic: {clinic}\nDate: {date}\nTime: {time}\nReference: USSD-{datetime.now().strftime('%Y%m%d%H%M%S')}"
-    
+
+            _ussd_update_session(session_id, appointment_time=chosen_time)
+            return "CON Enter reason for visit:\n(e.g., Checkup, Flu, Follow-up)"
+
+        # Level 5: reason entered, create booking
+        elif level == 5:
+            sess = _ussd_get_session(session_id) or {}
+            clinic_name = sess.get('clinic_name') or ''
+            chosen_date = sess.get('appointment_date') or ''
+            chosen_time = sess.get('appointment_time') or ''
+            reason = parts[4].strip() if len(parts) > 4 and parts[4].strip() else 'USSD Booking'
+
+            if not clinic_name or not chosen_date or not chosen_time:
+                return "END Session expired. Please dial again."
+
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            # Double-check slot still available
+            cursor.execute("""
+                SELECT id FROM appointments
+                WHERE clinic_name = ? AND appointment_date = ? AND appointment_time = ?
+                AND status != 'Cancelled'
+            """, (clinic_name, chosen_date, chosen_time))
+            if cursor.fetchone():
+                conn.close()
+                return "END Sorry, that slot was just taken. Please try another time."
+
+            # Try to find patient name by phone
+            cursor.execute("""
+                SELECT full_name FROM users WHERE phone = ? OR phone = ? LIMIT 1
+            """, (phone_clean, phone_number))
+            user_row = cursor.fetchone()
+            patient_name = user_row[0] if user_row else f"USSD User ...{phone_clean[-4:]}"
+
+            # Book it
+            cursor.execute("""
+                INSERT INTO appointments
+                (patient_name, patient_phone, clinic_name, appointment_date, appointment_time, reason, status)
+                VALUES (?, ?, ?, ?, ?, ?, 'Scheduled')
+            """, (patient_name, phone_clean, clinic_name, chosen_date, chosen_time, reason))
+            conn.commit()
+            conn.close()
+
+            return (
+                f"END Appointment confirmed!\n"
+                f"Clinic: {clinic_name}\n"
+                f"Date: {chosen_date}\n"
+                f"Time: {chosen_time}\n"
+                f"Ref: USSD-{session_id[:8].upper()}"
+            )
+
+        else:
+            return "END Invalid option. Please dial again."
+
+    # ==================== OPTION 2: Check Symptoms ====================
     if parts[0] == "2":
         if level == 1:
-            return "CON Describe your symptoms:\nExample: fever, cough, headache\nType your symptoms:"
+            return "CON Describe your symptoms:\n(e.g., fever, cough, headache)"
+
         elif level == 2:
-            symptoms = parts[1] if len(parts) > 1 else ""
-            if symptoms:
-                possible = []
-                if 'fever' in symptoms.lower():
-                    possible.append("Flu")
-                if 'cough' in symptoms.lower():
-                    possible.append("Common Cold")
-                if 'headache' in symptoms.lower():
-                    possible.append("Migraine")
-                if not possible:
-                    possible = ["Unknown - Please consult a doctor"]
-                return f"END Symptoms detected: {symptoms}\nPossible conditions:\n" + "\n".join([f"• {p}" for p in possible]) + "\n\nPlease consult a healthcare professional."
-            else:
-                return "END No symptoms detected. Please try again."
-    
+            symptoms = parts[1].strip() if len(parts) > 1 else ''
+            if not symptoms:
+                return "END No symptoms entered."
+
+            try:
+                diseases = search_master_database(symptoms) or []
+            except Exception:
+                diseases = []
+
+            if not diseases:
+                return (
+                    "END No matching conditions found.\n"
+                    "Please consult a healthcare professional."
+                )
+
+            lines = [f"END Possible conditions for '{symptoms[:30]}':"]
+            for d in diseases[:3]:
+                urgency = d.get('urgency', 'Routine')
+                lines.append(f"- {d.get('disease', 'Unknown')} ({urgency})")
+            lines.append("")
+            lines.append("Consult a doctor if symptoms persist.")
+            return "\n".join(lines)
+
+        else:
+            return "END Invalid input."
+
+    # ==================== OPTION 3: My Appointments ====================
     if parts[0] == "3":
-        # ===== FIX #10: use DB_PATH =====
         conn = get_db_connection()
-        # ===== END FIX #10 =====
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute('''
-        SELECT clinic_name, appointment_date, appointment_time, status 
-        FROM appointments 
-        WHERE appointment_date >= date('now')
-        ORDER BY appointment_date, appointment_time
-        LIMIT 3
-        ''')
+
+        cursor.execute("""
+            SELECT clinic_name, appointment_date, appointment_time, status
+            FROM appointments
+            WHERE (patient_phone = ? OR patient_phone = ?)
+              AND appointment_date >= date('now')
+              AND status != 'Cancelled'
+            ORDER BY appointment_date, appointment_time
+            LIMIT 3
+        """, (phone_clean, phone_number))
         appointments = cursor.fetchall()
         conn.close()
-        if appointments:
-            response = "END Your Appointments:\n"
-            for i, appt in enumerate(appointments, 1):
-                response += f"{i}. {appt['clinic_name']}\n   {appt['appointment_date']} {appt['appointment_time']}\n   Status: {appt['status']}\n"
-            return response
-        else:
-            return "END No appointments found."
-    
+
+        if not appointments:
+            return "END You have no upcoming appointments."
+
+        lines = ["END Your upcoming appointments:"]
+        for i, a in enumerate(appointments, 1):
+            lines.append(f"{i}. {a['clinic_name']}")
+            lines.append(f"   {a['appointment_date']} {a['appointment_time']}")
+        return "\n".join(lines)
+
+    # ==================== OPTION 4: Find Clinic ====================
     if parts[0] == "4":
         if level == 1:
-            return "CON Enter your location:\nExample: Durban, Cape Town"
+            return "CON Enter your city or area:\n(e.g., Durban, Soweto, Umlazi)"
+
         elif level == 2:
-            location = parts[1] if len(parts) > 1 else ""
-            if location:
-                if df_clinics is not None:
-                    results = df_clinics[
-                        df_clinics['City'].str.lower().str.contains(location.lower(), na=False) |
-                        df_clinics['Area'].str.lower().str.contains(location.lower(), na=False)
-                    ].head(3)
-                    if not results.empty:
-                        response = f"END Clinics near {location}:\n"
-                        for i, row in results.iterrows():
-                            response += f"{i+1}. {row['Clinic_Name']}\n"
-                            response += f"   Phone: {row['Phone'] if 'Phone' in row else 'N/A'}\n"
-                        return response
-                    else:
-                        return f"END No clinics found near {location}."
-                else:
-                    return f"END Clinics near {location}:\n1. Empangeni Clinic - 1.2km\n2. Ngwelezane Clinic - 3.5km"
-            else:
-                return "END Invalid location."
-    
+            location = parts[1].strip() if len(parts) > 1 else ''
+            if not location:
+                return "END No location entered."
+
+            if df_clinics is None:
+                return "END Clinic database unavailable."
+
+            try:
+                mask = (
+                    df_clinics['City'].astype(str).str.lower().str.contains(location.lower(), na=False) |
+                    df_clinics['Area'].astype(str).str.lower().str.contains(location.lower(), na=False) |
+                    df_clinics['Clinic_Name'].astype(str).str.lower().str.contains(location.lower(), na=False)
+                )
+                matches = df_clinics[mask].head(3)
+                if matches.empty:
+                    return f"END No clinics found near {location}."
+
+                lines = [f"END Clinics near {location}:"]
+                for _, row in matches.iterrows():
+                    lines.append(f"- {row.get('Clinic_Name', 'Clinic')}")
+                    phone = row.get('Phone', '')
+                    if phone and str(phone) != 'nan':
+                        lines.append(f"  Tel: {phone}")
+                return "\n".join(lines)
+            except Exception as e:
+                print(f"[ussd clinic find] {e}")
+                return "END Could not search clinics right now."
+
+        else:
+            return "END Invalid input."
+
+    # ==================== OPTION 5: Emergency Contacts ====================
     if parts[0] == "5":
-        if level == 1:
-            return "CON Enter disease name:\nExample: malaria, flu, diabetes"
-        elif level == 2:
-            disease = parts[1] if len(parts) > 1 else ""
-            if disease:
-                return f"END Health Info: {disease}\n\nDescription: A medical condition requiring proper diagnosis.\nConsult a healthcare professional for accurate information."
-            else:
-                return "END No disease entered."
-    
-    if parts[0] == "6":
-        return "END EMERGENCY CONTACTS\n\nAmbulance: 10177\nPolice: 10111\nNational Emergency: 112\n\nNearest Clinic: Empangeni Clinic\nPhone: 035 123 4567"
-    
+        return (
+            "END EMERGENCY CONTACTS\n\n"
+            "Ambulance: 10177\n"
+            "Police: 10111\n"
+            "National Emergency: 112\n"
+            "Poison Control: 0861 555 777"
+        )
+
     return "END Invalid option. Please try again."
 
 # ============================================================
