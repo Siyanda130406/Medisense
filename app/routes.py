@@ -1378,9 +1378,24 @@ def init_database():
         appointment_time TEXT,
         available_times TEXT,
         reason TEXT,
+        location TEXT,
+        matching_clinics TEXT,
+        clinic_offset INTEGER DEFAULT 0,
+        time_offset INTEGER DEFAULT 0,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     ''')
+    
+    # Add columns if this DB was created before we added them
+    cursor.execute("PRAGMA table_info(ussd_sessions)")
+    ussd_cols = [c[1] for c in cursor.fetchall()]
+    for col, coltype in [('location', 'TEXT'), ('matching_clinics', 'TEXT'),
+                         ('clinic_offset', 'INTEGER'), ('time_offset', 'INTEGER')]:
+        if col not in ussd_cols:
+            try:
+                cursor.execute(f"ALTER TABLE ussd_sessions ADD COLUMN {col} {coltype}")
+            except Exception:
+                pass
     # ===== END USSD sessions =====
     
     cursor.execute('''
@@ -5487,28 +5502,81 @@ def ussd():
     # ==================== OPTION 1: Book Appointment ====================
     if parts[0] == "1":
 
-        # Level 1: choose clinic
+        # ---------- Level 1: Enter location ----------
         if level == 1:
-            clinics = get_clinics_list()[:5]
-            if not clinics:
-                return "END No clinics available. Please try again later."
-            lines = ["CON Select clinic:"]
-            for i, c in enumerate(clinics, 1):
-                lines.append(f"{i}. {c}")
-            return "\n".join(lines)
+            return "CON Enter your area or city:\n(e.g., Empangeni, Cape Town, Soweto)"
 
-        # Level 2: chose clinic, choose date
+        # ---------- Level 2: Show clinics in that area ----------
         elif level == 2:
-            clinics = get_clinics_list()[:5]
+            location = parts[1].strip() if len(parts) > 1 else ''
+            if not location:
+                return "END No location entered. Please dial again."
+
+            if df_clinics is None:
+                return "END Clinic database unavailable."
+
+            # Find matching clinics
             try:
-                idx = int(parts[1]) - 1
-                if idx < 0 or idx >= len(clinics):
-                    return "END Invalid clinic selection. Please try again."
-                clinic_name = clinics[idx]
+                loc_lower = location.lower()
+                mask = (
+                    df_clinics['City'].astype(str).str.lower().str.contains(loc_lower, na=False) |
+                    df_clinics['Area'].astype(str).str.lower().str.contains(loc_lower, na=False) |
+                    df_clinics['Province'].astype(str).str.lower().str.contains(loc_lower, na=False) |
+                    df_clinics['Clinic_Name'].astype(str).str.lower().str.contains(loc_lower, na=False)
+                )
+                matches = df_clinics[mask]['Clinic_Name'].dropna().unique().tolist()
+            except Exception as e:
+                print(f"[ussd book clinics] {e}")
+                matches = []
+
+            if not matches:
+                return (
+                    f"END No clinics found in \"{location}\".\n"
+                    "Try another area, e.g., Empangeni, Durban, Cape Town."
+                )
+
+            # Store matching clinics and reset offset
+            clinics_str = "|".join(matches[:40])  # cap at 40 to keep session small
+            _ussd_update_session(
+                session_id,
+                location=location,
+                matching_clinics=clinics_str,
+                clinic_offset=0
+            )
+
+            return _ussd_render_clinic_page(clinics_str, offset=0)
+
+        # ---------- Level 3+: Pick a clinic / paginate ----------
+        elif level == 3:
+            sess = _ussd_get_session(session_id) or {}
+            clinics_str = sess.get('matching_clinics') or ''
+            if not clinics_str:
+                return "END Session expired. Please dial again."
+
+            clinics = clinics_str.split('|')
+            current_offset = int(sess.get('clinic_offset') or 0)
+
+            # User picked "next" (the last option on the current page)
+            if parts[2] == "9":
+                next_offset = current_offset + 4
+                if next_offset >= len(clinics):
+                    return "END No more clinics. Please dial again."
+                _ussd_update_session(session_id, clinic_offset=next_offset)
+                return _ussd_render_clinic_page(clinics_str, offset=next_offset)
+
+            # User picked a numbered clinic
+            try:
+                idx_on_page = int(parts[2]) - 1
+                if idx_on_page < 0 or idx_on_page >= 4:
+                    return "END Invalid clinic selection."
+                global_idx = current_offset + idx_on_page
+                if global_idx >= len(clinics):
+                    return "END Invalid clinic selection."
+                clinic_name = clinics[global_idx]
             except (ValueError, IndexError):
                 return "END Invalid clinic selection."
 
-            _ussd_update_session(session_id, clinic_name=clinic_name)
+            _ussd_update_session(session_id, clinic_name=clinic_name, time_offset=0)
 
             return (
                 "CON Select date:\n"
@@ -5517,8 +5585,8 @@ def ussd():
                 "3. Day after tomorrow"
             )
 
-        # Level 3: chose date, choose time
-        elif level == 3:
+        # ---------- Level 4: Pick date → show times page 1 ----------
+        elif level == 4:
             sess = _ussd_get_session(session_id) or {}
             clinic_name = sess.get('clinic_name') or ''
             if not clinic_name:
@@ -5526,59 +5594,81 @@ def ussd():
 
             date_map = {'1': 0, '2': 1, '3': 2}
             try:
-                days_ahead = date_map[parts[2]]
+                days_ahead = date_map[parts[3]]
             except KeyError:
                 return "END Invalid date selection."
 
             chosen_date = (datetime.now() + timedelta(days=days_ahead)).strftime('%Y-%m-%d')
-            _ussd_update_session(session_id, appointment_date=chosen_date)
 
-            available_times = get_available_times(clinic_name, chosen_date)
-            common_times = ['08:00', '09:00', '10:00', '11:00', '14:00', '15:00']
-            filtered = [t for t in common_times if t in available_times]
-            if not filtered:
-                filtered = available_times[:6]
+            # Build the full list of valid times for this date
+            valid_times = _ussd_get_valid_times(clinic_name, chosen_date)
+            if not valid_times:
+                return "END No available slots on that date. Please try another date."
 
-            if not filtered:
-                return "END No available slots on that day. Please try another date."
+            _ussd_update_session(
+                session_id,
+                appointment_date=chosen_date,
+                available_times="|".join(valid_times),
+                time_offset=0
+            )
 
-            _ussd_update_session(session_id, available_times=",".join(filtered))
+            return _ussd_render_time_page("|".join(valid_times), offset=0)
 
-            lines = ["CON Select time:"]
-            for i, t in enumerate(filtered, 1):
-                lines.append(f"{i}. {t}")
-            return "\n".join(lines)
-
-        # Level 4: chose time, ask for reason
-        elif level == 4:
+        # ---------- Level 5: Pick a time / paginate ----------
+        elif level == 5:
             sess = _ussd_get_session(session_id) or {}
-            available = (sess.get('available_times') or '').split(',')
+            times_str = sess.get('available_times') or ''
+            if not times_str:
+                return "END Session expired. Please dial again."
+
+            all_times = times_str.split('|')
+            current_offset = int(sess.get('time_offset') or 0)
+
+            # User picked "next"
+            if parts[4] == "9":
+                next_offset = current_offset + 6
+                if next_offset >= len(all_times):
+                    return "END No more time slots. Please dial again."
+                _ussd_update_session(session_id, time_offset=next_offset)
+                return _ussd_render_time_page(times_str, offset=next_offset)
+
+            # User picked a specific time on this page
             try:
-                idx = int(parts[3]) - 1
-                if idx < 0 or idx >= len(available) or not available[idx]:
+                idx_on_page = int(parts[4]) - 1
+                if idx_on_page < 0 or idx_on_page >= 6:
                     return "END Invalid time selection."
-                chosen_time = available[idx]
+                global_idx = current_offset + idx_on_page
+                if global_idx >= len(all_times):
+                    return "END Invalid time selection."
+                chosen_time = all_times[global_idx]
             except (ValueError, IndexError):
                 return "END Invalid time selection."
 
             _ussd_update_session(session_id, appointment_time=chosen_time)
             return "CON Enter reason for visit:\n(e.g., Checkup, Flu, Follow-up)"
 
-        # Level 5: reason entered, create booking
-        elif level == 5:
+        # ---------- Level 6: Enter reason → book ----------
+        elif level == 6:
             sess = _ussd_get_session(session_id) or {}
             clinic_name = sess.get('clinic_name') or ''
             chosen_date = sess.get('appointment_date') or ''
             chosen_time = sess.get('appointment_time') or ''
-            reason = parts[4].strip() if len(parts) > 4 and parts[4].strip() else 'USSD Booking'
+            reason = parts[5].strip() if len(parts) > 5 and parts[5].strip() else 'USSD Booking'
 
             if not clinic_name or not chosen_date or not chosen_time:
                 return "END Session expired. Please dial again."
 
+            # Re-validate the time is still in the future (20-min buffer)
+            if not _ussd_is_time_valid(chosen_date, chosen_time):
+                return (
+                    "END That time has passed or is less than 20 minutes away.\n"
+                    "Please dial again to pick another slot."
+                )
+
             conn = get_db_connection()
             cursor = conn.cursor()
 
-            # Double-check slot still available
+            # Double-check slot availability
             cursor.execute("""
                 SELECT id FROM appointments
                 WHERE clinic_name = ? AND appointment_date = ? AND appointment_time = ?
@@ -5588,25 +5678,33 @@ def ussd():
                 conn.close()
                 return "END Sorry, that slot was just taken. Please try another time."
 
-            # Try to find patient name by phone
+            # Find patient name and email by phone
             cursor.execute("""
-                SELECT full_name FROM users WHERE phone = ? OR phone = ? LIMIT 1
+                SELECT full_name, email FROM users
+                WHERE phone = ? OR phone = ?
+                LIMIT 1
             """, (phone_clean, phone_number))
             user_row = cursor.fetchone()
-            patient_name = user_row[0] if user_row else f"USSD User ...{phone_clean[-4:]}"
+            if user_row:
+                patient_name = user_row[0]
+                patient_email = user_row[1]
+            else:
+                patient_name = f"USSD User ...{phone_clean[-4:]}"
+                patient_email = None
 
-            # Book it
             cursor.execute("""
                 INSERT INTO appointments
-                (patient_name, patient_phone, clinic_name, appointment_date, appointment_time, reason, status)
-                VALUES (?, ?, ?, ?, ?, ?, 'Scheduled')
-            """, (patient_name, phone_clean, clinic_name, chosen_date, chosen_time, reason))
+                (patient_email, patient_name, patient_phone, clinic_name,
+                 appointment_date, appointment_time, reason, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'Scheduled')
+            """, (patient_email, patient_name, phone_clean, clinic_name,
+                  chosen_date, chosen_time, reason))
             conn.commit()
             conn.close()
 
             return (
                 f"END Appointment confirmed!\n"
-                f"Clinic: {clinic_name}\n"
+                f"Clinic: {clinic_name[:30]}\n"
                 f"Date: {chosen_date}\n"
                 f"Time: {chosen_time}\n"
                 f"Ref: USSD-{session_id[:8].upper()}"
@@ -5722,6 +5820,84 @@ def ussd():
         )
 
     return "END Invalid option. Please try again."
+
+
+# ============================================================
+# USSD HELPERS — pagination + time validation
+# ============================================================
+def _ussd_render_clinic_page(clinics_str, offset=0):
+    """Render 4 clinics starting at `offset`, with 'Next' if more follow."""
+    clinics = clinics_str.split('|')
+    total = len(clinics)
+    page = clinics[offset:offset + 4]
+
+    lines = ["CON Select clinic:"]
+    for i, c in enumerate(page, 1):
+        # Truncate long names so they fit on one USSD line
+        name = c if len(c) <= 24 else c[:23] + "…"
+        lines.append(f"{i}. {name}")
+
+    if offset + 4 < total:
+        lines.append(f"9. Next ({offset + 4 + 1}-{min(offset + 8, total)} of {total})")
+
+    return "\n".join(lines)
+
+
+def _ussd_render_time_page(times_str, offset=0):
+    """Render 6 time slots starting at `offset`, with 'Next' if more follow."""
+    all_times = times_str.split('|')
+    total = len(all_times)
+    page = all_times[offset:offset + 6]
+
+    lines = ["CON Select time:"]
+    for i, t in enumerate(page, 1):
+        lines.append(f"{i}. {t}")
+
+    if offset + 6 < total:
+        lines.append(f"9. Next ({min(offset + 12, total)} slots left)")
+
+    return "\n".join(lines)
+
+
+def _ussd_get_valid_times(clinic_name, chosen_date):
+    """
+    Returns the list of valid HH:MM slots for a given clinic + date.
+    - For today: only slots >= (now + 20 min)
+    - For future dates: all slots from 08:00 to 16:30
+    """
+    # All possible slots in 30-min steps from 08:00 to 16:30
+    all_slots = []
+    for hour in range(8, 17):
+        for minute in ['00', '30']:
+            all_slots.append(f"{hour:02d}:{minute}")
+    # Trim last one to 16:30 max
+    all_slots = [t for t in all_slots if t <= "16:30"]
+
+    # Get already-booked / blocked slots
+    try:
+        available = get_available_times(clinic_name, chosen_date)
+    except Exception as e:
+        print(f"[ussd times] {e}")
+        available = all_slots
+
+    today = datetime.now().strftime('%Y-%m-%d')
+
+    if chosen_date == today:
+        # Today: only slots at least 20 minutes from now
+        cutoff = datetime.now() + timedelta(minutes=20)
+        cutoff_str = cutoff.strftime('%H:%M')
+        available = [t for t in available if t > cutoff_str]
+
+    return available
+
+
+def _ussd_is_time_valid(chosen_date, chosen_time):
+    """Double-check a chosen slot is not in the past (20-min buffer for today)."""
+    today = datetime.now().strftime('%Y-%m-%d')
+    if chosen_date != today:
+        return True
+    cutoff = (datetime.now() + timedelta(minutes=20)).strftime('%H:%M')
+    return chosen_time > cutoff
 
 # ============================================================
 # UPDATE LANGUAGE
