@@ -5410,7 +5410,9 @@ def admin_check_no_shows():
 # USSD ENDPOINT
 # ============================================================
 
-@app.route('/ussd', methods=['GET', 'POST'])
+# ============================================================
+# USSD ENDPOINT (Africa's Talking)
+# ============================================================
 def _ussd_clean_phone(phone):
     """Normalize AT phone numbers: +27821234567 -> 0821234567"""
     if not phone:
@@ -5449,6 +5451,7 @@ def _ussd_update_session(session_id, **kwargs):
     cursor.execute(f"UPDATE ussd_sessions SET {fields}, updated_at = CURRENT_TIMESTAMP WHERE session_id = ?", values)
     conn.commit()
     conn.close()
+
 
 @app.route('/ussd', methods=['GET', 'POST'])
 def ussd():
