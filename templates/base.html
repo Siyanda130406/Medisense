@@ -6,6 +6,7 @@
     <title>{% block title %}MediSense{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
         :root {
             --bg-body: #f8f9fa;
@@ -249,6 +250,42 @@
         ::-webkit-scrollbar-thumb { background: #3498db; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #2980b9; }
 
+        /* Select2 theme to match MediSense */
+        .select2-container--default .select2-selection--single {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            height: 38px;
+            padding: 5px;
+            border-radius: 8px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: var(--text-primary);
+            line-height: 26px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+        }
+        .select2-dropdown {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        .select2-search__field {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+        .select2-results__option--highlighted {
+            background-color: #3498db !important;
+        }
+        [data-bs-theme="dark"] .select2-container--default .select2-selection--single {
+            background-color: var(--bg-card);
+        }
+        [data-bs-theme="dark"] .select2-dropdown {
+            background-color: var(--bg-card);
+        }
+
         @media (max-width: 991px) {
             .container, .container-fluid {
                 padding-left: 12px !important;
@@ -366,7 +403,6 @@
                         </li>
                     {% endif %}
 
-                    <!-- ===== FIX: Language switcher visible for EVERYONE ===== -->
                     <li class="nav-item language-selector">
                         <form method="POST" action="{{ url_for('update_language') }}" class="d-inline" aria-label="{{ translate_text('Language selector', lang) }}">
                             <select name="language" class="form-select form-select-sm" onchange="this.form.submit()" aria-label="{{ translate_text('Select language', lang) }}">
@@ -376,7 +412,6 @@
                         </form>
                     </li>
 
-                    <!-- ===== FIX: Theme toggle visible for EVERYONE ===== -->
                     <li class="nav-item">
                         <button class="theme-toggle" onclick="toggleTheme()"
                                 aria-label="{{ translate_text('Toggle dark mode', lang) }}"
@@ -522,6 +557,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script>
         function toggleTheme() {

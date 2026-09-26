@@ -1,4 +1,5 @@
 ﻿Flask
+python-dotenv
 gunicorn
 pandas
 joblib
@@ -6,3 +7,4 @@ numpy
 scikit-learn
 Werkzeug
 Jinja2
+requests

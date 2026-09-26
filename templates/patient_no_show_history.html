@@ -18,27 +18,27 @@
                     <h4 class="mb-0 text-danger"><i class="fas fa-exclamation-triangle"></i> {{ translate_text('No-Show History', lang) }}</h4>
                 </div>
                 <div class="card-body">
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <div class="stat-card bg-danger text-white p-3 rounded">
+                    <div class="row mb-4 g-3">
+                        <div class="col-md-3 col-6">
+                            <div class="stat-card stat-danger p-3 rounded">
                                 <h6>{{ translate_text('Total No-Shows', lang) }}</h6>
                                 <h2>{{ no_show_count }}</h2>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="stat-card bg-secondary text-white p-3 rounded">
+                        <div class="col-md-3 col-6">
+                            <div class="stat-card stat-secondary p-3 rounded">
                                 <h6>{{ translate_text('Total Appointments', lang) }}</h6>
                                 <h2>{{ total_appointments }}</h2>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="stat-card bg-warning text-white p-3 rounded">
+                        <div class="col-md-3 col-6">
+                            <div class="stat-card stat-warning p-3 rounded">
                                 <h6>{{ translate_text('No-Show Rate', lang) }}</h6>
                                 <h2>{{ no_show_rate }}%</h2>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="stat-card {% if risk_category == 'High' or risk_category == 'Very High' %}bg-danger{% else %}bg-success{% endif %} text-white p-3 rounded">
+                        <div class="col-md-3 col-6">
+                            <div class="stat-card {% if risk_category == 'High' or risk_category == 'Very High' %}stat-danger{% else %}stat-success{% endif %} p-3 rounded">
                                 <h6>{{ translate_text('Risk Category', lang) }}</h6>
                                 <h2>{{ translate_text(risk_category, lang) }}</h2>
                             </div>
@@ -94,39 +94,46 @@
 </div>
 
 <style>
-    /* ===== FIX: Force text visibility in light + dark mode ===== */
-    .card-body p,
-    .card-body small,
-    .card-body strong,
-    .card-body h2,
-    .card-body h4,
-    .card-body h6,
-    .card-body td,
-    .card-body th {
-        color: var(--text-primary);
-    }
-    .card-body .table {
-        color: var(--text-primary);
-    }
-    .card-body .table thead th {
+    /* ===== Coloured stat cards — text MUST always be white ===== */
+    .stat-card.stat-danger,
+    .stat-card.stat-success,
+    .stat-card.stat-warning,
+    .stat-card.stat-secondary {
         color: #ffffff !important;
     }
-    .card-body .table tbody td {
-        color: var(--text-primary) !important;
-    }
-    .card-body .table tbody td a {
-        color: #2b6cb0;
-    }
-    .stat-card h2,
-    .stat-card h6 {
+    .stat-card.stat-danger h2,
+    .stat-card.stat-danger h6,
+    .stat-card.stat-success h2,
+    .stat-card.stat-success h6,
+    .stat-card.stat-warning h2,
+    .stat-card.stat-warning h6,
+    .stat-card.stat-secondary h2,
+    .stat-card.stat-secondary h6 {
         color: #ffffff !important;
+        margin-bottom: 0;
     }
+
+    .stat-card.stat-danger { background-color: #dc3545 !important; }
+    .stat-card.stat-success { background-color: #198754 !important; }
+    .stat-card.stat-warning { background-color: #ffc107 !important; color: #212529 !important; }
+    .stat-card.stat-warning h2,
+    .stat-card.stat-warning h6 { color: #212529 !important; }
+    .stat-card.stat-secondary { background-color: #6c757d !important; }
+
+    /* ===== Table text visibility ===== */
+    .table tbody td { color: var(--text-primary) !important; }
+    .table thead th { color: #ffffff !important; }
+
+    /* ===== Alert text visibility ===== */
     .alert-success {
-        color: #22543d;
+        color: #0f5132;
+        background-color: #d1e7dd;
+        border-color: #badbcc;
     }
     [data-bs-theme="dark"] .alert-success {
-        color: #c6f6d5;
+        color: #d1e7dd;
+        background-color: #0f5132;
+        border-color: #0a3622;
     }
-    /* ===== END FIX ===== */
 </style>
 {% endblock %}

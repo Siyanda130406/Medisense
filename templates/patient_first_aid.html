@@ -59,16 +59,16 @@
     <div class="row" id="firstAidGrid">
         {% for category in first_aid_categories %}
         <div class="col-lg-4 col-md-6 mb-4 first-aid-item" data-color="{{ category.color }}" data-title="{{ translate_text(category.title, lang) }}" data-desc="{{ translate_text(category.description, lang) }}">
-            <div class="card h-100 shadow-sm border-{{ category.color }} first-aid-card">
-                <div class="card-header bg-{{ category.color }} text-white">
+            <div class="card h-100 shadow-sm first-aid-card border-top-{{ category.color }}-thick">
+                <div class="card-header first-aid-header-{{ category.color }}">
                     <div class="d-flex align-items-center">
                         <span class="fs-2 me-2"><i class="fas {{ category.icon }}"></i></span>
                         <h5 class="mb-0">{{ translate_text(category.title, lang) }}</h5>
                     </div>
                 </div>
                 <div class="card-body">
-                    <p class="card-text">{{ translate_text(category.description, lang) }}</p>
-                    <span class="badge bg-{{ category.color }}">
+                    <p class="card-text first-aid-desc">{{ translate_text(category.description, lang) }}</p>
+                    <span class="badge badge-{{ category.color }}">
                         {% if category.color == 'danger' %}{{ translate_text('Emergency', lang) }}
                         {% elif category.color == 'warning' %}{{ translate_text('Urgent', lang) }}
                         {% else %}{{ translate_text('Routine', lang) }}{% endif %}
@@ -87,11 +87,11 @@
         <div class="modal fade" id="firstAidModal{{ category.id }}" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
-                    <div class="modal-header bg-{{ category.color }} text-white">
+                    <div class="modal-header first-aid-header-{{ category.color }}">
                         <h5 class="modal-title">
                             <i class="fas {{ category.icon }} me-2"></i>{{ translate_text(category.title, lang) }}
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <div class="row">
@@ -285,21 +285,59 @@
 </div>
 
 <style>
-    /* ===== FIX: light mode text visibility in cards and modals ===== */
-    .first-aid-card .card-body,
-    .first-aid-card .card-body p,
-    .first-aid-card .card-text {
+    /* ===== Card border colours (top accent) ===== */
+    .border-top-danger-thick { border-top: 4px solid #dc3545 !important; }
+    .border-top-warning-thick { border-top: 4px solid #ffc107 !important; }
+    .border-top-info-thick { border-top: 4px solid #0dcaf0 !important; }
+
+    /* ===== Card header colours — white text on coloured header ===== */
+    .first-aid-header-danger,
+    .first-aid-header-warning,
+    .first-aid-header-info {
+        padding: 12px 16px;
+        border-radius: 0 !important;
+    }
+    .first-aid-header-danger { background-color: #dc3545 !important; }
+    .first-aid-header-warning { background-color: #ffc107 !important; }
+    .first-aid-header-info { background-color: #0dcaf0 !important; }
+
+    .first-aid-header-danger h5,
+    .first-aid-header-danger i,
+    .first-aid-header-info h5,
+    .first-aid-header-info i,
+    .first-aid-header-warning h5,
+    .first-aid-header-warning i {
+        color: #ffffff !important;
+    }
+    .first-aid-header-warning h5,
+    .first-aid-header-warning i {
+        color: #212529 !important;
+    }
+
+    /* ===== Card body text — dark on light mode, light on dark mode ===== */
+    .first-aid-card .card-body {
+        background-color: var(--bg-card);
+        color: var(--text-primary);
+    }
+    .first-aid-card .card-body .card-text,
+    .first-aid-card .card-body .first-aid-desc {
         color: var(--text-primary) !important;
     }
-    .first-aid-card .card-body p {
-        color: #4a5568 !important;
+    [data-bs-theme="dark"] .first-aid-card .card-body .card-text,
+    [data-bs-theme="dark"] .first-aid-card .card-body .first-aid-desc {
+        color: #e0e0e0 !important;
     }
-    [data-bs-theme="dark"] .first-aid-card .card-body p {
-        color: #cbd5e0 !important;
-    }
-    .modal-body h6 {
-        color: var(--text-primary) !important;
-    }
+
+    /* ===== Badges — keep coloured ===== */
+    .badge.badge-danger { background-color: #dc3545 !important; color: #ffffff !important; }
+    .badge.badge-warning { background-color: #ffc107 !important; color: #212529 !important; }
+    .badge.badge-info { background-color: #0dcaf0 !important; color: #212529 !important; }
+
+    /* ===== Card footer buttons keep their outline colour ===== */
+    .first-aid-card .card-footer { background-color: transparent !important; }
+
+    /* ===== Modal ===== */
+    .modal-body h6 { color: var(--text-primary) !important; }
     .modal-body .list-group-item {
         color: var(--text-primary) !important;
         background: var(--bg-card);
@@ -312,71 +350,53 @@
     [data-bs-theme="dark"] .modal-body {
         color: var(--text-primary);
     }
-    /* ===== END FIX ===== */
 
+    /* ===== Card hover ===== */
     .first-aid-card {
         transition: transform 0.2s ease, box-shadow 0.2s ease;
-        border-top-width: 4px !important;
-        border-top-style: solid !important;
         border-left: none !important;
         border-right: none !important;
         border-bottom: none !important;
+        overflow: hidden;
     }
-
     .first-aid-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
     }
+    .first-aid-card .card-body { min-height: 140px; }
 
-    .first-aid-card .card-header {
-        border-radius: 0 !important;
-    }
-
-    .first-aid-card .card-body {
-        min-height: 140px;
-    }
-
+    /* ===== Filter button group ===== */
     .btn-group-flex-wrap {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
     }
-
     .btn-group-flex-wrap .btn {
         border-radius: 25px !important;
         padding: 8px 20px;
         font-size: 0.9rem;
         border: 2px solid transparent;
     }
-
     .btn-group-flex-wrap .btn.active {
         border-color: #3498db;
         box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
     }
-
     .btn-outline-secondary.active { background: #6c757d; color: white; }
     .btn-outline-danger.active { background: #dc3545; color: white; }
     .btn-outline-warning.active { background: #ffc107; color: #212529; }
     .btn-outline-info.active { background: #0dcaf0; color: #212529; }
 
-    .first-aid-item.hidden {
-        display: none;
-    }
+    .first-aid-item.hidden { display: none; }
 
     .modal-body .list-group-item {
         padding: 10px 15px;
         border-left: 3px solid transparent;
         transition: border-color 0.2s ease;
     }
-
     .modal-body .list-group-item:hover {
         border-left-color: #3498db;
         background: rgba(52, 152, 219, 0.05);
     }
-
-    .border-danger { border-top-color: #dc3545 !important; }
-    .border-warning { border-top-color: #ffc107 !important; }
-    .border-info { border-top-color: #0dcaf0 !important; }
 </style>
 
 <script>

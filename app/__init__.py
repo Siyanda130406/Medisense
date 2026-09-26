@@ -1,5 +1,9 @@
 ﻿from flask import Flask
+from dotenv import load_dotenv   # <-- NEW
 import os
+
+# Load environment variables from .env file
+load_dotenv()   # <-- NEW
 
 # Create Flask app
 app = Flask(

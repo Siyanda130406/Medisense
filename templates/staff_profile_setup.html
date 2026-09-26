@@ -46,3 +46,15 @@
     </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('#staff_clinic').select2({
+            placeholder: "-- {{ translate_text('Select a clinic', lang) }} --",
+            allowClear: true,
+            width: '100%'
+        });
+    });
+</script>
+{% endblock %}

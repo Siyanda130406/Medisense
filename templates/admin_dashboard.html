@@ -328,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function() {
         data: {
             labels: {{ daily_labels|safe }},
             datasets: [{
-                label: '{{ translate_text("Appointments", lang) }}',
+                label: '{{ translate_text('Appointments', lang) }}',
                 data: {{ daily_counts|safe }},
                 backgroundColor: ['#0d6efd', '#0d6efd', '#0d6efd', '#0d6efd', '#0d6efd', '#0d6efd', '#0d6efd'],
                 borderRadius: 4,
@@ -343,7 +343,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return context.parsed.y + ' appointments';
+                            return context.parsed.y + ' {{ translate_text('appointments', lang) }}';
                         }
                     }
                 }
@@ -363,10 +363,10 @@ document.addEventListener('DOMContentLoaded', function() {
         type: 'doughnut',
         data: {
             labels: [
-                '{{ translate_text("Scheduled", lang) }}',
-                '{{ translate_text("Completed", lang) }}',
-                '{{ translate_text("Cancelled", lang) }}',
-                '{{ translate_text("No-Show", lang) }}'
+                '{{ translate_text('Scheduled', lang) }}',
+                '{{ translate_text('Completed', lang) }}',
+                '{{ translate_text('Cancelled', lang) }}',
+                '{{ translate_text('No-Show', lang) }}'
             ],
             datasets: [{
                 data: {{ status_counts|safe }},
@@ -391,7 +391,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ===== REAL-TIME UPDATES (simulated) =====
 setInterval(function() {
-    // Update the live indicator
     const indicator = document.querySelector('.live-indicator');
     if (indicator) {
         indicator.style.animation = 'none';

@@ -284,7 +284,7 @@ if __name__ == '__main__':
     print("  Nurse: nurse@medisense.com / Nurse123! (Assigned to Empangeni Clinic)")
     print("  Staff: staff@medisense.com / Staff123! (Assigned to Ngwelezane Clinic)")
     print("")
-    print("Auto No-Show Checker: Running (checks every 60 seconds)")
+    print("Auto No-Show Checker: Running (checks every 5 minutes)")
     print("="*60)
     
     app.run(debug=True, port=5000, host='0.0.0.0')

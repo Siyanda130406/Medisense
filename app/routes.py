@@ -15,6 +15,7 @@ import random
 import re
 import secrets
 import smtplib
+import requests
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from functools import wraps
@@ -988,7 +989,7 @@ translations = {
         'Enter your registered email': 'Faka i-imeyili yakho ebhalisiwe',
         'Enter your registered email address': 'Faka ikheli le-imeyili lakho elibhalisiwe',
         'Enter your email address and we\'ll send you a password reset code.': 'Faka ikheli lakho le-imeyili futhi sizokuthumelela ikhodi yokusetha kabusha iphasiwedi.',
-        'Enter your email address and we\'ll send you a reset link.': 'Faka ikheli lakho le-imeyili futhi sizokuthumelela isixhumanisi sokusetha kabusha.',
+        'Enter your email address and we\'ll send you a reset link.': 'Faka ikheli lakho le-imeyili futhi sizokuthumela isixhumanisi sokusetha kabusha.',
         'Back to Login': 'Buyela Ekungeneni',
         'Back to Sign In': 'Buyela Ekungeneni',
         'Forgot your password?': 'Ukhohlwe iphasiwedi yakho?',
@@ -1156,37 +1157,57 @@ def correct_spelling(query, n=1, cutoff=0.72):
 # ============================================================
 
 # ============================================================
-# FIX #9: HEALTH SCORE (starts at 0)
+# FIX #9: HEALTH SCORE (starts at 0, only counts explicit user input)
 # ============================================================
 def calculate_health_score(age, health_conditions, appointments,
                            profile_complete=False, has_id=False,
-                           has_emergency=False, has_allergies=False):
+                           has_emergency=False, has_allergies=False,
+                           has_phone=False, has_gender=False):
     """Health score starts at 0. Grows only from real user data."""
     score = 0
-    if age and 1 <= age <= 120:
+    
+    # Age: only count if explicitly set (not 0 and not the default 30)
+    if age and age != 30 and 1 <= age <= 120:
         score += 5
+    
+    # Profile completeness
     if profile_complete:
-        score += 5
+        score += 10
     if has_id:
         score += 5
     if has_emergency:
         score += 5
-    if health_conditions is not None and health_conditions != '':
+    if has_phone:
         score += 5
-    if has_allergies is not None and has_allergies != '':
+    if has_gender:
         score += 5
+    
+    # Health data
+    if health_conditions:
+        score += 5
+    if has_allergies:
+        score += 5
+    
+    # Appointments
     total = len(appointments)
     completed = sum(1 for a in appointments if a['status'] == 'Completed')
     score += min(completed * 5, 40)
+    
     checked_in = sum(1 for a in appointments if a['status'] == 'Checked-in')
     score += min(checked_in * 3, 15)
+    
+    # Penalties
     no_shows = sum(1 for a in appointments if a['status'] == 'No-Show')
     score -= min(no_shows * 10, 30)
+    
     cancelled = sum(1 for a in appointments if a['status'] == 'Cancelled')
     score -= min(cancelled * 2, 10)
+    
+    # Regular booking bonus
     if total >= 3: score += 5
     if total >= 5: score += 5
     if total >= 10: score += 5
+    
     score = max(0, min(score, 100))
     return score
 
@@ -1631,53 +1652,106 @@ def check_expired_appointments():
 def generate_reset_token():
     return secrets.token_urlsafe(32)
 
-def send_reset_email(email, reset_token):
+def send_email(to_email, subject, html_content):
+    """General purpose email sender using Brevo API."""
     try:
-        # ===== FIX #5: read SMTP creds from env, don't hardcode =====
-        sender_email = os.environ.get('SMTP_USERNAME', '').strip()
-        sender_password = os.environ.get('SMTP_PASSWORD', '').strip()
+        api_key = os.environ.get('BREVO_API_KEY', '').strip()
+        sender_email = os.environ.get('BREVO_FROM_EMAIL', '').strip()
+        sender_name = os.environ.get('BREVO_FROM_NAME', 'MediSense').strip()
         
-        if not sender_email or not sender_password:
-            print("[email] SMTP_USERNAME / SMTP_PASSWORD not set. Printing token instead.")
-            print(f"[email] Reset token for {email}: {reset_token}")
+        if not api_key or not sender_email:
+            print(f"[email] BREVO_API_KEY or BREVO_FROM_EMAIL not set. Would send to {to_email}: {subject}")
             return False
-        # ===== END FIX #5 =====
         
-        reset_link = url_for('reset_password', token=reset_token, _external=True)
+        url = "https://api.brevo.com/v3/smtp/email"
+        headers = {
+            "accept": "application/json",
+            "api-key": api_key,
+            "content-type": "application/json",
+        }
+        payload = {
+            "sender": {"name": sender_name, "email": sender_email},
+            "to": [{"email": to_email}],
+            "subject": subject,
+            "htmlContent": html_content,
+        }
         
-        subject = "MediSense - Password Reset"
-        body = f"""
-        Hello,
-
-        You requested a password reset for your MediSense account.
-
-        Click the link below to reset your password:
-        {reset_link}
-
-        This link will expire in 15 minutes.
-
-        If you did not request this, please ignore this email.
-
-        Regards,
-        MediSense Team
-        """
+        response = requests.post(url, json=payload, headers=headers, timeout=15)
         
-        msg = MIMEMultipart()
-        msg['From'] = sender_email
-        msg['To'] = email
-        msg['Subject'] = subject
-        msg.attach(MIMEText(body, 'plain'))
+        if response.status_code in (200, 201, 202):
+            data = response.json()
+            print(f"✅ Email sent to {to_email} (messageId: {data.get('messageId')})")
+            return True
+        else:
+            print(f"❌ Brevo error {response.status_code}: {response.text}")
+            return False
         
-        with smtplib.SMTP('smtp.gmail.com', 587) as server:
-            server.starttls()
-            server.login(sender_email, sender_password)
-            server.send_message(msg)
-        
-        print(f"✅ Reset email sent to {email}")
-        return True
     except Exception as e:
-        print(f"❌ Failed to send email: {e}")
+        print(f"❌ Failed to send email to {to_email}: {e}")
         return False
+
+
+def send_reset_email(email, reset_token):
+    """Send password reset email with the token link."""
+    reset_link = url_for('reset_password', token=reset_token, _external=True)
+    
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #3498db;">MediSense Password Reset</h2>
+        <p>Hello,</p>
+        <p>You requested a password reset for your MediSense account.</p>
+        <p>Click the link below to reset your password:</p>
+        <p><a href="{reset_link}" style="background: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Reset Password</a></p>
+        <p>This link will expire in 15 minutes.</p>
+        <p>If you did not request this, please ignore this email.</p>
+        <br>
+        <p>Regards,<br>MediSense Team</p>
+    </div>
+    """
+    
+    return send_email(email, "MediSense - Password Reset", html_content)
+
+
+def send_welcome_email(email, full_name):
+    """Send welcome email after signup."""
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #3498db;">Welcome to MediSense, {full_name}!</h2>
+        <p>Thank you for creating an account.</p>
+        <p>You can now:</p>
+        <ul>
+            <li>Search for symptoms and health information</li>
+            <li>Find clinics near you</li>
+            <li>Book appointments</li>
+            <li>Access our First Aid guide</li>
+        </ul>
+        <p>Get started by logging in:</p>
+        <p><a href="{url_for('login', _external=True)}" style="background: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Log In to MediSense</a></p>
+        <br>
+        <p>Stay healthy,<br>MediSense Team</p>
+    </div>
+    """
+    return send_email(email, "Welcome to MediSense!", html_content)
+
+
+def send_appointment_confirmation(email, patient_name, clinic, date, time):
+    """Send appointment confirmation email."""
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2ecc71;">Appointment Confirmed</h2>
+        <p>Hello {patient_name},</p>
+        <p>Your appointment has been booked successfully.</p>
+        <table style="border-collapse: collapse; width: 100%; margin: 15px 0;">
+            <tr><td style="padding: 8px; border: 1px solid #ddd; background: #f8f9fa;"><strong>Clinic</strong></td><td style="padding: 8px; border: 1px solid #ddd;">{clinic}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #ddd; background: #f8f9fa;"><strong>Date</strong></td><td style="padding: 8px; border: 1px solid #ddd;">{date}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #ddd; background: #f8f9fa;"><strong>Time</strong></td><td style="padding: 8px; border: 1px solid #ddd;">{time}</td></tr>
+        </table>
+        <p>Please arrive on time. You will receive an SMS reminder before your appointment.</p>
+        <br>
+        <p>Regards,<br>MediSense Team</p>
+    </div>
+    """
+    return send_email(email, "Appointment Confirmed - MediSense", html_content)
 
 # ============================================================
 # TERMS CHECK DECORATOR
@@ -2205,6 +2279,8 @@ def signup():
         conn.commit()
         user_id = cursor.lastrowid
         conn.close()
+
+        send_welcome_email(email, full_name)
         
         session['user_id'] = user_id
         session['email'] = email
@@ -3045,13 +3121,6 @@ def patient_dashboard():
     health_count = len([c for c in health_conditions.split(',') if c.strip()]) if health_conditions else 0
 
     # ===== FIX #9: HEALTH SCORE — starts at 0, based on real user data =====
-    # Breakdown (max 100):
-    #  - Profile completeness: up to 30 points
-    #  - Completed appointments: up to 40 points
-    #  - Checked-in appointments: up to 15 points
-    #  - Regular booking bonus: up to 15 points
-    #  - No-show penalty: up to -30
-    #  - Cancelled penalty: up to -10
     profile_complete = bool(age and patient['location'])
     has_id = bool(patient['id_number'])
     has_emergency = bool(patient['emergency_name'] and patient['emergency_phone'])
@@ -3062,13 +3131,15 @@ def patient_dashboard():
         profile_complete=profile_complete,
         has_id=has_id,
         has_emergency=has_emergency,
-        has_allergies=has_allergies
+        has_allergies=has_allergies,
+        has_phone=bool(patient['phone']),
+        has_gender=bool(patient['gender'])
     )
     health_score_category = get_health_score_category(health_score)
 
     # Give the dashboard a short explanation for the tooltip
     score_breakdown = []
-    if age and 1 <= age <= 120:
+    if age and age != 30 and 1 <= age <= 120:
         score_breakdown.append("Age provided (+5)")
     if profile_complete:
         score_breakdown.append("Profile complete (+10)")
@@ -3076,6 +3147,10 @@ def patient_dashboard():
         score_breakdown.append("ID number on file (+5)")
     if has_emergency:
         score_breakdown.append("Emergency contact on file (+5)")
+    if patient['phone']:
+        score_breakdown.append("Phone number on file (+5)")
+    if patient['gender']:
+        score_breakdown.append("Gender recorded (+5)")
     if health_conditions:
         score_breakdown.append("Health conditions recorded (+5)")
     if has_allergies:
@@ -3615,7 +3690,9 @@ def patient_book():
         ''', (session['email'], session['full_name'], session.get('phone', ''), clinic, date, time, reason, 'Scheduled'))
         conn.commit()
         conn.close()
-        
+
+        send_appointment_confirmation(session['email'], session['full_name'], clinic, date, time)
+
         flash(f'✅ Appointment booked at {clinic} on {date} at {time}.', 'success')
         return redirect('/patient/dashboard')
     
@@ -5065,8 +5142,53 @@ def admin_clinic_add():
             flash(translate_text('Clinic name and city are required.', lang), 'error')
             return render_template('admin_clinic_add.html', user=session, lang=lang, translate_text=translate_text)
         
-        flash(translate_text(f'Clinic "{clinic_name}" added successfully!', lang), 'success')
-        return redirect(url_for('admin_clinics'))
+        # ===== FIX: Actually save the clinic to the CSV file =====
+        try:
+            # Determine the path to the clinics CSV file
+            base_dir = os.path.dirname(os.path.dirname(__file__))
+            csv_path = os.path.join(base_dir, 'data', 'processed', 'sa_clinic_database_real.csv')
+            
+            # Create a new row with the clinic data
+            new_clinic = {
+                'Clinic_ID': f"CLN{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                'Clinic_Name': clinic_name,
+                'Clinic_Type': 'Community Health Centre',
+                'Province': province if province else 'Unknown',
+                'District': '',
+                'City': city,
+                'Area': area,
+                'Phone': phone,
+                'Services': services,
+                'Latitude': 0.0,
+                'Longitude': 0.0
+            }
+            
+            # Load existing data, append, and save
+            if os.path.exists(csv_path):
+                df = pd.read_csv(csv_path)
+                # Check for duplicate clinic name
+                if clinic_name.lower() in df['Clinic_Name'].str.lower().values:
+                    flash(translate_text(f'A clinic named "{clinic_name}" already exists.', lang), 'error')
+                    return render_template('admin_clinic_add.html', user=session, lang=lang, translate_text=translate_text)
+                
+                df = pd.concat([df, pd.DataFrame([new_clinic])], ignore_index=True)
+            else:
+                df = pd.DataFrame([new_clinic])
+            
+            df.to_csv(csv_path, index=False)
+            print(f"✅ Saved new clinic to CSV: {clinic_name}")
+            
+            # Reload the global df_clinics so the change is immediately visible
+            global df_clinics
+            df_clinics = safe_load_csv(csv_path)
+            
+            flash(translate_text(f'Clinic "{clinic_name}" added successfully!', lang), 'success')
+            return redirect(url_for('admin_clinics'))
+            
+        except Exception as e:
+            print(f"❌ Error saving clinic: {e}")
+            flash(translate_text('Failed to save clinic. Please try again.', lang), 'error')
+            return render_template('admin_clinic_add.html', user=session, lang=lang, translate_text=translate_text)
     
     return render_template('admin_clinic_add.html',
         user=session,
