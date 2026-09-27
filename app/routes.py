@@ -1689,14 +1689,8 @@ def send_sms(to_phone, message):
     """
     Send an SMS via Africa's Talking HTTP API.
     Works in sandbox (delivered to the AT simulator) and live (delivered to real phones).
-
-    Args:
-        to_phone (str): recipient phone number (e.g., '0821234567' or '+27821234567')
-        message  (str): the SMS body
-
-    Returns:
-        bool: True on success, False on failure
     """
+    print(f"[SMS-TEST] send_sms called for {to_phone} with message: {message[:40]}...")
     try:
         username = os.environ.get('AT_USERNAME', 'sandbox').strip()
         api_key = os.environ.get('AT_API_KEY', '').strip()
@@ -1710,15 +1704,12 @@ def send_sms(to_phone, message):
             print("[sms] No recipient phone — skipping SMS")
             return False
 
-        # Normalize: Africa's Talking accepts +27821234567 or 0821234567
         phone_clean = re.sub(r'[^0-9+]', '', str(to_phone))
-        # Add +27 prefix if user entered a local number (0821...)
         if phone_clean.startswith('0') and len(phone_clean) == 10:
             phone_clean = '+27' + phone_clean[1:]
         elif not phone_clean.startswith('+'):
             phone_clean = '+' + phone_clean
 
-        # AT expects a comma-separated list of recipients
         url = "https://api.africastalking.com/version1/messaging"
         headers = {
             "apiKey": api_key,
@@ -1740,8 +1731,6 @@ def send_sms(to_phone, message):
                 body = response.json()
             except Exception:
                 body = {}
-            # AT always returns 200/201 even for individual failures,
-            # so check the SMSMessageData.Recipients.Status
             try:
                 recipients = body.get("SMSMessageData", {}).get("Recipients", [])
                 if recipients and recipients[0].get("status") == "Success":
@@ -1763,7 +1752,44 @@ def send_sms(to_phone, message):
     except Exception as e:
         print(f"❌ SMS send failed to {to_phone}: {e}")
         return False
-        
+
+def send_booking_confirmation_sms(phone, patient_name, clinic, date, time):
+    """Send an SMS confirming an appointment."""
+    first_name = (patient_name or "there").split()[0]
+    msg = (
+        f"Hi {first_name}, your MediSense appointment is confirmed.\n"
+        f"Clinic: {clinic}\n"
+        f"Date: {date}\n"
+        f"Time: {time}\n"
+        f"Reply STOP to opt out."
+    )
+    return send_sms(phone, msg)
+
+
+def send_reminder_sms(phone, patient_name, clinic, date, time):
+    """Send an SMS reminding a patient of an upcoming appointment."""
+    first_name = (patient_name or "there").split()[0]
+    msg = (
+        f"Hi {first_name}, reminder: you have a MediSense appointment tomorrow.\n"
+        f"Clinic: {clinic}\n"
+        f"Date: {date}\n"
+        f"Time: {time}\n"
+        f"Please arrive 10 min early."
+    )
+    return send_sms(phone, msg)
+
+
+def send_ussd_confirmation_sms(phone, clinic, date, time):
+    """Send an SMS confirming a USSD booking."""
+    msg = (
+        f"MediSense: appointment confirmed.\n"
+        f"Clinic: {clinic}\n"
+        f"Date: {date}\n"
+        f"Time: {time}\n"
+        f"See you there!"
+    )
+    return send_sms(phone, msg)
+
 def send_email(to_email, subject, html_content):
     """General purpose email sender using Brevo API."""
     try:
@@ -2447,6 +2473,7 @@ def login():
                 session['language'] = user['language'] if user['language'] else 'en'
                 session['gender'] = user['gender'] or ''
                 session['id_number'] = user['id_number'] or ''
+                session['phone'] = user['phone'] or ''
                 
                 flash(f'Welcome back, {user["full_name"]}!', 'success')
                 
@@ -3805,6 +3832,12 @@ def patient_book():
 
         send_appointment_confirmation(session['email'], session['full_name'], clinic, date, time)
 
+        # ===== SMS confirmation (uses patient's registered phone) =====
+        patient_phone_for_sms = session.get('phone', '')
+        if patient_phone_for_sms:
+            send_booking_confirmation_sms(patient_phone_for_sms, session['full_name'], clinic, date, time)
+        # ===== END SMS confirmation =====
+
         flash(f'✅ Appointment booked at {clinic} on {date} at {time}.', 'success')
         return redirect('/patient/dashboard')
     
@@ -3890,6 +3923,7 @@ def patient_profile():
         session['language'] = language
         session['gender'] = gender
         session['id_number'] = id_number
+        session['phone'] = phone
         
         flash('Profile updated successfully', 'success')
         return redirect('/patient/dashboard')
@@ -4314,10 +4348,68 @@ def staff_noshow(appt_id):
     conn.close()
     return redirect('/staff/dashboard')
 
+# ============================================================
+# STAFF - SEND REMINDER (SMS) — FIXED
+# ============================================================
 @app.route('/staff/send-reminder/<int:appt_id>', methods=['POST'])
+@require_terms_acceptance
 def staff_send_reminder(appt_id):
-    flash('Reminder sent', 'success')
+    if 'user_id' not in session or session.get('role') not in ['nurse', 'staff', 'admin']:
+        return redirect('/login')
+
+    conn = get_db_connection()
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    # Get the appointment details
+    cursor.execute('''
+        SELECT patient_name, patient_phone, patient_email,
+               clinic_name, appointment_date, appointment_time
+        FROM appointments
+        WHERE id = ?
+    ''', (appt_id,))
+    appt = cursor.fetchone()
+
+    if not appt:
+        conn.close()
+        flash('Appointment not found.', 'error')
+        return redirect('/staff/dashboard')
+
+    # Determine the phone to use:
+    # 1. Try the patient record (linked by email) if it exists
+    # 2. Otherwise, use the appointment's stored patient_phone
+    phone_to_use = appt['patient_phone'] or ''
+
+    if appt['patient_email']:
+        cursor.execute('SELECT phone FROM users WHERE email = ? LIMIT 1', (appt['patient_email'],))
+        row = cursor.fetchone()
+        if row and row['phone']:
+            phone_to_use = row['phone']
+
+    conn.close()
+
+    if not phone_to_use:
+        flash('This patient has no phone number on file — reminder not sent.', 'warning')
+        return redirect('/staff/dashboard')
+
+    # Send the SMS
+    ok = send_reminder_sms(
+        phone_to_use,
+        appt['patient_name'],
+        appt['clinic_name'],
+        appt['appointment_date'],
+        appt['appointment_time']
+    )
+
+    if ok:
+        flash(f'Reminder sent to {appt["patient_name"]}.', 'success')
+    else:
+        flash('Reminder could not be sent (see server logs).', 'error')
+
     return redirect('/staff/dashboard')
+# ============================================================
+# END STAFF - SEND REMINDER
+# ============================================================
 
 @app.route('/staff/manual-book', methods=['GET', 'POST'])
 @require_terms_acceptance
@@ -5783,6 +5875,13 @@ def ussd():
                   chosen_date, chosen_time, reason))
             conn.commit()
             conn.close()
+
+            # ===== SMS confirmation for USSD booking =====
+            try:
+                send_ussd_confirmation_sms(phone_clean, clinic_name, chosen_date, chosen_time)
+            except Exception as _e:
+                print(f"[ussd sms] {_e}")
+            # ===== END SMS confirmation =====
 
             return (
                 f"END Appointment confirmed!\n"
