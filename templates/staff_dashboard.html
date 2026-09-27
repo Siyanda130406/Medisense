@@ -53,16 +53,26 @@
                             <td>
                                 {% if a.status == 'Scheduled' %}
                                 <form method="POST" action="{{ url_for('staff_checkin', appt_id=a.id) }}" class="d-inline">
-                                    <button class="btn btn-sm btn-outline-warning"><i class="fas fa-sign-in-alt"></i> Check-in</button>
+                                    <button class="btn btn-sm btn-outline-warning" title="Check-in"><i class="fas fa-sign-in-alt"></i> Check-in</button>
                                 </form>
                                 <form method="POST" action="{{ url_for('staff_noshow', appt_id=a.id) }}" class="d-inline">
-                                    <button class="btn btn-sm btn-outline-danger"><i class="fas fa-user-slash"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger" title="Mark No-Show"><i class="fas fa-user-slash"></i></button>
                                 </form>
                                 {% elif a.status == 'Checked-in' %}
                                 <form method="POST" action="{{ url_for('staff_checkout', appt_id=a.id) }}" class="d-inline">
-                                    <button class="btn btn-sm btn-success"><i class="fas fa-check"></i> Check-out</button>
+                                    <button class="btn btn-sm btn-success" title="Check-out"><i class="fas fa-check"></i> Check-out</button>
                                 </form>
                                 {% endif %}
+
+                                {# ===== NEW: Send Reminder button (visible for Scheduled + Checked-in) ===== #}
+                                {% if a.status in ['Scheduled', 'Checked-in'] %}
+                                <form method="POST" action="{{ url_for('staff_send_reminder', appt_id=a.id) }}" class="d-inline">
+                                    <button class="btn btn-sm btn-outline-info" title="Send SMS reminder">
+                                        <i class="fas fa-bell"></i> Remind
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {# ===== END NEW ===== #}
                             </td>
                         </tr>
                         {% else %}
