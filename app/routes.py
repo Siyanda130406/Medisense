@@ -1682,6 +1682,88 @@ def check_expired_appointments():
 def generate_reset_token():
     return secrets.token_urlsafe(32)
 
+# ============================================================
+# SMS HELPER (Africa's Talking)
+# ============================================================
+def send_sms(to_phone, message):
+    """
+    Send an SMS via Africa's Talking HTTP API.
+    Works in sandbox (delivered to the AT simulator) and live (delivered to real phones).
+
+    Args:
+        to_phone (str): recipient phone number (e.g., '0821234567' or '+27821234567')
+        message  (str): the SMS body
+
+    Returns:
+        bool: True on success, False on failure
+    """
+    try:
+        username = os.environ.get('AT_USERNAME', 'sandbox').strip()
+        api_key = os.environ.get('AT_API_KEY', '').strip()
+        sender_id = os.environ.get('AT_SENDER_ID', '').strip()
+
+        if not api_key:
+            print("[sms] AT_API_KEY not set — skipping SMS")
+            return False
+
+        if not to_phone:
+            print("[sms] No recipient phone — skipping SMS")
+            return False
+
+        # Normalize: Africa's Talking accepts +27821234567 or 0821234567
+        phone_clean = re.sub(r'[^0-9+]', '', str(to_phone))
+        # Add +27 prefix if user entered a local number (0821...)
+        if phone_clean.startswith('0') and len(phone_clean) == 10:
+            phone_clean = '+27' + phone_clean[1:]
+        elif not phone_clean.startswith('+'):
+            phone_clean = '+' + phone_clean
+
+        # AT expects a comma-separated list of recipients
+        url = "https://api.africastalking.com/version1/messaging"
+        headers = {
+            "apiKey": api_key,
+            "Accept": "application/json",
+            "Content-Type": "application/x-www-form-urlencoded",
+        }
+        data = {
+            "username": username,
+            "to": phone_clean,
+            "message": message,
+        }
+        if sender_id:
+            data["from"] = sender_id
+
+        response = requests.post(url, headers=headers, data=data, timeout=15)
+
+        if response.status_code in (200, 201, 202):
+            try:
+                body = response.json()
+            except Exception:
+                body = {}
+            # AT always returns 200/201 even for individual failures,
+            # so check the SMSMessageData.Recipients.Status
+            try:
+                recipients = body.get("SMSMessageData", {}).get("Recipients", [])
+                if recipients and recipients[0].get("status") == "Success":
+                    print(f"✅ SMS sent to {phone_clean} (messageId: {recipients[0].get('messageId')})")
+                    return True
+                elif recipients:
+                    print(f"❌ SMS rejected by AT for {phone_clean}: {recipients[0]}")
+                    return False
+                else:
+                    print(f"⚠️ SMS API returned 200 but no recipients — assuming sent to {phone_clean}")
+                    return True
+            except Exception as e:
+                print(f"⚠️ SMS parse issue: {e}")
+                return True
+        else:
+            print(f"❌ AT SMS error {response.status_code}: {response.text}")
+            return False
+
+    except Exception as e:
+        print(f"❌ SMS send failed to {to_phone}: {e}")
+        return False
+        
 def send_email(to_email, subject, html_content):
     """General purpose email sender using Brevo API."""
     try:
