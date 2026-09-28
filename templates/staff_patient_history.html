@@ -25,7 +25,7 @@
                     <hr>
                     <div class="text-start small">
                         <p class="mb-2"><strong>Phone:</strong> {{ patient.phone or '—' }}</p>
-                        <p class="mb-2"><strong>Age:</strong> {{ patient.age or '—' }}</p>
+                        <p class="mb-2"><strong>Age:</strong> {{ (patient.age|string) + ' years' if patient.age else '—' }}</p>
                         <p class="mb-2"><strong>Gender:</strong> {{ patient.gender or '—' }}</p>
                         <p class="mb-2"><strong>ID Number:</strong> {{ patient.id_number or '—' }}</p>
                         <p class="mb-2"><strong>Location:</strong> {{ patient.location or '—' }}</p>
@@ -33,7 +33,7 @@
                 </div>
             </div>
 
-            <!-- ALLERGIES — highlighted for clinical safety -->
+            <!-- ALLERGIES -->
             <div class="card border-0 shadow-sm mt-4" style="border-left: 4px solid #d69e2e !important;">
                 <div class="card-body">
                     <h6 class="mb-2"><i class="fas fa-triangle-exclamation text-warning me-2"></i>Allergies</h6>

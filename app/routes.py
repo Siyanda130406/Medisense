@@ -3071,9 +3071,7 @@ def patient_profile_setup():
     if session.get('role') != 'patient':
         return redirect('/login')
     
-    # ===== FIX #10: use DB_PATH =====
     conn = get_db_connection()
-    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute('SELECT age, location, health_conditions FROM users WHERE id = ?', (session['user_id'],))
@@ -3099,7 +3097,6 @@ def patient_profile_setup():
             lang = session.get('language', 'en')
             return render_template('patient_profile_setup.html', user=session, lang=lang, translate_text=translate_text)
         
-        # ===== FIX: SA ID is required and age is auto-calculated =====
         if not id_number:
             flash('Please enter your South African ID number.', 'error')
             lang = session.get('language', 'en')
@@ -3111,7 +3108,6 @@ def patient_profile_setup():
             lang = session.get('language', 'en')
             return render_template('patient_profile_setup.html', user=session, lang=lang, translate_text=translate_text)
         
-        # Calculate age from ID
         birth_year, birth_month, birth_day = extract_dob_from_sa_id(id_number)
         if birth_year is None:
             flash('Could not read date of birth from ID number.', 'error')
@@ -3127,16 +3123,13 @@ def patient_profile_setup():
             flash('The age calculated from your ID number is not valid.', 'error')
             lang = session.get('language', 'en')
             return render_template('patient_profile_setup.html', user=session, lang=lang, translate_text=translate_text)
-        # ===== END FIX =====
         
         if not gender:
             flash('Please select your gender.', 'error')
             lang = session.get('language', 'en')
             return render_template('patient_profile_setup.html', user=session, lang=lang, translate_text=translate_text)
         
-        # ===== FIX #10: use DB_PATH =====
         conn = get_db_connection()
-        # ===== END FIX #10 =====
         cursor = conn.cursor()
         cursor.execute('''
         UPDATE users 
@@ -3165,6 +3158,142 @@ def patient_profile_setup():
         lang=lang,
         translate_text=translate_text
     )
+
+
+@app.route('/patient/profile', methods=['GET', 'POST'])
+@require_terms_acceptance
+def patient_profile():
+    if 'user_id' not in session or session.get('role') != 'patient':
+        return redirect('/login')
+    
+    conn = get_db_connection()
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    if request.method == 'POST':
+        health_conditions = request.form.get('health_conditions', '').strip()
+        location = request.form.get('location', '').strip()
+        language = request.form.get('language', 'en')
+        phone = request.form.get('phone', '').strip()
+        gender = request.form.get('gender', '').strip()
+        id_number = request.form.get('id_number', '').strip()
+        allergies = request.form.get('allergies', '').strip()
+        
+        if not id_number:
+            flash('Please enter your South African ID number.', 'error')
+            return redirect('/patient/profile')
+        
+        valid, msg = validate_sa_id(id_number)
+        if not valid:
+            flash(f'ID Number: {msg}', 'error')
+            return redirect('/patient/profile')
+        
+        birth_year, birth_month, birth_day = extract_dob_from_sa_id(id_number)
+        if birth_year is None:
+            flash('Could not read date of birth from ID number.', 'error')
+            return redirect('/patient/profile')
+        
+        today = datetime.now()
+        age = today.year - birth_year
+        if (today.month, today.day) < (birth_month, birth_day):
+            age -= 1
+        
+        if age < 1 or age > 120:
+            flash('The age calculated from your ID number is not valid.', 'error')
+            return redirect('/patient/profile')
+        
+        cursor.execute('''
+        UPDATE users 
+        SET age = ?, health_conditions = ?, location = ?, 
+            language = ?, phone = ?, gender = ?, id_number = ?,
+            allergies = ?
+        WHERE id = ?
+        ''', (age, health_conditions, location, language, phone, gender, id_number, allergies, session['user_id']))
+        conn.commit()
+        conn.close()
+        
+        session['age'] = age
+        session['health_conditions'] = health_conditions
+        session['location'] = location
+        session['language'] = language
+        session['gender'] = gender
+        session['id_number'] = id_number
+        session['phone'] = phone
+        
+        flash('Profile updated successfully', 'success')
+        return redirect('/patient/dashboard')
+    
+    cursor.execute('SELECT id, email, full_name, phone, age, health_conditions, location, gender, id_number, allergies, emergency_name, emergency_phone FROM users WHERE id = ?', (session['user_id'],))
+    patient = cursor.fetchone()
+    conn.close()
+    lang = session.get('language', 'en')
+    return render_template('patient_profile.html', 
+        user=session, 
+        patient=patient,
+        lang=lang,
+        translate_text=translate_text
+    )
+
+# ============================================================
+# PATIENT - DASHBOARD (NEWLY ADDED TO FIX 404 ERROR)
+# ============================================================
+@app.route('/patient/dashboard')
+@require_terms_acceptance
+def patient_dashboard():
+    if 'user_id' not in session or session.get('role') != 'patient':
+        return redirect('/login')
+
+    conn = get_db_connection()
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    # Get patient details
+    cursor.execute('SELECT * FROM users WHERE id = ?', (session['user_id'],))
+    patient = cursor.fetchone()
+
+    # Get appointments
+    cursor.execute('''
+        SELECT * FROM appointments 
+        WHERE patient_email = ? AND status != 'Cancelled'
+        ORDER BY appointment_date DESC, appointment_time DESC
+    ''', (session['email'],))
+    appointments = cursor.fetchall()
+    conn.close()
+
+    # Calculate stats for the dashboard
+    total = len(appointments)
+    upcoming = sum(1 for a in appointments if a['status'] == 'Scheduled')
+    completed = sum(1 for a in appointments if a['status'] == 'Completed')
+    no_shows = sum(1 for a in appointments if a['status'] == 'No-Show')
+
+    # Calculate Health Score
+    health_score = calculate_health_score(
+        patient['age'] if patient else 30,
+        patient['health_conditions'] if patient else '',
+        appointments,
+        profile_complete=bool(patient and patient['age'] and patient['location']),
+        has_id=bool(patient and patient['id_number']),
+        has_emergency=bool(patient and patient['emergency_name']),
+        has_allergies=bool(patient and patient['allergies']),
+        has_phone=bool(patient and patient['phone']),
+        has_gender=bool(patient and patient['gender'])
+    )
+
+    lang = session.get('language', 'en')
+    return render_template('patient_dashboard.html',
+                           user=session,
+                           patient=patient,
+                           appointments=appointments,
+                           total=total,
+                           upcoming=upcoming,
+                           completed=completed,
+                           no_shows=no_shows,
+                           health_score=health_score,
+                           health_score_category=get_health_score_category(health_score),
+                           health_tip=get_random_health_tip(),
+                           nearest_clinic=get_nearest_clinic(patient['location'] if patient else ''),
+                           lang=lang,
+                           translate_text=translate_text)
 
 # ============================================================
 # PATIENT - HEALTH & SYMPTOMS - FIX #7 (Q&A removed), FIX #8 (spell)
