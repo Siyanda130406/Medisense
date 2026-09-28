@@ -21,11 +21,20 @@
                         <h6 class="text-primary mb-3"><i class="fas fa-id-card me-2"></i>Basic Information</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <label for="age" class="form-label">Age <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="age" name="age"
-                                       min="1" max="120" required
-                                       value="{{ request.form.get('age', '') }}">
-                                <div class="form-text">Enter your age in years (1–120).</div>
+                                <label for="id_number" class="form-label">South African ID Number <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="id_number" name="id_number"
+                                       maxlength="13" minlength="13" pattern="[0-9]{13}"
+                                       placeholder="e.g. 9001011234567" required
+                                       value="{{ request.form.get('id_number', '') }}">
+                                <div class="form-text">13 digits. We validate the format, date, and checksum.</div>
+                                <div class="invalid-feedback" id="idError"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="age" class="form-label">Age</label>
+                                <input type="text" class="form-control" id="age" name="age_display"
+                                       readonly placeholder="Auto-calculated from ID">
+                                <div class="form-text">Automatically calculated from your ID number.</div>
+                                <input type="hidden" id="age_hidden" name="age" value="">
                             </div>
                             <div class="col-md-6">
                                 <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
@@ -36,15 +45,6 @@
                                     <option value="Other" {% if request.form.get('gender') == 'Other' %}selected{% endif %}>Other</option>
                                     <option value="Prefer not to say" {% if request.form.get('gender') == 'Prefer not to say' %}selected{% endif %}>Prefer not to say</option>
                                 </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="id_number" class="form-label">South African ID Number <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="id_number" name="id_number"
-                                       maxlength="13" minlength="13" pattern="[0-9]{13}"
-                                       placeholder="e.g. 9001011234567" required
-                                       value="{{ request.form.get('id_number', '') }}">
-                                <div class="form-text">13 digits. We validate the format, date, and checksum.</div>
-                                <div class="invalid-feedback" id="idError"></div>
                             </div>
                             <div class="col-md-6">
                                 <label for="location" class="form-label">Location <span class="text-danger">*</span></label>
@@ -178,6 +178,58 @@ function validateSAIDClient(id) {
     return { valid: true, msg: 'Valid' };
 }
 
+// ===== AUTO-CALCULATE AGE FROM SA ID =====
+function calculateAgeFromID(id) {
+    if (!id || id.length !== 13) return null;
+
+    var yy = parseInt(id.substr(0, 2), 10);
+    var mm = parseInt(id.substr(2, 2), 10);
+    var dd = parseInt(id.substr(4, 2), 10);
+
+    var currentYear = new Date().getFullYear();
+    var currentYY = currentYear % 100;
+    var birthYear = (yy <= currentYY) ? 2000 + yy : 1900 + yy;
+
+    var today = new Date();
+    var birthDate = new Date(birthYear, mm - 1, dd);
+
+    var age = today.getFullYear() - birthDate.getFullYear();
+    var monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+
+    return age;
+}
+
+function updateAgeField() {
+    var idInput = document.getElementById('id_number');
+    var ageDisplay = document.getElementById('age');
+    var ageHidden = document.getElementById('age_hidden');
+
+    var id = idInput.value.trim();
+    var result = validateSAIDClient(id);
+
+    if (result.valid && id.length === 13) {
+        var age = calculateAgeFromID(id);
+        if (age !== null && age >= 1 && age <= 120) {
+            ageDisplay.value = age + ' years';
+            ageHidden.value = age;
+        } else {
+            ageDisplay.value = '';
+            ageHidden.value = '';
+        }
+    } else {
+        ageDisplay.value = '';
+        ageHidden.value = '';
+    }
+}
+
+document.getElementById('id_number').addEventListener('input', function() {
+    this.value = this.value.replace(/[^0-9]/g, '').slice(0, 13);
+    updateAgeField();
+});
+
 document.getElementById('profileForm').addEventListener('submit', function(e) {
     var idInput = document.getElementById('id_number');
     var result = validateSAIDClient(idInput.value.trim());
@@ -189,13 +241,29 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
         idInput.focus();
         return false;
     }
+
+    // Final age sync
+    updateAgeField();
+    var ageHidden = document.getElementById('age_hidden');
+    if (!ageHidden.value) {
+        e.preventDefault();
+        idInput.classList.add('is-invalid');
+        document.getElementById('idError').textContent = 'Please enter a valid ID number so we can calculate your age.';
+        document.getElementById('idError').style.display = 'block';
+        return false;
+    }
+
     var btn = document.getElementById('submitBtn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
 });
 
-document.getElementById('id_number').addEventListener('input', function() {
-    this.value = this.value.replace(/[^0-9]/g, '').slice(0, 13);
+// Run on page load if ID already filled
+document.addEventListener('DOMContentLoaded', function() {
+    var idInput = document.getElementById('id_number');
+    if (idInput.value.trim().length === 13) {
+        updateAgeField();
+    }
 });
 </script>
 {% endblock %}

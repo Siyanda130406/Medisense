@@ -34,8 +34,11 @@
                     </div>
                     <div class="col-md-6">
                         <label for="age" class="form-label">Age</label>
-                        <input type="number" class="form-control" id="age" name="age"
-                               value="{{ patient.age or '' }}" min="1" max="120">
+                        <input type="text" class="form-control" id="age" name="age_display"
+                               value="{{ (patient.age|string) + ' years' if patient.age else '' }}"
+                               readonly placeholder="Auto-calculated from ID">
+                        <div class="form-text">Automatically calculated from your ID number.</div>
+                        <input type="hidden" id="age_hidden" name="age" value="{{ patient.age or '' }}">
                     </div>
                     <div class="col-md-6">
                         <label for="gender" class="form-label">Gender</label>
@@ -64,7 +67,7 @@
                                   placeholder="Separate with commas">{{ patient.health_conditions or '' }}</textarea>
                     </div>
 
-                    <!-- ALLERGIES (proper textarea) -->
+                    <!-- ALLERGIES -->
                     <div class="col-12">
                         <label for="allergies" class="form-label">
                             <i class="fas fa-triangle-exclamation text-warning me-1"></i>Allergies
@@ -133,8 +136,46 @@ function validateSAIDClient(id) {
     return { valid: true };
 }
 
+function calculateAgeFromID(id) {
+    if (!id || id.length !== 13) return null;
+    var yy = parseInt(id.substr(0, 2), 10);
+    var mm = parseInt(id.substr(2, 2), 10);
+    var dd = parseInt(id.substr(4, 2), 10);
+    var currentYear = new Date().getFullYear();
+    var currentYY = currentYear % 100;
+    var birthYear = (yy <= currentYY) ? 2000 + yy : 1900 + yy;
+    var today = new Date();
+    var birthDate = new Date(birthYear, mm - 1, dd);
+    var age = today.getFullYear() - birthDate.getFullYear();
+    var monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) age--;
+    return age;
+}
+
+function updateAgeField() {
+    var idInput = document.getElementById('id_number');
+    var ageDisplay = document.getElementById('age');
+    var ageHidden = document.getElementById('age_hidden');
+    var id = idInput.value.trim();
+    var result = validateSAIDClient(id);
+    if (result.valid && id.length === 13) {
+        var age = calculateAgeFromID(id);
+        if (age !== null && age >= 1 && age <= 120) {
+            ageDisplay.value = age + ' years';
+            ageHidden.value = age;
+        } else {
+            ageDisplay.value = '';
+            ageHidden.value = '';
+        }
+    } else {
+        ageDisplay.value = '';
+        ageHidden.value = '';
+    }
+}
+
 document.getElementById('id_number').addEventListener('input', function() {
     this.value = this.value.replace(/[^0-9]/g, '').slice(0, 13);
+    updateAgeField();
 });
 
 document.getElementById('profileForm').addEventListener('submit', function(e) {
@@ -147,7 +188,9 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
         err.textContent = result.msg;
         err.style.display = 'block';
         idInput.focus();
+        return false;
     }
+    updateAgeField();
 });
 </script>
 {% endblock %}

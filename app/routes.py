@@ -3085,7 +3085,6 @@ def patient_profile_setup():
         return redirect('/patient/dashboard')
     
     if request.method == 'POST':
-        age = request.form.get('age', '')
         location = request.form.get('location', '').strip()
         health_conditions = request.form.get('health_conditions', '').strip()
         emergency_name = request.form.get('emergency_name', '').strip()
@@ -3095,35 +3094,40 @@ def patient_profile_setup():
         gender = request.form.get('gender', '').strip()
         id_number = request.form.get('id_number', '').strip()
         
-        if not age:
-            flash('Please enter your age', 'error')
-            lang = session.get('language', 'en')
-            return render_template('patient_profile_setup.html', user=session, lang=lang, translate_text=translate_text)
-        
-        try:
-            age = int(age)
-            if age < 1 or age > 120:
-                flash('Please enter a valid age (1-120)', 'error')
-                lang = session.get('language', 'en')
-                return render_template('patient_profile_setup.html', user=session, lang=lang, translate_text=translate_text)
-        except:
-            flash('Please enter a valid age', 'error')
-            lang = session.get('language', 'en')
-            return render_template('patient_profile_setup.html', user=session, lang=lang, translate_text=translate_text)
-        
         if not location:
             flash('Please enter your location', 'error')
             lang = session.get('language', 'en')
             return render_template('patient_profile_setup.html', user=session, lang=lang, translate_text=translate_text)
         
-        # ===== FIX #1: SA ID validation =====
-        if id_number:
-            valid, msg = validate_sa_id(id_number)
-            if not valid:
-                flash(f'ID Number: {msg}', 'error')
-                lang = session.get('language', 'en')
-                return render_template('patient_profile_setup.html', user=session, lang=lang, translate_text=translate_text)
-        # ===== END FIX #1 =====
+        # ===== FIX: SA ID is required and age is auto-calculated =====
+        if not id_number:
+            flash('Please enter your South African ID number.', 'error')
+            lang = session.get('language', 'en')
+            return render_template('patient_profile_setup.html', user=session, lang=lang, translate_text=translate_text)
+        
+        valid, msg = validate_sa_id(id_number)
+        if not valid:
+            flash(f'ID Number: {msg}', 'error')
+            lang = session.get('language', 'en')
+            return render_template('patient_profile_setup.html', user=session, lang=lang, translate_text=translate_text)
+        
+        # Calculate age from ID
+        birth_year, birth_month, birth_day = extract_dob_from_sa_id(id_number)
+        if birth_year is None:
+            flash('Could not read date of birth from ID number.', 'error')
+            lang = session.get('language', 'en')
+            return render_template('patient_profile_setup.html', user=session, lang=lang, translate_text=translate_text)
+        
+        today = datetime.now()
+        age = today.year - birth_year
+        if (today.month, today.day) < (birth_month, birth_day):
+            age -= 1
+        
+        if age < 1 or age > 120:
+            flash('The age calculated from your ID number is not valid.', 'error')
+            lang = session.get('language', 'en')
+            return render_template('patient_profile_setup.html', user=session, lang=lang, translate_text=translate_text)
+        # ===== END FIX =====
         
         if not gender:
             flash('Please select your gender.', 'error')
@@ -3158,185 +3162,6 @@ def patient_profile_setup():
     lang = session.get('language', 'en')
     return render_template('patient_profile_setup.html', 
         user=session,
-        lang=lang,
-        translate_text=translate_text
-    )
-
-# ============================================================
-# STAFF PROFILE SETUP
-# ============================================================
-
-@app.route('/staff/profile-setup', methods=['GET', 'POST'])
-@require_terms_acceptance
-def staff_profile_setup():
-    if 'user_id' not in session:
-        return redirect('/login')
-    if session.get('role') not in ['nurse', 'staff']:
-        return redirect('/login')
-    
-    # ===== FIX #10: use DB_PATH =====
-    conn = get_db_connection()
-    # ===== END FIX #10 =====
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute('SELECT staff_clinic FROM users WHERE id = ?', (session['user_id'],))
-    user = cursor.fetchone()
-    conn.close()
-    
-    if user and user['staff_clinic']:
-        flash('Profile already set up', 'info')
-        return redirect('/staff/dashboard')
-    
-    clinics = get_clinics_list()
-    
-    if request.method == 'POST':
-        clinic = request.form.get('staff_clinic', '').strip()
-        
-        if not clinic:
-            flash('Please select a clinic', 'error')
-            lang = session.get('language', 'en')
-            return render_template('staff_profile_setup.html', user=session, clinics=clinics, lang=lang, translate_text=translate_text)
-        
-        # ===== FIX #10: use DB_PATH =====
-        conn = get_db_connection()
-        # ===== END FIX #10 =====
-        cursor = conn.cursor()
-        cursor.execute('''
-        UPDATE users SET staff_clinic = ?
-        WHERE id = ?
-        ''', (clinic, session['user_id']))
-        conn.commit()
-        conn.close()
-        
-        session['staff_clinic'] = clinic
-        
-        flash('Profile setup complete! Welcome to MediSense.', 'success')
-        return redirect('/staff/dashboard')
-    
-    lang = session.get('language', 'en')
-    return render_template('staff_profile_setup.html', 
-        user=session, 
-        clinics=clinics,
-        lang=lang,
-        translate_text=translate_text
-    )
-
-# ============================================================
-# PATIENT DASHBOARD - FIX #9: health score starts at 0
-# ============================================================
-
-@app.route('/patient/dashboard')
-@require_terms_acceptance
-def patient_dashboard():
-    if 'user_id' not in session or session.get('role') != 'patient':
-        return redirect('/login')
-
-    # ===== FIX #10: use DB_PATH =====
-    conn = get_db_connection()
-    # ===== END FIX #10 =====
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-
-    cursor.execute('SELECT id, email, full_name, phone, role, age, health_conditions, location, gender, id_number, allergies, emergency_name, emergency_phone FROM users WHERE id = ?', (session['user_id'],))
-    patient = cursor.fetchone()
-
-    if patient is None:
-        flash('User record not found. Please log in again.', 'error')
-        session.clear()
-        conn.close()
-        return redirect('/login')
-
-    cursor.execute('''
-    SELECT id, clinic_name, appointment_date, appointment_time, status, reason
-    FROM appointments
-    WHERE patient_email = ?
-    ORDER BY appointment_date DESC, appointment_time DESC
-    ''', (session['email'],))
-    appointments = cursor.fetchall()
-    conn.close()
-
-    age = patient['age'] if patient['age'] else 0
-    health_conditions = patient['health_conditions'] if patient['health_conditions'] else ''
-    health_count = len([c for c in health_conditions.split(',') if c.strip()]) if health_conditions else 0
-
-    # ===== FIX #9: HEALTH SCORE — starts at 0, based on real user data =====
-    profile_complete = bool(age and patient['location'])
-    has_id = bool(patient['id_number'])
-    has_emergency = bool(patient['emergency_name'] and patient['emergency_phone'])
-    has_allergies = patient['allergies'] or ''
-
-    health_score = calculate_health_score(
-        age, health_conditions, appointments,
-        profile_complete=profile_complete,
-        has_id=has_id,
-        has_emergency=has_emergency,
-        has_allergies=has_allergies,
-        has_phone=bool(patient['phone']),
-        has_gender=bool(patient['gender'])
-    )
-    health_score_category = get_health_score_category(health_score)
-
-    # Give the dashboard a short explanation for the tooltip
-    score_breakdown = []
-    if age and age != 30 and 1 <= age <= 120:
-        score_breakdown.append("Age provided (+5)")
-    if profile_complete:
-        score_breakdown.append("Profile complete (+10)")
-    if has_id:
-        score_breakdown.append("ID number on file (+5)")
-    if has_emergency:
-        score_breakdown.append("Emergency contact on file (+5)")
-    if patient['phone']:
-        score_breakdown.append("Phone number on file (+5)")
-    if patient['gender']:
-        score_breakdown.append("Gender recorded (+5)")
-    if health_conditions:
-        score_breakdown.append("Health conditions recorded (+5)")
-    if has_allergies:
-        score_breakdown.append("Allergies recorded (+5)")
-    completed_ct = sum(1 for a in appointments if a['status'] == 'Completed')
-    if completed_ct:
-        score_breakdown.append(f"{completed_ct} completed appointment(s) (+{min(completed_ct * 5, 40)})")
-    checked_in_ct = sum(1 for a in appointments if a['status'] == 'Checked-in')
-    if checked_in_ct:
-        score_breakdown.append(f"{checked_in_ct} checked-in appointment(s) (+{min(checked_in_ct * 3, 15)})")
-    ns_ct = sum(1 for a in appointments if a['status'] == 'No-Show')
-    if ns_ct:
-        score_breakdown.append(f"{ns_ct} no-show(s) (-{min(ns_ct * 10, 30)})")
-    cancel_ct = sum(1 for a in appointments if a['status'] == 'Cancelled')
-    if cancel_ct:
-        score_breakdown.append(f"{cancel_ct} cancelled appointment(s) (-{min(cancel_ct * 2, 10)})")
-
-    # Keep risk_score/risk_category for template backward-compat
-    risk_score = health_score
-    risk_category = health_score_category
-    # ===== END FIX #9 =====
-
-    nearest_clinic = get_nearest_clinic(patient['location'] if patient['location'] else None)
-    health_tip = get_random_health_tip()
-    no_show_prediction = predict_no_show(session['email'])
-
-    lang = session.get('language', 'en')
-    return render_template('patient_dashboard.html',
-        user=dict(patient),
-        appointments=appointments,
-        total_visits=len(appointments),
-        no_shows=sum(1 for a in appointments if a['status'] == 'No-Show'),
-        no_show_count=sum(1 for a in appointments if a['status'] == 'No-Show'),
-        completed_count=sum(1 for a in appointments if a['status'] == 'Completed'),
-        cancelled_count=sum(1 for a in appointments if a['status'] == 'Cancelled'),
-        total_appointments=len(appointments),
-        health_score=health_score,
-        health_score_category=health_score_category,
-        score_breakdown=score_breakdown,
-        risk_score=risk_score,
-        risk_category=risk_category,
-        nearest_clinic=nearest_clinic,
-        age=age,
-        health_conditions=health_conditions,
-        health_count=health_count,
-        health_tip=health_tip,
-        no_show_prediction=no_show_prediction,
         lang=lang,
         translate_text=translate_text
     )
