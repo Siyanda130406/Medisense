@@ -273,10 +273,14 @@ if __name__ == '__main__':
     checker_thread = threading.Thread(target=run_auto_checker, daemon=True)
     checker_thread.start()
     
+    # ===== FIX: read PORT from environment (required for Render) =====
+    PORT = int(os.environ.get('PORT', 5000))
+    HOST = '0.0.0.0'
+    
     print("="*60)
     print("MEDISENSE SYSTEM")
     print("="*60)
-    print("Running on: http://127.0.0.1:5000")
+    print(f"Running on: http://{HOST}:{PORT}")
     print("")
     print("Login Credentials:")
     print("  Admin: admin@medisense.com / Admin123!")
@@ -287,4 +291,5 @@ if __name__ == '__main__':
     print("Auto No-Show Checker: Running (checks every 5 minutes)")
     print("="*60)
     
-    app.run(debug=True, port=5000, host='0.0.0.0')
+    app.run(debug=False, port=PORT, host=HOST)
+    # ===== END FIX =====
