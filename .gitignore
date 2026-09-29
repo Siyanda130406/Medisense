@@ -11,12 +11,18 @@ env/
 # Database
 *.db
 *.sqlite3
+*.db-shm
+*.db-wal
+database/
 
 # Models (large files)
 *.pkl
 *.h5
 *.zip
 *.tar.gz
+*.gguf
+*.safetensors
+*.bin
 
 # Backups (large files)
 backup_20260727_145032/
@@ -26,3 +32,16 @@ legacy/
 # OS files
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# Editor junk
+.vscode/
+.idea/
+*.swp
+
+# Logs
+logs/
+*.log
+
+# Backup files
+*.bak

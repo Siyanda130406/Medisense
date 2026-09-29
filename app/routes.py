@@ -22,6 +22,7 @@ from functools import wraps
 
 # ===== FIX #8: Spell correction library =====
 from difflib import get_close_matches
+from modules import medisense_ml
 # ===== END FIX #8 =====
 
 # ============================================================
@@ -148,6 +149,28 @@ except Exception as e:
 print("="*60)
 print("ALL DATASETS LOADED")
 print("="*60)
+# ============================================================
+# INITIALIZE ML SUBSYSTEMS
+# ============================================================
+# This loads the sentence-transformer model, builds the spell
+# dictionary, and pre-computes embeddings for the Q&A index.
+# All ML is now ready for use by the route functions below.
+# ------------------------------------------------------------
+try:
+    medisense_ml.initialize_ml(
+        df_symptom_descriptions=df_symptom_descriptions,
+        df_disease_master=df_master,
+        df_chatbot_qa=df_chatbot_qa,
+        df_medical_qa=df_medical_qa,
+        df_medicines=df_medicines_master,
+        df_clinics=df_clinics,
+    )
+    print("[routes.py] ML initialized:", medisense_ml.ml_status())
+except Exception as _ml_e:
+    print(f"[routes.py] ML init failed (falling back to keyword mode): {_ml_e}")
+# ============================================================
+# END ML INIT
+# ============================================================
 
 # ============================================================
 # TRANSLATIONS - English to isiZulu (Full Dictionary)
@@ -1124,9 +1147,24 @@ def _build_term_cache():
     return _TERM_CACHE
 
 def correct_spelling(query, n=1, cutoff=0.72):
-    """Return the best spelling suggestion for `query`, or None."""
+    """
+    Return the best spelling suggestion for `query`, or None.
+
+    Tries SymSpell (via medisense_ml) first — fast, medical-tuned.
+    Falls back to difflib if the SymSpell dictionary isn't ready.
+    """
     if not query or len(query.strip()) < 3:
         return None
+
+    # ---- Try SymSpell first ----
+    try:
+        result = medisense_ml.correct_spelling_symspell(query)
+        if result:
+            return result
+    except Exception as e:
+        print(f"[correct_spelling] SymSpell failed, using difflib fallback: {e}")
+
+    # ---- Fallback: original difflib logic ----
     terms = _build_term_cache()
     if not terms:
         return None
@@ -1163,51 +1201,56 @@ def calculate_health_score(age, health_conditions, appointments,
                            profile_complete=False, has_id=False,
                            has_emergency=False, has_allergies=False,
                            has_phone=False, has_gender=False):
-    """Health score starts at 0. Grows only from real user data."""
+    """
+    Return an integer health score in [0, 100].
+
+    Now delegates to medisense_ml.compute_health_score — a weighted
+    nonlinear function. Falls back to simple arithmetic if the ML
+    module isn't available.
+    """
+    try:
+        return medisense_ml.compute_health_score(
+            age=age or 30,
+            has_id=has_id,
+            has_phone=has_phone,
+            has_gender=has_gender,
+            has_emergency=has_emergency,
+            has_allergies=has_allergies,
+            has_health_conditions=bool(health_conditions),
+            appointments=list(appointments) if appointments else [],
+        )
+    except Exception as e:
+        print(f"[calculate_health_score] ML score failed, using fallback: {e}")
+
+    # ===== Fallback: original linear arithmetic =====
     score = 0
-    
-    # Age: only count if explicitly set (not 0 and not the default 30)
     if age and age != 30 and 1 <= age <= 120:
         score += 5
-    
-    # Profile completeness
-    if profile_complete:
-        score += 10
-    if has_id:
-        score += 5
-    if has_emergency:
-        score += 5
-    if has_phone:
-        score += 5
-    if has_gender:
-        score += 5
-    
-    # Health data
-    if health_conditions:
-        score += 5
-    if has_allergies:
-        score += 5
-    
-    # Appointments
+    if profile_complete: score += 10
+    if has_id: score += 5
+    if has_emergency: score += 5
+    if has_phone: score += 5
+    if has_gender: score += 5
+    if health_conditions: score += 5
+    if has_allergies: score += 5
+
     total = len(appointments)
     completed = sum(1 for a in appointments if a['status'] == 'Completed')
     score += min(completed * 5, 40)
-    
+
     checked_in = sum(1 for a in appointments if a['status'] == 'Checked-in')
     score += min(checked_in * 3, 15)
-    
-    # Penalties
+
     no_shows = sum(1 for a in appointments if a['status'] == 'No-Show')
     score -= min(no_shows * 10, 30)
-    
+
     cancelled = sum(1 for a in appointments if a['status'] == 'Cancelled')
     score -= min(cancelled * 2, 10)
-    
-    # Regular booking bonus
+
     if total >= 3: score += 5
     if total >= 5: score += 5
     if total >= 10: score += 5
-    
+
     score = max(0, min(score, 100))
     return score
 
@@ -1599,13 +1642,31 @@ def get_available_times(clinic, date):
 # ============================================================
 
 def analyze_symptoms_nlp(text):
-    """Extract symptoms using NLP - simple version without spacy"""
+    """
+    Extract symptom names from free text.
+
+    Powered by medisense_ml — semantic embeddings find symptoms by
+    meaning, not just keyword. Falls back to keyword match if the
+    model isn't available.
+
+    Returns a list of symptom name strings (same shape as before,
+    so all existing callers keep working).
+    """
     if not text:
         return []
-    
+
+    # ---- Try ML first ----
+    try:
+        results = medisense_ml.extract_symptoms_public(text, top_k=5)
+        if results:
+            return [r['symptom'] for r in results]
+    except Exception as e:
+        print(f"[analyze_symptoms_nlp] ML extract failed, using fallback: {e}")
+
+    # ---- Fallback: keyword match (original behaviour) ----
     symptom_keywords = [
-        'pain', 'ache', 'cough', 'fever', 'headache', 'dizziness', 
-        'nausea', 'vomiting', 'diarrhea', 'rash', 'itching', 
+        'pain', 'ache', 'cough', 'fever', 'headache', 'dizziness',
+        'nausea', 'vomiting', 'diarrhea', 'rash', 'itching',
         'swelling', 'bleeding', 'fatigue', 'weakness', 'chest pain',
         'shortness of breath', 'difficulty breathing', 'sore throat',
         'runny nose', 'congestion', 'muscle ache', 'joint pain',
@@ -1613,21 +1674,22 @@ def analyze_symptoms_nlp(text):
         'chills', 'sweating', 'loss of appetite', 'weight loss',
         'coughing', 'sneezing', 'allergies', 'asthma', 'wheezing'
     ]
-    
+
     text_lower = text.lower()
     found = []
-    
     for keyword in symptom_keywords:
         if keyword in text_lower:
             found.append(keyword)
-    
+
     words = text_lower.split()
     for i in range(len(words) - 1):
-        phrase = words[i] + ' ' + words[i+1]
-        if phrase in ['chest pain', 'shortness breath', 'sore throat', 'runny nose', 'muscle ache', 'joint pain', 'back pain', 'stomach ache', 'abdominal pain', 'headache pain', 'cough fever']:
+        phrase = words[i] + ' ' + words[i + 1]
+        if phrase in ['chest pain', 'shortness breath', 'sore throat', 'runny nose',
+                      'muscle ache', 'joint pain', 'back pain', 'stomach ache',
+                      'abdominal pain', 'headache pain', 'cough fever']:
             if phrase not in found:
                 found.append(phrase)
-    
+
     return list(set(found))[:5]
 
 # ============================================================
@@ -2003,11 +2065,39 @@ def is_short_keyword(search_term):
 def search_medical_qa(search_term, limit=3, offset=0):
     """
     Relevance-ranked Q&A search.
-    Tries curated chatbot_qa.csv first, then falls back to MedQuAD.
+
+    Primary: semantic search via medisense_ml (understands meaning,
+             not just keywords).
+    Fallback: keyword scoring (original behaviour) if the ML model
+              is unavailable.
+
+    Returns (results_list, total_count).
     """
     if not search_term:
         return [], 0
 
+    # ===== Try semantic search first =====
+    try:
+        results = medisense_ml.semantic_search_qa(
+            search_term, top_k=limit + offset + 5
+        )
+        if results:
+            # Format to match the old output shape
+            formatted = []
+            for r in results:
+                formatted.append({
+                    'question': r.get('question', ''),
+                    'answer': r.get('answer', ''),
+                    'source': r.get('source', 'MediSense Guide'),
+                    'score': r.get('score', 0.0),
+                })
+            total = len(formatted)
+            # Apply offset + limit
+            return formatted[offset:offset + limit], total
+    except Exception as e:
+        print(f"[search_medical_qa] semantic search failed, using fallback: {e}")
+
+    # ===== Fallback: keyword scoring (original) =====
     search_lower = search_term.lower().strip()
 
     STOP_WORDS = {
@@ -2030,28 +2120,18 @@ def search_medical_qa(search_term, limit=3, offset=0):
         q = str(row.get(qcol, '')).lower()
         a = str(row.get(acol, '')).lower()
         t = str(row.get(tcol, '')).lower() if tcol else ''
-
         score = 0
-        if search_lower in q:
-            score += 100
-        if tcol and search_lower in t:
-            score += 80
-        if search_lower in a:
-            score += 40
-
+        if search_lower in q: score += 100
+        if tcol and search_lower in t: score += 80
+        if search_lower in a: score += 40
         for kw in keywords:
-            if kw in q:
-                score += 20
-            if tcol and kw in t:
-                score += 15
-            if kw in a:
-                score += 3
-
+            if kw in q: score += 20
+            if tcol and kw in t: score += 15
+            if kw in a: score += 3
         return score
 
     results = []
 
-    # ===== Try curated chatbot_qa first =====
     if df_chatbot_qa is not None and len(df_chatbot_qa) > 0:
         try:
             df_chatbot_qa['_score'] = df_chatbot_qa.apply(
@@ -2059,7 +2139,6 @@ def search_medical_qa(search_term, limit=3, offset=0):
             matched = df_chatbot_qa[df_chatbot_qa['_score'] >= 20].copy()
             matched = matched.sort_values('_score', ascending=False)
             df_chatbot_qa.drop(columns=['_score'], inplace=True, errors='ignore')
-
             for _, row in matched.iterrows():
                 results.append({
                     'question': row.get('question', ''),
@@ -2068,9 +2147,8 @@ def search_medical_qa(search_term, limit=3, offset=0):
                     'score': int(row['_score']),
                 })
         except Exception as e:
-            print(f"[curated QA] {e}")
+            print(f"[curated QA fallback] {e}")
 
-    # ===== Fall back to MedQuAD =====
     if not results and df_medical_qa is not None:
         try:
             df_medical_qa['_score'] = df_medical_qa.apply(
@@ -2078,7 +2156,6 @@ def search_medical_qa(search_term, limit=3, offset=0):
             matched = df_medical_qa[df_medical_qa['_score'] >= 40].copy()
             matched = matched.sort_values('_score', ascending=False)
             df_medical_qa.drop(columns=['_score'], inplace=True, errors='ignore')
-
             for _, row in matched.iterrows():
                 results.append({
                     'question': row.get('question', ''),
@@ -2087,9 +2164,8 @@ def search_medical_qa(search_term, limit=3, offset=0):
                     'score': int(row['_score']),
                 })
         except Exception as e:
-            print(f"[MedQuAD QA] {e}")
+            print(f"[MedQuAD fallback] {e}")
 
-    # Deduplicate by question
     seen = set()
     unique = []
     for r in results:
@@ -2724,18 +2800,28 @@ def public_clinics():
     if request.method == 'POST':
         search_location = request.form.get('location', '').strip()
         if search_location and df_clinics is not None:
-            df = df_clinics.copy()
-            for col in ['Province', 'District', 'City', 'Area', 'Clinic_Name']:
-                if col in df.columns:
-                    df[col] = df[col].astype(str).str.lower()
-            sl = search_location.lower()
-            mask = (df['Province'].str.contains(sl, na=False) |
-                    df['District'].str.contains(sl, na=False) |
-                    df['City'].str.contains(sl, na=False) |
-                    df['Area'].str.contains(sl, na=False) |
-                    df['Clinic_Name'].str.contains(sl, na=False))
-            results = df[mask].head(50)
-            search_results = results.to_dict('records')
+                        try:
+                all_clinics = df_clinics.to_dict('records')
+                ranked = medisense_ml.rank_clinics(
+                    all_clinics, search_location, limit=50
+                )
+                search_results = [c for c in ranked if c.get('match_score', 0) > 0]
+            except Exception as e:
+                print(f"[public_clinics] ML rank failed, using fallback: {e}")
+                search_results = []
+
+            if not search_results:
+                df = df_clinics.copy()
+                for col in ['Province', 'District', 'City', 'Area', 'Clinic_Name']:
+                    if col in df.columns:
+                        df[col] = df[col].astype(str).str.lower()
+                sl = search_location.lower()
+                mask = (df['Province'].str.contains(sl, na=False) |
+                        df['District'].str.contains(sl, na=False) |
+                        df['City'].str.contains(sl, na=False) |
+                        df['Area'].str.contains(sl, na=False) |
+                        df['Clinic_Name'].str.contains(sl, na=False))
+                search_results = df[mask].head(50).to_dict('records')
             for c in search_results:
                 n = str(c.get('Clinic_Name', '')).replace(' ', '+')
                 ci = str(c.get('City', '')).replace(' ', '+')
@@ -3160,80 +3246,6 @@ def patient_profile_setup():
     )
 
 
-@app.route('/patient/profile', methods=['GET', 'POST'])
-@require_terms_acceptance
-def patient_profile():
-    if 'user_id' not in session or session.get('role') != 'patient':
-        return redirect('/login')
-    
-    conn = get_db_connection()
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    
-    if request.method == 'POST':
-        health_conditions = request.form.get('health_conditions', '').strip()
-        location = request.form.get('location', '').strip()
-        language = request.form.get('language', 'en')
-        phone = request.form.get('phone', '').strip()
-        gender = request.form.get('gender', '').strip()
-        id_number = request.form.get('id_number', '').strip()
-        allergies = request.form.get('allergies', '').strip()
-        
-        if not id_number:
-            flash('Please enter your South African ID number.', 'error')
-            return redirect('/patient/profile')
-        
-        valid, msg = validate_sa_id(id_number)
-        if not valid:
-            flash(f'ID Number: {msg}', 'error')
-            return redirect('/patient/profile')
-        
-        birth_year, birth_month, birth_day = extract_dob_from_sa_id(id_number)
-        if birth_year is None:
-            flash('Could not read date of birth from ID number.', 'error')
-            return redirect('/patient/profile')
-        
-        today = datetime.now()
-        age = today.year - birth_year
-        if (today.month, today.day) < (birth_month, birth_day):
-            age -= 1
-        
-        if age < 1 or age > 120:
-            flash('The age calculated from your ID number is not valid.', 'error')
-            return redirect('/patient/profile')
-        
-        cursor.execute('''
-        UPDATE users 
-        SET age = ?, health_conditions = ?, location = ?, 
-            language = ?, phone = ?, gender = ?, id_number = ?,
-            allergies = ?
-        WHERE id = ?
-        ''', (age, health_conditions, location, language, phone, gender, id_number, allergies, session['user_id']))
-        conn.commit()
-        conn.close()
-        
-        session['age'] = age
-        session['health_conditions'] = health_conditions
-        session['location'] = location
-        session['language'] = language
-        session['gender'] = gender
-        session['id_number'] = id_number
-        session['phone'] = phone
-        
-        flash('Profile updated successfully', 'success')
-        return redirect('/patient/dashboard')
-    
-    cursor.execute('SELECT id, email, full_name, phone, age, health_conditions, location, gender, id_number, allergies, emergency_name, emergency_phone FROM users WHERE id = ?', (session['user_id'],))
-    patient = cursor.fetchone()
-    conn.close()
-    lang = session.get('language', 'en')
-    return render_template('patient_profile.html', 
-        user=session, 
-        patient=patient,
-        lang=lang,
-        translate_text=translate_text
-    )
-
 # ============================================================
 # PATIENT - DASHBOARD (NEWLY ADDED TO FIX 404 ERROR)
 # ============================================================
@@ -3567,20 +3579,33 @@ def patient_chatbot():
     if request.method == 'POST':
         question = request.form.get('question', '').strip()
         if question:
-            corrected = correct_spelling(question)
-            query = corrected if corrected else question
+            # ===== Bilingual search — handles both English and isiZulu =====
+            try:
+                bilingual = medisense_ml.bilingual_search(question, top_k=3)
+                detected_lang = bilingual.get('language', 'en')
+                normalized = bilingual.get('normalized_query', question)
+                results = bilingual.get('results', [])
+                top_answer = bilingual.get('top_answer', '')
+                translated = bilingual.get('translated', False)
+            except Exception as e:
+                print(f"[chatbot] bilingual_search failed, using English-only: {e}")
+                bilingual = None
+                detected_lang = 'en'
+                normalized = question
+                translated = False
 
-            # Only mark as corrected if actually different
-            if corrected and corrected.strip().lower() == question.strip().lower():
-                corrected = None
+                # Fallback to old path
+                corrected = correct_spelling(question)
+                query = corrected if corrected else question
+                if corrected and corrected.strip().lower() == question.strip().lower():
+                    corrected = None
+                results, _ = search_medical_qa(query, limit=1, offset=0)
+                results = results[:1]
+                top_answer = results[0].get('answer', '') if results else ''
 
-            # Primary: Q&A database — single best answer only
-            results, _ = search_medical_qa(query, limit=1, offset=0)
-            results = results[:1]
-
-            # Fallback 1: Disease DB
+            # Fallback 1: disease database (only if bilingual returned nothing)
             if not results:
-                diseases = search_master_database(query)
+                diseases = search_master_database(normalized)
                 if diseases:
                     d = diseases[0]
                     parts = [d.get('description', '')]
@@ -3589,31 +3614,48 @@ def patient_chatbot():
                     if d.get('precautions') and d['precautions'] != 'No precautions available':
                         parts.append("\n\nPrecautions: " + str(d['precautions'])[:300])
                     answer_text = "\n".join(p for p in parts if p)
+                    if detected_lang == 'zu':
+                        answer_text = medisense_ml.translate_answer_to_zulu(answer_text)
+                        translated = True
                     results = [{
                         'question': f'Information about {d["disease"]}',
                         'answer': answer_text,
                         'source': 'Disease Database',
                     }]
+                    top_answer = answer_text
 
-            # Fallback 2: Symptom descriptions
+            # Fallback 2: symptom descriptions
             if not results:
-                symptoms = search_symptom_descriptions(query)
+                symptoms = search_symptom_descriptions(normalized)
                 if symptoms:
                     s = symptoms[0]
+                    answer_text = s.get('description', 'No details available.')
+                    if detected_lang == 'zu':
+                        answer_text = medisense_ml.translate_answer_to_zulu(answer_text)
+                        translated = True
                     results = [{
                         'question': f'About {s["symptom"]}',
-                        'answer': s.get('description', 'No details available.'),
+                        'answer': answer_text,
                         'source': 'Symptom Database',
                     }]
+                    top_answer = answer_text
 
             # Save + respond
             if results:
                 top = results[0]
+                # Override the answer with the (possibly translated) one
+                if top_answer:
+                    top = dict(top)
+                    top['answer'] = top_answer
+
                 answer_data = {
                     'question': question,
-                    'corrected': corrected,
+                    'corrected': None,
                     'results': [top],
                     'found': True,
+                    'language': detected_lang,
+                    'normalized_query': normalized if detected_lang == 'zu' else None,
+                    'translated': translated,
                 }
                 try:
                     conn = get_db_connection()
@@ -3629,9 +3671,11 @@ def patient_chatbot():
             else:
                 answer_data = {
                     'question': question,
-                    'corrected': corrected,
+                    'corrected': None,
                     'results': [],
                     'found': False,
+                    'language': detected_lang,
+                    'translated': False,
                 }
 
     lang = session.get('language', 'en')
@@ -3836,7 +3880,6 @@ def patient_profile():
     cursor = conn.cursor()
     
     if request.method == 'POST':
-        age = request.form.get('age', 30)
         health_conditions = request.form.get('health_conditions', '').strip()
         location = request.form.get('location', '').strip()
         language = request.form.get('language', 'en')
@@ -3847,19 +3890,30 @@ def patient_profile():
         allergies = request.form.get('allergies', '').strip()
         # ===== END FIX #6 =====
         
-        # ===== FIX #1: SA ID validation =====
-        if id_number:
-            valid, msg = validate_sa_id(id_number)
-            if not valid:
-                flash(f'ID Number: {msg}', 'error')
-                return redirect('/patient/profile')
-        # ===== END FIX #1 =====
-        
-        try:
-            age = int(age)
-        except:
-            flash('Please enter a valid age', 'error')
+        # ===== FIX #1: SA ID validation + age auto-calc =====
+        if not id_number:
+            flash('Please enter your South African ID number.', 'error')
             return redirect('/patient/profile')
+        
+        valid, msg = validate_sa_id(id_number)
+        if not valid:
+            flash(f'ID Number: {msg}', 'error')
+            return redirect('/patient/profile')
+        
+        birth_year, birth_month, birth_day = extract_dob_from_sa_id(id_number)
+        if birth_year is None:
+            flash('Could not read date of birth from ID number.', 'error')
+            return redirect('/patient/profile')
+        
+        today = datetime.now()
+        age = today.year - birth_year
+        if (today.month, today.day) < (birth_month, birth_day):
+            age -= 1
+        
+        if age < 1 or age > 120:
+            flash('The age calculated from your ID number is not valid.', 'error')
+            return redirect('/patient/profile')
+        # ===== END FIX #1 =====
         
         cursor.execute('''
         UPDATE users 
@@ -3925,43 +3979,57 @@ def patient_clinics():
     search_results = None
     today = datetime.now().strftime('%Y-%m-%d')
     
-    if request.method == 'POST':
+        if request.method == 'POST':
         search_location = request.form.get('location', '').strip()
         if search_location and df_clinics is not None:
             try:
-                df = df_clinics.copy()
-                for col in ['Province', 'District', 'City', 'Area', 'Clinic_Name']:
-                    if col in df.columns:
-                        df[col] = df[col].astype(str).str.lower()
-                
-                search_lower = search_location.lower()
-                mask = (
-                    df['Province'].str.contains(search_lower, na=False) |
-                    df['District'].str.contains(search_lower, na=False) |
-                    df['City'].str.contains(search_lower, na=False) |
-                    df['Area'].str.contains(search_lower, na=False) |
-                    df['Clinic_Name'].str.contains(search_lower, na=False)
-                )
-                results = df[mask].head(50)
-                search_results = results.to_dict('records')
-                
-                # ===== FIX #8: spell correction for clinic search =====
+                # Convert the full DataFrame to records so the ML ranker can work with it
+                all_clinics = df_clinics.to_dict('records')
+
+                # Use ML ranker — returns a ranked list (best match first)
+                try:
+                    ranked = medisense_ml.rank_clinics(
+                        all_clinics, search_location, limit=50
+                    )
+                    # Only keep clinics that actually matched (score > 0)
+                    search_results = [c for c in ranked if c.get('match_score', 0) > 0]
+                except Exception as e:
+                    print(f"[patient_clinics] ML rank failed, using fallback: {e}")
+                    search_results = []
+
+                # Fallback: old substring search if ML returned nothing
                 if not search_results:
-                    corrected = correct_spelling(search_location)
-                    if corrected and corrected != search_location.lower():
-                        flash(f'No results for "{search_location}". Showing results for "{corrected}".', 'info')
-                        search_location = corrected
-                        search_lower = corrected.lower()
-                        mask = (
-                            df['Province'].str.contains(search_lower, na=False) |
-                            df['District'].str.contains(search_lower, na=False) |
-                            df['City'].str.contains(search_lower, na=False) |
-                            df['Area'].str.contains(search_lower, na=False) |
-                            df['Clinic_Name'].str.contains(search_lower, na=False)
-                        )
-                        search_results = df[mask].head(50).to_dict('records')
-                # ===== END FIX #8 =====
-                
+                    df = df_clinics.copy()
+                    for col in ['Province', 'District', 'City', 'Area', 'Clinic_Name']:
+                        if col in df.columns:
+                            df[col] = df[col].astype(str).str.lower()
+                    search_lower = search_location.lower()
+                    mask = (
+                        df['Province'].str.contains(search_lower, na=False) |
+                        df['District'].str.contains(search_lower, na=False) |
+                        df['City'].str.contains(search_lower, na=False) |
+                        df['Area'].str.contains(search_lower, na=False) |
+                        df['Clinic_Name'].str.contains(search_lower, na=False)
+                    )
+                    search_results = df[mask].head(50).to_dict('records')
+
+                    # Spell-correct if still no results
+                    if not search_results:
+                        corrected = correct_spelling(search_location)
+                        if corrected and corrected != search_location.lower():
+                            flash(f'No results for "{search_location}". Showing results for "{corrected}".', 'info')
+                            search_location = corrected
+                            search_lower = corrected.lower()
+                            mask = (
+                                df['Province'].str.contains(search_lower, na=False) |
+                                df['District'].str.contains(search_lower, na=False) |
+                                df['City'].str.contains(search_lower, na=False) |
+                                df['Area'].str.contains(search_lower, na=False) |
+                                df['Clinic_Name'].str.contains(search_lower, na=False)
+                            )
+                            search_results = df[mask].head(50).to_dict('records')
+
+                # Add Google Maps links
                 for clinic in search_results:
                     clinic_name = str(clinic.get('Clinic_Name', '')).replace(' ', '+')
                     city = str(clinic.get('City', '')).replace(' ', '+')

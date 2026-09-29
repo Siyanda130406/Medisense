@@ -22,31 +22,31 @@
                                      title="{% if score_breakdown %}{{ score_breakdown|join(' • ') }}{% else %}Complete your profile and attend appointments to build your score{% endif %}">
                                     <h5 class="mb-0
                                         {% if health_score < 30 %}text-secondary{% elif health_score < 50 %}text-warning{% elif health_score < 70 %}text-primary{% else %}text-success{% endif %}">
-                                        {{ health_score }}%
+                                        {{ health_score|default(0) }}%
                                     </h5>
                                     <small class="text-muted">{{ translate_text('Health Score', lang) }}</small>
                                     <div>
                                         <span class="badge
-                                            {% if health_score < 30 %}bg-secondary{% elif health_score < 50 %}bg-warning text-dark{% elif health_score < 70 %}bg-primary{% else %}bg-success{% endif %} mt-1">
-                                            {{ translate_text(health_score_category, lang) }}
+                                            {% if health_score|default(0) < 30 %}bg-secondary{% elif health_score|default(0) < 50 %}bg-warning text-dark{% elif health_score|default(0) < 70 %}bg-primary{% else %}bg-success{% endif %} mt-1">
+                                            {{ translate_text(health_score_category|default('New'), lang) }}
                                         </span>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <h5 class="mb-0">{{ total_visits }}</h5>
+                                    <h5 class="mb-0">{{ total_visits|default(total|default(0)) }}</h5>
                                     <small class="text-muted">{{ translate_text('Total Visits', lang) }}</small>
                                 </div>
 
                                 <div>
-                                    <h5 class="mb-0">{{ completed_count }}</h5>
+                                    <h5 class="mb-0">{{ completed_count|default(completed|default(0)) }}</h5>
                                     <small class="text-muted">{{ translate_text('Completed', lang) }}</small>
                                 </div>
 
                             </div>
 
                             <p class="small text-muted mt-2 mb-0" style="font-size: 0.75rem;">
-                                {% if health_score == 0 %}
+                                {% if health_score|default(0) == 0 %}
                                 {{ translate_text('New account — score starts at 0 and grows as you use MediSense', lang) }}
                                 {% else %}
                                 {{ translate_text('Score = profile completeness + appointments attended − no-shows', lang) }}
@@ -57,9 +57,9 @@
 
                     <div class="progress mt-3" style="height: 6px;">
                         <div class="progress-bar
-                            {% if health_score < 30 %}bg-secondary{% elif health_score < 50 %}bg-warning{% elif health_score < 70 %}bg-primary{% else %}bg-success{% endif %}"
-                            role="progressbar" style="width: {{ health_score }}%;"
-                            aria-valuenow="{{ health_score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            {% if health_score|default(0) < 30 %}bg-secondary{% elif health_score|default(0) < 50 %}bg-warning{% elif health_score|default(0) < 70 %}bg-primary{% else %}bg-success{% endif %}"
+                            role="progressbar" style="width: {{ health_score|default(0) }}%;"
+                            aria-valuenow="{{ health_score|default(0) }}" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
                 </div>
             </div>
@@ -217,22 +217,23 @@
                         <div class="card-body">
                             <div class="row text-center">
                                 <div class="col-4">
-                                    <h5 class="mb-0">{{ age or '?' }}</h5>
+                                    <h5 class="mb-0">{{ age|default(patient.age if patient else '?') }}</h5>
                                     <small class="text-muted">{{ translate_text('Age', lang) }}</small>
                                 </div>
                                 <div class="col-4">
-                                    <h5 class="mb-0">{{ health_count or 0 }}</h5>
+                                    <h5 class="mb-0">{{ health_count|default(0) }}</h5>
                                     <small class="text-muted">{{ translate_text('Conditions', lang) }}</small>
                                 </div>
                                 <div class="col-4">
-                                    <h5 class="mb-0">{{ total_visits }}</h5>
+                                    <h5 class="mb-0">{{ total_visits|default(total|default(0)) }}</h5>
                                     <small class="text-muted">{{ translate_text('Visits', lang) }}</small>
                                 </div>
                             </div>
                             
-                            {% if health_conditions %}
+                            {% set display_conditions = health_conditions|default(patient.health_conditions if patient else '', true) %}
+                            {% if display_conditions %}
                             <hr>
-                            <p class="small text-muted mb-0"><strong>{{ translate_text('Conditions', lang) }}:</strong> {{ health_conditions }}</p>
+                            <p class="small text-muted mb-0"><strong>{{ translate_text('Conditions', lang) }}:</strong> {{ display_conditions }}</p>
                             {% endif %}
                             
                             <hr>
@@ -240,13 +241,13 @@
                             <div class="text-center">
                                 <p class="small mb-1 text-muted">{{ translate_text('No-Show Risk Assessment', lang) }}</p>
                                 <h5 class="mb-0 
-                                    {% if risk_score < 30 %}text-success{% elif risk_score < 50 %}text-warning{% elif risk_score < 70 %}text-danger{% else %}text-dark{% endif %}">
-                                    {{ risk_score }}% <span class="small">({{ translate_text(risk_category, lang) }})</span>
+                                    {% if risk_score|default(0) < 30 %}text-success{% elif risk_score|default(0) < 50 %}text-warning{% elif risk_score|default(0) < 70 %}text-danger{% else %}text-dark{% endif %}">
+                                    {{ risk_score|default(0) }}% <span class="small">({{ translate_text(risk_category|default('Low'), lang) }})</span>
                                 </h5>
-                                <div class="progress mt-2" style="height: 6px;" role="progressbar" aria-valuenow="{{ risk_score }}" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress mt-2" style="height: 6px;" role="progressbar" aria-valuenow="{{ risk_score|default(0) }}" aria-valuemin="0" aria-valuemax="100">
                                     <div class="progress-bar 
-                                        {% if risk_score < 30 %}bg-success{% elif risk_score < 50 %}bg-warning{% elif risk_score < 70 %}bg-danger{% else %}bg-dark{% endif %}" 
-                                        style="width: {{ risk_score }}%;"></div>
+                                        {% if risk_score|default(0) < 30 %}bg-success{% elif risk_score|default(0) < 50 %}bg-warning{% elif risk_score|default(0) < 70 %}bg-danger{% else %}bg-dark{% endif %}" 
+                                        style="width: {{ risk_score|default(0) }}%;"></div>
                                 </div>
                                 <small class="text-muted small">{{ translate_text('Higher score = Higher risk of missing appointments', lang) }}</small>
                             </div>

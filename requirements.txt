@@ -8,3 +8,7 @@ scikit-learn
 Werkzeug
 Jinja2
 requests
+
+# ===== NEW: ML and NLP for MediSense upgrades =====
+sentence-transformers>=2.2.0
+symspellpy>=6.7.0
