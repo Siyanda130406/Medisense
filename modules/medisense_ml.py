@@ -382,6 +382,13 @@ def _build_qa_index(qa_rows):
     if vecs is None:
         return False
 
+    # Store as float16 — halves RAM usage, negligible accuracy loss
+    import numpy as np
+    try:
+        vecs = vecs.astype(np.float16)
+    except Exception:
+        pass
+
     _QA_EMBEDDINGS = vecs
     _QA_ROWS = qa_rows
     print(f"[medisense_ml] Q&A index built: {len(qa_rows)} rows")
@@ -404,7 +411,7 @@ def semantic_search_qa(query, top_k=3):
     if q_vec is None:
         return []
 
-    sims = _cosine_sim_matrix(q_vec[0], _QA_EMBEDDINGS)
+    sims = _cosine_sim_matrix(q_vec[0].astype('float32'), _QA_EMBEDDINGS.astype('float32'))
     idx = np.argsort(-sims)[:top_k]
 
     results = []
@@ -758,7 +765,7 @@ def initialize_ml(df_symptom_descriptions=None,
     # --- Load the ST model (warms up the cache) ---
     _get_st_model()
 
-    # --- Build Q&A index (merge chatbot_qa first, then medical_qa) ---
+    # --- Build Q&A index (chatbot_qa only — skip 32K MedQuAD rows to save RAM) ---
     qa_rows = []
     try:
         if df_chatbot_qa is not None and len(df_chatbot_qa) > 0:
@@ -769,19 +776,13 @@ def initialize_ml(df_symptom_descriptions=None,
                     'tags': str(row.get('tags', '')),
                     'source': 'MediSense Guide',
                 })
-        if df_medical_qa is not None and len(df_medical_qa) > 0:
-            for _, row in df_medical_qa.iterrows():
-                qa_rows.append({
-                    'question': str(row.get('question', '')),
-                    'answer': str(row.get('answer', '')),
-                    'tags': '',
-                    'source': str(row.get('source', 'Medical Q&A')),
-                })
     except Exception as e:
         print(f"[medisense_ml] Q&A row build error: {e}")
 
     if qa_rows:
         _build_qa_index(qa_rows)
+    else:
+        print("[medisense_ml] No Q&A rows to index — chatbot will use fallback")
 
     print("[medisense_ml] initialization complete")
 
