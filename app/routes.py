@@ -152,18 +152,23 @@ print("="*60)
 # ============================================================
 # INITIALIZE ML SUBSYSTEMS
 
-try:
-    medisense_ml.initialize_ml(
-        df_symptom_descriptions=df_symptom_descriptions,
-        df_disease_master=df_master,
-        df_chatbot_qa=df_chatbot_qa,
-        df_medical_qa=None,        # skip 32K MedQuAD rows to save RAM
-        df_medicines=None,         # skip 24K medicines (not needed for ML)
-        df_clinics=df_clinics,
-    )
-    print("[routes.py] ML initialized:", medisense_ml.ml_status())
-except Exception as _ml_e:
-    print(f"[routes.py] ML init failed (falling back to keyword mode): {_ml_e}")
+ENABLE_ML = os.environ.get('ENABLE_ML', 'true').lower() == 'true'
+
+if ENABLE_ML:
+    try:
+        medisense_ml.initialize_ml(
+            df_symptom_descriptions=df_symptom_descriptions,
+            df_disease_master=df_master,
+            df_chatbot_qa=df_chatbot_qa,
+            df_medical_qa=None,
+            df_medicines=None,
+            df_clinics=df_clinics,
+        )
+        print("[routes.py] ML initialized:", medisense_ml.ml_status())
+    except Exception as _ml_e:
+        print(f"[routes.py] ML init failed (falling back to keyword mode): {_ml_e}")
+else:
+    print("[routes.py] ML disabled (ENABLE_ML=false). Using keyword mode.")
 
 # Free large DataFrames we no longer need in memory
 try:
