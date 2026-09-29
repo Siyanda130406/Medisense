@@ -151,23 +151,29 @@ print("ALL DATASETS LOADED")
 print("="*60)
 # ============================================================
 # INITIALIZE ML SUBSYSTEMS
-# ============================================================
-# This loads the sentence-transformer model, builds the spell
-# dictionary, and pre-computes embeddings for the Q&A index.
-# All ML is now ready for use by the route functions below.
-# ------------------------------------------------------------
+
 try:
     medisense_ml.initialize_ml(
         df_symptom_descriptions=df_symptom_descriptions,
         df_disease_master=df_master,
         df_chatbot_qa=df_chatbot_qa,
-        df_medical_qa=df_medical_qa,
-        df_medicines=df_medicines_master,
+        df_medical_qa=None,        # skip 32K MedQuAD rows to save RAM
+        df_medicines=None,         # skip 24K medicines (not needed for ML)
         df_clinics=df_clinics,
     )
     print("[routes.py] ML initialized:", medisense_ml.ml_status())
 except Exception as _ml_e:
     print(f"[routes.py] ML init failed (falling back to keyword mode): {_ml_e}")
+
+# Free large DataFrames we no longer need in memory
+try:
+    import gc
+    df_medical_qa = None
+    gc.collect()
+    print("[routes.py] Freed MedQuAD DataFrame from RAM")
+except Exception:
+    pass
+
 # ============================================================
 # END ML INIT
 # ============================================================
