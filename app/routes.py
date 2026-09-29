@@ -2800,7 +2800,7 @@ def public_clinics():
     if request.method == 'POST':
         search_location = request.form.get('location', '').strip()
         if search_location and df_clinics is not None:
-                        try:
+            try:
                 all_clinics = df_clinics.to_dict('records')
                 ranked = medisense_ml.rank_clinics(
                     all_clinics, search_location, limit=50
@@ -2822,6 +2822,7 @@ def public_clinics():
                         df['Area'].str.contains(sl, na=False) |
                         df['Clinic_Name'].str.contains(sl, na=False))
                 search_results = df[mask].head(50).to_dict('records')
+
             for c in search_results:
                 n = str(c.get('Clinic_Name', '')).replace(' ', '+')
                 ci = str(c.get('City', '')).replace(' ', '+')
@@ -3979,25 +3980,21 @@ def patient_clinics():
     search_results = None
     today = datetime.now().strftime('%Y-%m-%d')
     
-        if request.method == 'POST':
+    if request.method == 'POST':
         search_location = request.form.get('location', '').strip()
         if search_location and df_clinics is not None:
             try:
-                # Convert the full DataFrame to records so the ML ranker can work with it
                 all_clinics = df_clinics.to_dict('records')
 
-                # Use ML ranker — returns a ranked list (best match first)
                 try:
                     ranked = medisense_ml.rank_clinics(
                         all_clinics, search_location, limit=50
                     )
-                    # Only keep clinics that actually matched (score > 0)
                     search_results = [c for c in ranked if c.get('match_score', 0) > 0]
                 except Exception as e:
                     print(f"[patient_clinics] ML rank failed, using fallback: {e}")
                     search_results = []
 
-                # Fallback: old substring search if ML returned nothing
                 if not search_results:
                     df = df_clinics.copy()
                     for col in ['Province', 'District', 'City', 'Area', 'Clinic_Name']:
@@ -4013,7 +4010,6 @@ def patient_clinics():
                     )
                     search_results = df[mask].head(50).to_dict('records')
 
-                    # Spell-correct if still no results
                     if not search_results:
                         corrected = correct_spelling(search_location)
                         if corrected and corrected != search_location.lower():
@@ -4029,7 +4025,6 @@ def patient_clinics():
                             )
                             search_results = df[mask].head(50).to_dict('records')
 
-                # Add Google Maps links
                 for clinic in search_results:
                     clinic_name = str(clinic.get('Clinic_Name', '')).replace(' ', '+')
                     city = str(clinic.get('City', '')).replace(' ', '+')
