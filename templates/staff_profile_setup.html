@@ -27,7 +27,7 @@
                     <form method="POST" action="{{ url_for('staff_profile_setup') }}">
                         <div class="mb-3">
                             <label for="staff_clinic" class="form-label fw-semibold">{{ translate_text('Select Your Clinic', lang) }} *</label>
-                            <select class="form-select" id="staff_clinic" name="staff_clinic" required>
+                            <select class="form-select" id="staff_clinic" name="clinic" required>
                                 <option value="">-- {{ translate_text('Select a clinic', lang) }} --</option>
                                 {% for clinic in clinics %}
                                 <option value="{{ clinic }}">{{ clinic }}</option>
