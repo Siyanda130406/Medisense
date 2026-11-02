@@ -3323,7 +3323,7 @@ def staff_profile_setup():
         return redirect('/staff/dashboard')
 
     if request.method == 'POST':
-        clinic = request.form.get('staff_clinic', '').strip()
+        clinic = request.form.get('clinic', '').strip()
 
         if not clinic:
             flash('Please select a clinic', 'error')
