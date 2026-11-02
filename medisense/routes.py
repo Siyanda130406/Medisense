@@ -1,4 +1,9 @@
-from app import app
+from medisense import app
+try:
+    import torch  # noqa
+    print("[routes.py] Preloaded torch successfully")
+except Exception as _torch_e:
+    print(f"[routes.py] torch preload failed: {_torch_e}")
 from flask import render_template, session, redirect, url_for, request, flash, Response, jsonify
 from datetime import datetime, timedelta
 import sqlite3
@@ -13,6 +18,7 @@ import pickle
 import numpy as np
 import random
 import re
+import ast
 import secrets
 import smtplib
 import requests
@@ -34,10 +40,14 @@ def _get_db_dir():
     if env_dir:
         os.makedirs(env_dir, exist_ok=True)
         return env_dir
-    os.makedirs('database', exist_ok=True)
-    return 'database'
+    # Anchor to the project root, not the CWD
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    db_dir = os.path.join(project_root, 'database')
+    os.makedirs(db_dir, exist_ok=True)
+    return db_dir
 
 DB_PATH = os.path.join(_get_db_dir(), 'medisense_users.db')
+print(f"[DB] Using database at: {DB_PATH}")
 
 # ===== FIX: SQLite concurrency — WAL + timeout to prevent hangs =====
 def get_db_connection():
@@ -149,9 +159,13 @@ except Exception as e:
 print("="*60)
 print("ALL DATASETS LOADED")
 print("="*60)
+
 # ============================================================
 # INITIALIZE ML SUBSYSTEMS
-
+# ============================================================
+# Local dev: ML is on by default (ENABLE_ML unset = 'true').
+# Render: set ENABLE_ML=false in Environment tab if memory is tight.
+# ------------------------------------------------------------
 ENABLE_ML = os.environ.get('ENABLE_ML', 'true').lower() == 'true'
 
 if ENABLE_ML:
@@ -160,8 +174,8 @@ if ENABLE_ML:
             df_symptom_descriptions=df_symptom_descriptions,
             df_disease_master=df_master,
             df_chatbot_qa=df_chatbot_qa,
-            df_medical_qa=None,
-            df_medicines=None,
+            df_medical_qa=df_medical_qa,
+            df_medicines=df_medicines_master,
             df_clinics=df_clinics,
         )
         print("[routes.py] ML initialized:", medisense_ml.ml_status())
@@ -169,16 +183,6 @@ if ENABLE_ML:
         print(f"[routes.py] ML init failed (falling back to keyword mode): {_ml_e}")
 else:
     print("[routes.py] ML disabled (ENABLE_ML=false). Using keyword mode.")
-
-# Free large DataFrames we no longer need in memory
-try:
-    import gc
-    df_medical_qa = None
-    gc.collect()
-    print("[routes.py] Freed MedQuAD DataFrame from RAM")
-except Exception:
-    pass
-
 # ============================================================
 # END ML INIT
 # ============================================================
@@ -1512,44 +1516,64 @@ def get_risk_category(risk_score):
     else: return 'Very High'
 
 def predict_no_show(user_email):
-    """Predict if patient will no-show based on history using ML"""
-    # ===== FIX #10: use DB_PATH =====
+    """
+    Predict no-show probability using the retrained RandomForest
+    (4 features: no_show_rate, completion_rate, cancellation_rate,
+    total_appointments).
+    """
     conn = get_db_connection()
-    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    
+
     cursor.execute('''
-    SELECT 
+    SELECT
         COUNT(*) as total_appointments,
-        SUM(CASE WHEN status = 'No-Show' THEN 1 ELSE 0 END) as no_shows,
+        SUM(CASE WHEN status = 'No-Show'   THEN 1 ELSE 0 END) as no_shows,
         SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed,
         SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) as cancelled
-    FROM appointments 
+    FROM appointments
     WHERE patient_email = ?
     ''', (user_email,))
-    
     data = cursor.fetchone()
     conn.close()
-    
+
     if not data or data['total_appointments'] == 0:
-        return {'risk': 0, 'category': 'Low', 'confidence': 0, 'predictions': []}
-    
-    no_show_rate = data['no_shows'] / data['total_appointments'] if data['total_appointments'] > 0 else 0
-    completion_rate = data['completed'] / data['total_appointments'] if data['total_appointments'] > 0 else 0
-    cancellation_rate = data['cancelled'] / data['total_appointments'] if data['total_appointments'] > 0 else 0
-    
-    if models_loaded and model_ensemble is not None:
+        return {
+            'risk': 0, 'category': 'Low', 'confidence': 0,
+            'predictions': [], 'model_used': 'none',
+            'total_appointments': 0, 'no_shows': 0,
+            'completed': 0, 'cancelled': 0,
+        }
+
+    total = data['total_appointments']
+    no_show_rate      = data['no_shows']  / total
+    completion_rate   = data['completed'] / total
+    cancellation_rate = data['cancelled'] / total
+
+    features = np.array([[
+        no_show_rate,
+        completion_rate,
+        cancellation_rate,
+        total,
+    ]])
+
+    prediction = None
+    model_used = 'heuristic'
+
+    if model_loaded and model is not None:
         try:
-            features = np.array([[no_show_rate, completion_rate, cancellation_rate, data['total_appointments']]])
-            prediction = model_ensemble.predict_proba(features)[0][1]
-        except:
-            prediction = no_show_rate
-    else:
+            prediction = float(model.predict_proba(features)[0][1])
+            model_used = 'RandomForest'
+        except Exception as e:
+            print(f"[predict_no_show] RF failed: {e}")
+            prediction = None
+
+    if prediction is None:
         prediction = no_show_rate
-    
-    confidence = min(0.9, 0.5 + (data['total_appointments'] / 20))
-    
+        model_used = 'heuristic'
+
+    confidence = min(0.9, 0.5 + (total / 20))
+
     if prediction < 0.2:
         category = 'Low'
     elif prediction < 0.4:
@@ -1558,32 +1582,25 @@ def predict_no_show(user_email):
         category = 'High'
     else:
         category = 'Very High'
-    
+
     predictions = []
-    if model_loaded:
-        predictions.append({'model': 'RandomForest', 'score': round(no_show_rate * 100, 1)})
-    if model_xgb is not None:
+    if model_loaded and model is not None:
         try:
-            xgb_pred = model_xgb.predict_proba([[no_show_rate, completion_rate, cancellation_rate, data['total_appointments']]])[0][1]
-            predictions.append({'model': 'XGBoost', 'score': round(xgb_pred * 100, 1)})
-        except:
+            rf = float(model.predict_proba(features)[0][1])
+            predictions.append({'model': 'RandomForest', 'score': round(rf * 100, 1)})
+        except Exception:
             pass
-    if model_nn is not None:
-        try:
-            nn_pred = model_nn.predict_proba([[no_show_rate, completion_rate, cancellation_rate, data['total_appointments']]])[0][1]
-            predictions.append({'model': 'Neural Network', 'score': round(nn_pred * 100, 1)})
-        except:
-            pass
-    
+
     return {
         'risk': round(prediction * 100, 1),
         'category': category,
         'confidence': round(confidence * 100, 1),
         'predictions': predictions,
-        'total_appointments': data['total_appointments'],
+        'model_used': model_used,
+        'total_appointments': total,
         'no_shows': data['no_shows'],
         'completed': data['completed'],
-        'cancelled': data['cancelled']
+        'cancelled': data['cancelled'],
     }
 
 def get_nearest_clinic(location):
@@ -2000,6 +2017,16 @@ def require_terms_acceptance(f):
 # ============================================================
 # SEARCH FUNCTIONS - ENHANCED WITH NLP
 # ============================================================
+def _word_match(column_series, term):
+    """
+    Return a boolean mask matching `term` as a WHOLE WORD in each row of
+    column_series. Prevents 'flu' from matching 'reflux' or 'antiflu'.
+    Case-insensitive. Handles NaN safely.
+    """
+    if not term:
+        return column_series.astype(str).str.len() == 0  # all False
+    pattern = r'\b' + re.escape(str(term).strip().lower()) + r'\b'
+    return column_series.astype(str).str.lower().str.contains(pattern, na=False, regex=True)
 
 def get_disease_suggestions(search_term):
     if not search_term:
@@ -2266,36 +2293,37 @@ def get_urgency_level(symptoms, disease_info, risk_category=None):
     return 'Routine'
 
 def search_master_database(search_term):
-    if df_master is None:
+    if df_master is None or not search_term:
         return []
-    
+
     search_lower = search_term.lower().strip()
     results = []
-    
+
     try:
-        matches = df_master[df_master['disease'].astype(str).str.lower().str.contains(search_lower, na=False)]
-        if matches.empty:
-            matches = df_master[df_master['all_symptoms'].astype(str).str.lower().str.contains(search_lower, na=False)]
-        
+        # Whole-word match on disease name OR symptom list
+        mask = _word_match(df_master['disease'], search_lower)
+        if not mask.any():
+            mask = _word_match(df_master['all_symptoms'], search_lower)
+
+        matches = df_master[mask]
+
         for _, row in matches.iterrows():
             symptoms = row.get('all_symptoms', '')
             if isinstance(symptoms, str):
-                try: symptoms = eval(symptoms)
-                except: symptoms = []
-            
+                try: symptoms = ast.literal_eval(symptoms)
+                except Exception: symptoms = []
+
             cures = row.get('cures_list', '')
             if isinstance(cures, str):
-                try: cures = eval(cures)
-                except: cures = []
-            
+                try: cures = ast.literal_eval(cures)
+                except Exception: cures = []
+
             doctors = row.get('doctors_list', '')
             if isinstance(doctors, str):
-                try: doctors = eval(doctors)
-                except: doctors = []
-            
+                try: doctors = ast.literal_eval(doctors)
+                except Exception: doctors = []
+
             disease_name = row.get('disease', '')
-            urgency = get_urgency_level(str(symptoms), disease_name)
-            
             results.append({
                 'disease': disease_name,
                 'symptoms': symptoms,
@@ -2308,18 +2336,19 @@ def search_master_database(search_term):
             })
     except Exception as e:
         print(f"Search error: {e}")
-    
+
     return results
 
 def search_symptom_descriptions(search_term):
-    if df_symptom_descriptions is None:
+    if df_symptom_descriptions is None or not search_term:
         return []
-    
+
     search_lower = search_term.lower().strip()
     results = []
-    
+
     try:
-        matches = df_symptom_descriptions[df_symptom_descriptions['symptom'].astype(str).str.lower().str.contains(search_lower, na=False)]
+        mask = _word_match(df_symptom_descriptions['symptom'], search_lower)
+        matches = df_symptom_descriptions[mask]
         for _, row in matches.iterrows():
             results.append({
                 'symptom': row.get('symptom', ''),
@@ -2327,18 +2356,19 @@ def search_symptom_descriptions(search_term):
             })
     except Exception as e:
         print(f"Symptom descriptions search error: {e}")
-    
+
     return results[:3]
 
 def search_symptom_precautions(search_term):
-    if df_symptom_precautions is None:
+    if df_symptom_precautions is None or not search_term:
         return []
-    
+
     search_lower = search_term.lower().strip()
     results = []
-    
+
     try:
-        matches = df_symptom_precautions[df_symptom_precautions['condition'].astype(str).str.lower().str.contains(search_lower, na=False)]
+        mask = _word_match(df_symptom_precautions['condition'], search_lower)
+        matches = df_symptom_precautions[mask]
         for _, row in matches.iterrows():
             results.append({
                 'condition': row.get('condition', ''),
@@ -2346,7 +2376,7 @@ def search_symptom_precautions(search_term):
             })
     except Exception as e:
         print(f"Precautions search error: {e}")
-    
+
     return results[:3]
 
 # ============================================================
@@ -2356,48 +2386,55 @@ def search_symptom_precautions(search_term):
 def search_medicines_by_disease(search_term):
     if df_disease_to_medicine is None or not search_term:
         return []
-    
+
     search_lower = search_term.lower().strip()
     results = []
-    
+
     try:
-        matches = df_disease_to_medicine[
-            df_disease_to_medicine['disease'].astype(str).str.lower().str.contains(search_lower, na=False)
-        ]
-        
+        # Only match if the disease name contains the search term as a whole word
+        mask = _word_match(df_disease_to_medicine['disease'], search_lower)
+        matches = df_disease_to_medicine[mask]
+
         for _, row in matches.iterrows():
             medicines = str(row.get('medicines', '')).split(', ')
+            cleaned = [m.strip() for m in medicines if m and m != 'Not available']
+            if not cleaned:
+                continue
             results.append({
                 'disease': row.get('disease', ''),
-                'medicines': [m.strip() for m in medicines if m and m != 'Not available']
+                'medicines': cleaned[:20],   # cap at 20 to avoid the 1085-medicine dump
             })
     except Exception as e:
         print(f"Medicine search error: {e}")
-    
-    return results
+
+    return results[:5]
 
 def search_diseases_by_medicine(search_term):
     if df_medicine_to_disease is None or not search_term:
         return []
-    
+
     search_lower = search_term.lower().strip()
     results = []
-    
+
     try:
-        matches = df_medicine_to_disease[
-            df_medicine_to_disease['medicine'].astype(str).str.lower().str.contains(search_lower, na=False)
-        ]
-        
+        # Only match if the medicine name contains the search term as a whole word.
+        # This is what stops "Antiflu" from being treated as the disease "flu".
+        mask = _word_match(df_medicine_to_disease['medicine'], search_lower)
+        matches = df_medicine_to_disease[mask]
+
         for _, row in matches.iterrows():
             diseases = str(row.get('diseases', '')).split(', ')
+            cleaned = [d.strip() for d in diseases if d and d != 'Not available']
+            if not cleaned:
+                continue
             results.append({
                 'medicine': row.get('medicine', ''),
-                'diseases': [d.strip() for d in diseases if d and d != 'Not available']
+                'diseases': cleaned[:10],
             })
     except Exception as e:
         print(f"Disease search error: {e}")
-    
-    return results
+
+    return results[:5]
 
 def get_medicine_details(medicine_name):
     if df_medicines_master is None or not medicine_name:
@@ -2607,11 +2644,6 @@ def home():
     elif role == 'admin':
         return redirect('/admin/dashboard')
     return redirect('/welcome')
-    # ===== END FIX =====
-
-# ============================================================
-# FIX #3: PUBLIC ROUTES (no login required)
-# ============================================================
 
 @app.route('/welcome')
 def public_home():
@@ -2623,7 +2655,12 @@ def public_home():
                            clinics_count=clinics_count,
                            diseases_count=diseases_count,
                            medicines_count=medicines_count,
-                           lang=lang, translate_text=translate_text)
+                           lang=lang, translate_text=translate_text)    
+    # ===== END FIX =====
+
+# ============================================================
+# FIX #3: PUBLIC ROUTES (no login required)
+# ============================================================
 
 @app.route('/public/symptoms', methods=['GET', 'POST'])
 def public_symptoms():
@@ -2803,6 +2840,12 @@ def public_symptoms():
                            search_history=search_history,
                            is_public=True,
                            lang=lang, translate_text=translate_text)
+
+
+@app.route('/patient/health-symptoms', methods=['GET', 'POST'])
+def patient_health_symptoms():
+    """Alias for public_symptoms so logged-in patients can use it too."""
+    return public_symptoms()
 
 @app.route('/public/clinics', methods=['GET', 'POST'])
 def public_clinics():
@@ -3258,6 +3301,56 @@ def patient_profile_setup():
     )
 
 
+@app.route('/staff/profile-setup', methods=['GET', 'POST'])
+@require_terms_acceptance
+def staff_profile_setup():
+    """Nurse/staff clinic selection — restores the missing route."""
+    if 'user_id' not in session:
+        return redirect('/login')
+    if session.get('role') not in ['nurse', 'staff']:
+        return redirect('/login')
+
+    # If they already have a clinic set, skip to dashboard
+    conn = get_db_connection()
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute('SELECT staff_clinic FROM users WHERE id = ?', (session['user_id'],))
+    user = cursor.fetchone()
+    conn.close()
+
+    if user and user['staff_clinic']:
+        flash('Clinic already selected', 'info')
+        return redirect('/staff/dashboard')
+
+    if request.method == 'POST':
+        clinic = request.form.get('staff_clinic', '').strip()
+
+        if not clinic:
+            flash('Please select a clinic', 'error')
+            lang = session.get('language', 'en')
+            return render_template('staff_profile_setup.html',
+                                   user=session,
+                                   clinics=get_clinics_list(),
+                                   lang=lang, translate_text=translate_text)
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('UPDATE users SET staff_clinic = ? WHERE id = ?',
+                       (clinic, session['user_id']))
+        conn.commit()
+        conn.close()
+
+        session['staff_clinic'] = clinic
+        flash(f'Clinic set to {clinic}', 'success')
+        return redirect('/staff/dashboard')
+
+    lang = session.get('language', 'en')
+    return render_template('staff_profile_setup.html',
+                           user=session,
+                           clinics=get_clinics_list(),
+                           lang=lang, translate_text=translate_text)
+
+
 # ============================================================
 # PATIENT - DASHBOARD (NEWLY ADDED TO FIX 404 ERROR)
 # ============================================================
@@ -3323,244 +3416,6 @@ def patient_dashboard():
 # PATIENT - HEALTH & SYMPTOMS - FIX #7 (Q&A removed), FIX #8 (spell)
 # ============================================================
 
-@app.route('/patient/health-symptoms', methods=['GET', 'POST'])
-@require_terms_acceptance
-def patient_health_symptoms():
-    if 'user_id' not in session or session.get('role') != 'patient':
-        return redirect('/login')
-    
-    search_result = None
-    search_term = ""
-    search_history = []
-    featured_diseases = ['Diabetes', 'HIV/AIDS', 'Heart Attack', 'Stroke', 'Tuberculosis', 'Cancer', 'Asthma', 'Malaria']
-    trending_topics = ['Flu', 'Cough', 'Fever', 'Headache', 'COVID-19', 'Malaria']
-    
-    if df_master is not None and 'disease' in df_master.columns:
-        try:
-            featured_diseases = df_master['disease'].head(8).tolist()
-        except:
-            pass
-    
-    # ===== FIX #10: use DB_PATH =====
-    conn = get_db_connection()
-    # ===== END FIX #10 =====
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute('''
-    SELECT search_term, result, urgency_level, created_at 
-    FROM symptom_history 
-    WHERE user_id = ? 
-    ORDER BY created_at DESC 
-    LIMIT 5
-    ''', (session['user_id'],))
-    search_history = cursor.fetchall()
-    conn.close()
-    
-    if request.method == 'POST':
-        search_term = request.form.get('search_term', '').strip()
-        
-        if search_term:
-            is_question_search = is_question(search_term)
-            is_keyword_search = is_short_keyword(search_term) and not is_question_search
-            
-            nlp_symptoms = analyze_symptoms_nlp(search_term)
-            extracted_terms = extract_health_terms(search_term)
-            all_extracted = list(set(nlp_symptoms + extracted_terms))
-            search_queries = all_extracted if all_extracted else [search_term]
-            
-            # ===== FIX #8: offer spelling correction =====
-            corrected = None
-            has_any_result = bool(search_master_database(search_term)) or bool(search_medicines_by_disease(search_term)) or bool(search_diseases_by_medicine(search_term))
-            if not has_any_result:
-                corrected = correct_spelling(search_term)
-            # ===== END FIX #8 =====
-            
-            search_result = {
-                'found': False,
-                'search_term': search_term,
-                # ===== FIX #8: did_you_mean =====
-                'did_you_mean': corrected,
-                # ===== END FIX #8 =====
-                'extracted_terms': all_extracted,
-                'nlp_symptoms': nlp_symptoms,
-                'is_question': is_question_search,
-                'is_keyword': is_keyword_search,
-                'diseases': [],
-                # ===== FIX #7: Q&A fields kept so old template doesn't break, but never populated =====
-                'qa': [], 'qa_total': 0, 'qa_offset': 0, 'qa_limit': 0,
-                # ===== END FIX #7 =====
-                'precautions': [],
-                'symptom_descriptions': [],
-                'health_tips': [],
-                'all_symptoms': [],
-                'all_treatments': [],
-                'all_doctors': [],
-                'all_risks': [],
-                'all_urgency': [],
-                'has_disease_info': False,
-                'has_qa_info': False,
-                'has_symptom_info': False,
-                'has_precaution_info': False,
-                'has_health_tips': False,
-                'suggestions': [],
-                'has_medicine_info': False,
-                'medicines': [],
-                'all_medicines': [],
-                'has_disease_by_medicine_info': False,
-                'diseases_by_medicine': [],
-                'all_diseases_by_medicine': []
-            }
-            
-            all_diseases = []
-            all_symptoms = []
-            all_precautions = []
-            all_tips = []
-            
-            # ===== FIX #7: no Q&A search inside the main search =====
-            for query in search_queries:
-                disease_results = search_master_database(query)
-                if disease_results:
-                    all_diseases.extend(disease_results)
-                symptom_results = search_symptom_descriptions(query)
-                if symptom_results:
-                    all_symptoms.extend(symptom_results)
-                precaution_results = search_symptom_precautions(query)
-                if precaution_results:
-                    all_precautions.extend(precaution_results)
-                if df_health_tips is not None:
-                    try:
-                        tip_matches = df_health_tips[df_health_tips['tip'].astype(str).str.lower().str.contains(query.lower(), na=False)]
-                        if not tip_matches.empty:
-                            all_tips.extend(tip_matches['tip'].head(2).tolist())
-                    except:
-                        pass
-            # ===== END FIX #7 =====
-            
-            medicine_results = search_medicines_by_disease(search_term)
-            if medicine_results:
-                search_result['has_medicine_info'] = True
-                search_result['medicines'] = medicine_results
-                search_result['found'] = True
-                all_medicines = []
-                for item in medicine_results:
-                    all_medicines.extend(item.get('medicines', []))
-                search_result['all_medicines'] = list(set(all_medicines))[:10]
-            
-            disease_results = search_diseases_by_medicine(search_term)
-            if disease_results:
-                search_result['has_disease_by_medicine_info'] = True
-                search_result['diseases_by_medicine'] = disease_results
-                search_result['found'] = True
-                all_diseases_by_med = []
-                for item in disease_results:
-                    all_diseases_by_med.extend(item.get('diseases', []))
-                search_result['all_diseases_by_medicine'] = list(set(all_diseases_by_med))[:10]
-            
-            unique_diseases = []
-            seen = set()
-            for d in all_diseases:
-                name = d.get('disease', '')
-                if name and name not in seen:
-                    seen.add(name)
-                    unique_diseases.append(d)
-            
-            results_found = unique_diseases or all_symptoms or all_precautions or all_tips or medicine_results or disease_results
-            
-            if not results_found:
-                # ===== FIX #8: suggest correction if available =====
-                if corrected:
-                    search_result['message'] = f"No results for '{search_term}'. Did you mean '{corrected}'?"
-                else:
-                    suggestions = get_disease_suggestions(search_term)
-                    if suggestions:
-                        search_result['did_you_mean'] = suggestions[0]
-                        search_result['suggestions'] = suggestions
-                        if is_question_search:
-                            search_result['message'] = f"No results found for your question '{search_term}'. Did you mean: {suggestions[0]}?"
-                        else:
-                            search_result['message'] = f"No exact match found for '{search_term}'. Did you mean: {suggestions[0]}?"
-                    else:
-                        if is_question_search:
-                            search_result['message'] = f"No results found for your question '{search_term}'. Please try rephrasing or use a shorter search term."
-                        else:
-                            search_result['message'] = f"No information found for '{search_term}'. Please try a different term."
-                # ===== END FIX #8 =====
-                search_result['suggestions'] = featured_diseases[:6]
-            else:
-                search_result['found'] = True
-                
-                urgency_levels = []
-                if unique_diseases:
-                    search_result['has_disease_info'] = True
-                    search_result['diseases'] = unique_diseases[:3]
-                    for d in unique_diseases:
-                        if d.get('symptoms'):
-                            for s in (d['symptoms'] if isinstance(d['symptoms'], list) else []):
-                                if s not in search_result['all_symptoms']:
-                                    search_result['all_symptoms'].append(s)
-                        if d.get('treatments'):
-                            for t in (d['treatments'] if isinstance(d['treatments'], list) else []):
-                                if t not in search_result['all_treatments']:
-                                    search_result['all_treatments'].append(t)
-                        if d.get('doctors'):
-                            for doc in (d['doctors'] if isinstance(d['doctors'], list) else []):
-                                if doc not in search_result['all_doctors']:
-                                    search_result['all_doctors'].append(doc)
-                        if d.get('risk') and d['risk'] not in search_result['all_risks']:
-                            search_result['all_risks'].append(d['risk'])
-                        if d.get('urgency') and d['urgency'] not in urgency_levels:
-                            urgency_levels.append(d['urgency'])
-                
-                if all_symptoms:
-                    search_result['has_symptom_info'] = True
-                    search_result['symptom_descriptions'] = all_symptoms[:3]
-                
-                if all_precautions:
-                    search_result['has_precaution_info'] = True
-                    search_result['precautions'] = all_precautions[:3]
-                
-                if all_tips:
-                    search_result['has_health_tips'] = True
-                    search_result['health_tips'] = all_tips[:3]
-                
-                search_result['all_symptoms'] = search_result['all_symptoms'][:10]
-                search_result['all_treatments'] = search_result['all_treatments'][:5]
-                search_result['all_doctors'] = search_result['all_doctors'][:3]
-                search_result['all_risks'] = search_result['all_risks'][:3]
-                search_result['all_urgency'] = urgency_levels[:2]
-                
-                urgency = ', '.join(urgency_levels[:2]) if urgency_levels else 'Unknown'
-                result_summary = search_result['diseases'][0]['disease'] if search_result['diseases'] else 'Health information'
-                try:
-                    # ===== FIX #10: use DB_PATH =====
-                    conn = get_db_connection()
-                    # ===== END FIX #10 =====
-                    cursor = conn.cursor()
-                    cursor.execute('''
-                    INSERT INTO symptom_history (user_id, search_term, result, urgency_level)
-                    VALUES (?, ?, ?, ?)
-                    ''', (session['user_id'], search_term, result_summary, urgency))
-                    conn.commit()
-                    conn.close()
-                except:
-                    pass
-    
-    lang = session.get('language', 'en')
-    return render_template('patient_health_symptoms_enhanced.html',
-        user=session,
-        search_result=search_result,
-        search_term=search_term,
-        featured_diseases=featured_diseases,
-        trending_topics=trending_topics,
-        search_history=search_history,
-        lang=lang,
-        translate_text=translate_text
-    )
-
-# ============================================================
-# FIX #7: CHATBOT ROUTE (Q&A moved here)
-# ============================================================
-
 @app.route('/patient/chatbot', methods=['GET', 'POST'])
 @require_terms_acceptance
 def patient_chatbot():
@@ -3590,84 +3445,58 @@ def patient_chatbot():
 
     if request.method == 'POST':
         question = request.form.get('question', '').strip()
-        if question:
-            # ===== Bilingual search — handles both English and isiZulu =====
+
+        # ===== JUNK QUERY FILTER =====
+        JUNK_QUERIES = {
+            'hi', 'hello', 'hey', 'yo', 'sup', 'ok', 'okay',
+            'why', 'why?', 'what', 'what?', 'how', 'how?', 'when', 'when?',
+            'who', 'who?', 'where', 'where?', 'yes', 'no', 'maybe',
+            'test', 'testing', 'asdf', 'asdfasdf', 'aaa', 'bbb', '...',
+            'thanks', 'thank', 'thankyou', 'thx', 'cheers',
+            'bye', 'goodbye', 'goodnight', 'please', 'pls',
+        }
+        q_lower = question.lower().strip(' ?!.,')
+
+        if not question:
+            answer_data = None
+        elif len(q_lower) < 3 or q_lower in JUNK_QUERIES:
+            answer_data = {
+                'question': question,
+                'results': [{
+                    'question': 'Ask me a health question',
+                    'answer': (
+                        "I can help with health questions. Try asking things like:\n\n"
+                        "• \"What causes a headache?\"\n"
+                        "• \"How do I treat a fever?\"\n"
+                        "• \"What is diabetes?\"\n"
+                        "• \"What are the symptoms of malaria?\"\n"
+                        "• \"How do I stop a nosebleed?\"\n\n"
+                        "Please type a full health question."
+                    ),
+                    'source': 'MediSense Guide',
+                }],
+                'found': True,
+                'is_help': True,
+            }
+        else:
+            # ===== RAG (LLM) ATTEMPT =====
+            rag_result = None
             try:
-                bilingual = medisense_ml.bilingual_search(question, top_k=3)
-                detected_lang = bilingual.get('language', 'en')
-                normalized = bilingual.get('normalized_query', question)
-                results = bilingual.get('results', [])
-                top_answer = bilingual.get('top_answer', '')
-                translated = bilingual.get('translated', False)
+                from modules import rag_chatbot
+                rag_result = rag_chatbot.rag_answer(question, top_k=3)
             except Exception as e:
-                print(f"[chatbot] bilingual_search failed, using English-only: {e}")
-                bilingual = None
-                detected_lang = 'en'
-                normalized = question
-                translated = False
+                print(f"[chatbot] RAG failed, falling back: {e}")
+                rag_result = None
 
-                # Fallback to old path
-                corrected = correct_spelling(question)
-                query = corrected if corrected else question
-                if corrected and corrected.strip().lower() == question.strip().lower():
-                    corrected = None
-                results, _ = search_medical_qa(query, limit=1, offset=0)
-                results = results[:1]
-                top_answer = results[0].get('answer', '') if results else ''
-
-            # Fallback 1: disease database (only if bilingual returned nothing)
-            if not results:
-                diseases = search_master_database(normalized)
-                if diseases:
-                    d = diseases[0]
-                    parts = [d.get('description', '')]
-                    if d.get('symptoms'):
-                        parts.append("\n\nSymptoms: " + ", ".join(d['symptoms'][:6]))
-                    if d.get('precautions') and d['precautions'] != 'No precautions available':
-                        parts.append("\n\nPrecautions: " + str(d['precautions'])[:300])
-                    answer_text = "\n".join(p for p in parts if p)
-                    if detected_lang == 'zu':
-                        answer_text = medisense_ml.translate_answer_to_zulu(answer_text)
-                        translated = True
-                    results = [{
-                        'question': f'Information about {d["disease"]}',
-                        'answer': answer_text,
-                        'source': 'Disease Database',
-                    }]
-                    top_answer = answer_text
-
-            # Fallback 2: symptom descriptions
-            if not results:
-                symptoms = search_symptom_descriptions(normalized)
-                if symptoms:
-                    s = symptoms[0]
-                    answer_text = s.get('description', 'No details available.')
-                    if detected_lang == 'zu':
-                        answer_text = medisense_ml.translate_answer_to_zulu(answer_text)
-                        translated = True
-                    results = [{
-                        'question': f'About {s["symptom"]}',
-                        'answer': answer_text,
-                        'source': 'Symptom Database',
-                    }]
-                    top_answer = answer_text
-
-            # Save + respond
-            if results:
-                top = results[0]
-                # Override the answer with the (possibly translated) one
-                if top_answer:
-                    top = dict(top)
-                    top['answer'] = top_answer
-
+            if rag_result and rag_result.get('answer'):
                 answer_data = {
                     'question': question,
-                    'corrected': None,
-                    'results': [top],
+                    'results': [{
+                        'question': 'MediSense AI',
+                        'answer': rag_result['answer'],
+                        'source': rag_result.get('source_label', 'AI'),
+                    }],
                     'found': True,
-                    'language': detected_lang,
-                    'normalized_query': normalized if detected_lang == 'zu' else None,
-                    'translated': translated,
                 }
                 try:
                     conn = get_db_connection()
@@ -3675,20 +3504,208 @@ def patient_chatbot():
                     cursor.execute('''
                         INSERT INTO chatbot_history (user_id, question, answer, source)
                         VALUES (?, ?, ?, ?)
-                    ''', (session['user_id'], question, top['answer'], top['source']))
+                    ''', (session['user_id'], question,
+                          rag_result['answer'],
+                          rag_result.get('source_label', 'AI')))
                     conn.commit()
                     conn.close()
                 except Exception as e:
                     print(f"[chatbot save] {e}")
+
             else:
-                answer_data = {
-                    'question': question,
-                    'corrected': None,
-                    'results': [],
-                    'found': False,
-                    'language': detected_lang,
-                    'translated': False,
+                # ===== FALLBACK PIPELINE =====
+                detected_lang = 'en'
+                normalized = question
+                results = []
+                top_answer = ''
+
+                # Words that should NEVER score
+                STOP = {
+                    'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+                    'of', 'to', 'for', 'in', 'on', 'at', 'by', 'with', 'and', 'or',
+                    'but', 'if', 'so', 'as', 'than', 'that', 'this', 'these', 'those',
+                    'i', 'me', 'my', 'we', 'our', 'you', 'your', 'he', 'she', 'it',
+                    'they', 'them', 'their', 'what', 'how', 'why', 'when', 'where',
+                    'who', 'which', 'do', 'does', 'did', 'can', 'could', 'should',
+                    'would', 'will', 'have', 'has', 'had', 'get', 'got', 'getting',
+                    'am', 'any', 'some', 'all', 'not', 'no', 'yes', 'hi', 'hey',
+                    'hello', 'thanks', 'thank', 'thankyou', 'pls', 'please', 'ok',
+                    'okay', 'cool', 'nice', 'good', 'bad', 'bye', 'goodbye',
                 }
+
+                tokens_low = [w for w in re.findall(r"[a-z]+", question.lower())]
+                meaningful = [w for w in tokens_low if w not in STOP and len(w) >= 3]
+
+                if not meaningful:
+                    # Nothing meaningful — return help
+                    answer_data = {
+                        'question': question,
+                        'results': [{
+                            'question': 'Ask me a health question',
+                            'answer': (
+                                "You're welcome! If you have a health question, try asking:\n\n"
+                                "• \"What are the symptoms of malaria?\"\n"
+                                "• \"What is HIV?\"\n"
+                                "• \"How do I treat a fever?\"\n"
+                                "• \"What causes a headache?\"\n\n"
+                                "I'm here to help with medical questions only."
+                            ),
+                            'source': 'MediSense Guide',
+                        }],
+                        'found': True,
+                        'is_help': True,
+                    }
+                else:
+                    # STEP 1: Curated chatbot_qa.csv — STRICT scoring
+                    if df_chatbot_qa is not None and len(df_chatbot_qa) > 0:
+                        try:
+                            q_low = question.lower().strip(' ?!.,')
+                            scored = []
+                            for _, row in df_chatbot_qa.iterrows():
+                                q_text = str(row.get('question', '')).lower()
+                                a_text = str(row.get('answer', '')).lower()
+                                tags = str(row.get('tags', '')).lower()
+
+                                score = 0
+                                # Exact question match
+                                if q_low in q_text or q_text in q_low:
+                                    score += 200
+
+                                # Meaningful words only
+                                for w in meaningful:
+                                    if w in q_text:
+                                        score += 40
+                                    elif w in tags:
+                                        score += 30
+                                    elif w in a_text:
+                                        score += 8
+
+                                if score > 0:
+                                    scored.append((score, row))
+
+                            scored.sort(key=lambda x: -x[0])
+
+                            # Require a MINIMUM score of 40
+                            if scored and scored[0][0] >= 40:
+                                best = scored[0][1]
+                                results = [{
+                                    'question': best.get('question', ''),
+                                    'answer': best.get('answer', ''),
+                                    'source': 'MediSense Guide',
+                                }]
+                                top_answer = best.get('answer', '')
+                        except Exception as e:
+                            print(f"[chatbot curated] {e}")
+
+                    # STEP 2: MedQuAD fallback (with metadata filter)
+                    if not results:
+                        try:
+                            search_results, _ = search_medical_qa(question, limit=3, offset=0)
+                            if search_results:
+                                BAD_PHRASES = [
+                                    'human phenotype ontology',
+                                    'prognosis for infants',
+                                    'table below includes',
+                                    'if the information is available',
+                                    'the following list of signs',
+                                    'this section provides',
+                                ]
+                                for r in search_results:
+                                    ans = str(r.get('answer', ''))
+                                    ans_low = ans.lower()
+                                    if any(bp in ans_low for bp in BAD_PHRASES):
+                                        continue
+                                    if len(ans) < 40:
+                                        continue
+                                    # Detect truncation
+                                    truncated = (
+                                        len(ans) == 500 and
+                                        not ans.rstrip().endswith(('.', '!', '?', ')', '"'))
+                                    )
+                                    display = ans
+                                    if truncated:
+                                        display += " […]"
+                                    results = [{
+                                        'question': r.get('question', ''),
+                                        'answer': display,
+                                        'source': r.get('source', 'Medical Q&A'),
+                                    }]
+                                    top_answer = display
+                                    break
+                        except Exception as e:
+                            print(f"[chatbot search_medical_qa] {e}")
+
+                    # STEP 3: Disease database
+                    if not results:
+                        try:
+                            diseases = search_master_database(question)
+                            if diseases:
+                                d = diseases[0]
+                                parts = [d.get('description', '')]
+                                if d.get('symptoms'):
+                                    parts.append("\n\nSymptoms: " + ", ".join(d['symptoms'][:6]))
+                                if d.get('precautions') and d['precautions'] != 'No precautions available':
+                                    parts.append("\n\nPrecautions: " + str(d['precautions'])[:300])
+                                top_answer = "\n".join(p for p in parts if p)
+                                results = [{
+                                    'question': f'About {d["disease"]}',
+                                    'answer': top_answer,
+                                    'source': 'Disease Database',
+                                }]
+                        except Exception as e:
+                            print(f"[chatbot disease] {e}")
+
+                    # STEP 4: Symptom descriptions
+                    if not results:
+                        try:
+                            symptoms = search_symptom_descriptions(question)
+                            if symptoms:
+                                s = symptoms[0]
+                                top_answer = s.get('description', 'No details available.')
+                                results = [{
+                                    'question': f'About {s["symptom"]}',
+                                    'answer': top_answer,
+                                    'source': 'Symptom Database',
+                                }]
+                        except Exception as e:
+                            print(f"[chatbot symptom] {e}")
+
+                    # ===== BUILD ANSWER DATA =====
+                    if results:
+                        top = results[0]
+                        answer_data = {
+                            'question': question,
+                            'results': [top],
+                            'found': True,
+                        }
+                        try:
+                            conn = get_db_connection()
+                            cursor = conn.cursor()
+                            cursor.execute('''
+                                INSERT INTO chatbot_history (user_id, question, answer, source)
+                                VALUES (?, ?, ?, ?)
+                            ''', (session['user_id'], question, top['answer'], top['source']))
+                            conn.commit()
+                            conn.close()
+                        except Exception as e:
+                            print(f"[chatbot save] {e}")
+                    else:
+                        answer_data = {
+                            'question': question,
+                            'results': [{
+                                'question': 'No match found',
+                                'answer': (
+                                    f"I don't have specific information about \"{question}\".\n\n"
+                                    "Try asking:\n"
+                                    "• About a condition: \"What is diabetes?\"\n"
+                                    "• About a symptom: \"What causes a headache?\"\n"
+                                    "• About treatment: \"How do I treat a fever?\"\n\n"
+                                    "If this is urgent, please contact a healthcare professional."
+                                ),
+                                'source': 'MediSense Guide',
+                            }],
+                            'found': False,
+                        }
 
     lang = session.get('language', 'en')
     return render_template('patient_chatbot.html',
@@ -3699,6 +3716,7 @@ def patient_chatbot():
         lang=lang,
         translate_text=translate_text
     )
+
 
 @app.route('/load-more-qa', methods=['POST'])
 @require_terms_acceptance
@@ -5428,7 +5446,7 @@ def admin_clinic_add():
         translate_text=translate_text
     )
 
-@app.route('/admin/clinic/edit/<int:clinic_id>', methods=['GET', 'POST'])
+@app.route('/admin/clinic/edit/<clinic_id>', methods=['GET', 'POST'])
 @require_terms_acceptance
 def admin_clinic_edit(clinic_id):
     if 'user_id' not in session or session.get('role') != 'admin':
@@ -5437,7 +5455,7 @@ def admin_clinic_edit(clinic_id):
     clinic = None
     if df_clinics is not None:
         try:
-            clinic = df_clinics[df_clinics['Clinic_ID'] == str(clinic_id)].iloc[0].to_dict()
+            clinic = df_clinics[df_clinics['Clinic_Name'] == str(clinic_id)].iloc[0].to_dict()
         except:
             pass
     
@@ -5458,7 +5476,7 @@ def admin_clinic_edit(clinic_id):
         translate_text=translate_text
     )
 
-@app.route('/admin/clinic/delete/<int:clinic_id>', methods=['POST'])
+@app.route('/admin/clinic/delete/<clinic_id>', methods=['POST'])
 @require_terms_acceptance
 def admin_clinic_delete(clinic_id):
     if 'user_id' not in session or session.get('role') != 'admin':

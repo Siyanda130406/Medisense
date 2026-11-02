@@ -455,7 +455,7 @@
                         <a class="nav-link {{ 'active' if request.endpoint == 'patient_book' }}" href="{{ url_for('patient_book') }}">
                             <i class="fas fa-calendar-plus" aria-hidden="true"></i> {{ translate_text('Book Appointment', lang) }}
                         </a>
-                        <a class="nav-link {{ 'active' if request.endpoint == 'patient_health_symptoms' }}" href="{{ url_for('patient_health_symptoms') }}">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'public_symptoms' }}" href="{{ url_for('public_symptoms') }}">
                             <i class="fas fa-search" aria-hidden="true"></i> {{ translate_text('Health & Symptoms', lang) }}
                         </a>
                         <a class="nav-link {{ 'active' if request.endpoint == 'patient_chatbot' }}" href="{{ url_for('patient_chatbot') }}">

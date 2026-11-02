@@ -1,11 +1,11 @@
 ﻿from flask import Flask
-from dotenv import load_dotenv   # <-- NEW
+from dotenv import load_dotenv
 import os
 
-# Load environment variables from .env file
-load_dotenv()   # <-- NEW
+load_dotenv()
 
-# Create Flask app
+os.environ.setdefault('DISABLE_SENTENCE_TRANSFORMERS', 'true')
+
 app = Flask(
     __name__,
     template_folder='../templates',
@@ -14,5 +14,4 @@ app = Flask(
 
 app.secret_key = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
 
-# Import routes only (auth is merged into routes)
-from app import routes
+from medisense import routes  # noqa: E402,F401

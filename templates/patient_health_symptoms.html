@@ -29,7 +29,7 @@
                 <div class="card-body px-4 pb-4">
 
                     <!-- SEARCH -->
-                    <form method="POST" action="{{ url_for('public_symptoms') if is_public else url_for('patient_health_symptoms') }}" id="searchForm">
+                    <form method="POST" action="{{ url_for('public_symptoms') if is_public else url_for('public_symptoms') }}" id="searchForm">
                         <div class="row g-0 align-items-center">
                             <div class="col-md-9">
                                 <div class="input-group">
@@ -387,7 +387,7 @@
                                 <strong>{{ translate_text('Want to save your searches and book appointments?', lang) }}</strong>
                                 <a href="{{ url_for('signup') }}" class="ms-2 fw-semibold">{{ translate_text('Create a free account', lang) }}</a>
                             </div>
-                            <a href="{{ url_for('public_home') }}" class="btn btn-outline-secondary" style="border-radius: 20px; padding: 6px 24px;">
+                            <a href="{{ url_for('home') }}" class="btn btn-outline-secondary" style="border-radius: 20px; padding: 6px 24px;">
                                 <i class="bi bi-arrow-left me-1"></i> {{ translate_text('Back to Home', lang) }}
                             </a>
                         {% else %}

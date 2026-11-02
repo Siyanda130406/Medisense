@@ -29,7 +29,7 @@ def run_reminder_job():
 def run_no_show_checker():
     """Check for expired appointments (45 minute rule)"""
     try:
-        from app import routes
+        from medisense import routes
         expired = routes.check_expired_appointments()
         if expired > 0:
             print(f"   Auto no-shows marked: {expired}")

@@ -29,31 +29,52 @@
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>ID</th>
+                                    <th style="width: 50px;">#</th>
                                     <th>{{ translate_text('Clinic Name', lang) }}</th>
                                     <th>{{ translate_text('City', lang) }}</th>
                                     <th>{{ translate_text('Area', lang) }}</th>
                                     <th>{{ translate_text('Province', lang) }}</th>
                                     <th>{{ translate_text('Phone', lang) }}</th>
-                                    <th class="text-center">{{ translate_text('Actions', lang) }}</th>
+                                    <th>{{ translate_text('Type', lang) }}</th>
+                                    <th class="text-center" style="width: 130px;">{{ translate_text('Actions', lang) }}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for clinic in clinics %}
                                 <tr>
-                                    <td class="fw-semibold">{{ clinic.Clinic_ID }}</td>
-                                    <td>{{ clinic.Clinic_Name }}</td>
+                                    <td class="text-muted small">{{ loop.index }}</td>
+                                    <td class="fw-semibold">{{ clinic.Clinic_Name }}</td>
                                     <td>{{ clinic.City }}</td>
                                     <td>{{ clinic.Area }}</td>
                                     <td>{{ clinic.Province }}</td>
-                                    <td>{{ clinic.Phone }}</td>
+                                    <td>
+                                        {% if clinic.Phone and clinic.Phone != 'nan' %}
+                                            {{ clinic.Phone }}
+                                        {% else %}
+                                            <span class="text-muted small">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if clinic.Clinic_Type %}
+                                            <span class="badge bg-secondary">{{ clinic.Clinic_Type }}</span>
+                                        {% else %}
+                                            <span class="text-muted small">—</span>
+                                        {% endif %}
+                                    </td>
                                     <td class="text-center">
                                         <div class="d-flex justify-content-center gap-1">
-                                            <a href="{{ url_for('admin_clinic_edit', clinic_id=clinic.Clinic_ID) }}" class="btn btn-sm btn-outline-primary" title="{{ translate_text('Edit', lang) }}">
+                                            <a href="{{ url_for('admin_clinic_edit', clinic_id=clinic.Clinic_Name) }}"
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="{{ translate_text('Edit', lang) }}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <form method="POST" action="{{ url_for('admin_clinic_delete', clinic_id=clinic.Clinic_ID) }}" style="display:inline;" onsubmit="return confirm('{{ translate_text('Delete this clinic? This action cannot be undone.', lang) }}')">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ translate_text('Delete', lang) }}">
+                                            <form method="POST"
+                                                  action="{{ url_for('admin_clinic_delete', clinic_id=clinic.Clinic_Name) }}"
+                                                  style="display:inline;"
+                                                  onsubmit="return confirm('{{ translate_text('Delete this clinic? This action cannot be undone.', lang) }}')">
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        title="{{ translate_text('Delete', lang) }}">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>

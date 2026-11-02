@@ -7,7 +7,7 @@
     <div class="row">
         <div class="col-md-12">
             
-            <!-- ===== FIX: Health Score Card — clear explanation, aligned with user data ===== -->
+            <!-- ===== FIX: Health Score Card — aligned with user data ===== -->
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-body">
                     <div class="row align-items-center">
@@ -44,14 +44,6 @@
                                 </div>
 
                             </div>
-
-                            <p class="small text-muted mt-2 mb-0" style="font-size: 0.75rem;">
-                                {% if health_score|default(0) == 0 %}
-                                {{ translate_text('New account — score starts at 0 and grows as you use MediSense', lang) }}
-                                {% else %}
-                                {{ translate_text('Score = profile completeness + appointments attended − no-shows', lang) }}
-                                {% endif %}
-                            </p>
                         </div>
                     </div>
 
@@ -76,7 +68,7 @@
                     </a>
                 </div>
                 <div class="col-md-3 col-6">
-                    <a href="{{ url_for('patient_health_symptoms') }}" class="text-decoration-none" aria-label="{{ translate_text('Health & Symptoms', lang) }}">
+                    <a href="{{ url_for('public_symptoms') }}" class="text-decoration-none" aria-label="{{ translate_text('Health & Symptoms', lang) }}">
                         <div class="card text-center p-3 action-card border-0 shadow-sm" role="button" tabindex="0">
                             <i class="fas fa-search fa-2x text-primary" aria-hidden="true"></i>
                             <span class="d-block mt-2 small fw-bold">{{ translate_text('Health & Symptoms', lang) }}</span>
@@ -236,22 +228,6 @@
                             <p class="small text-muted mb-0"><strong>{{ translate_text('Conditions', lang) }}:</strong> {{ display_conditions }}</p>
                             {% endif %}
                             
-                            <hr>
-                            
-                            <div class="text-center">
-                                <p class="small mb-1 text-muted">{{ translate_text('No-Show Risk Assessment', lang) }}</p>
-                                <h5 class="mb-0 
-                                    {% if risk_score|default(0) < 30 %}text-success{% elif risk_score|default(0) < 50 %}text-warning{% elif risk_score|default(0) < 70 %}text-danger{% else %}text-dark{% endif %}">
-                                    {{ risk_score|default(0) }}% <span class="small">({{ translate_text(risk_category|default('Low'), lang) }})</span>
-                                </h5>
-                                <div class="progress mt-2" style="height: 6px;" role="progressbar" aria-valuenow="{{ risk_score|default(0) }}" aria-valuemin="0" aria-valuemax="100">
-                                    <div class="progress-bar 
-                                        {% if risk_score|default(0) < 30 %}bg-success{% elif risk_score|default(0) < 50 %}bg-warning{% elif risk_score|default(0) < 70 %}bg-danger{% else %}bg-dark{% endif %}" 
-                                        style="width: {{ risk_score|default(0) }}%;"></div>
-                                </div>
-                                <small class="text-muted small">{{ translate_text('Higher score = Higher risk of missing appointments', lang) }}</small>
-                            </div>
-                            
                             <div class="mt-3">
                                 <a href="{{ url_for('patient_profile') }}" class="btn btn-outline-secondary btn-sm w-100" aria-label="{{ translate_text('Update Profile', lang) }}">
                                     <i class="fas fa-edit" aria-hidden="true"></i> {{ translate_text('Update Profile', lang) }}
@@ -360,7 +336,7 @@
 </style>
 
 <script>
-// ===== FIX: Initialize tooltips for health score explanation =====
+// ===== Initialize tooltips for health score explanation =====
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
         new bootstrap.Tooltip(el);

@@ -1,4 +1,4 @@
-from app import app
+from medisense import app
 import sqlite3
 import os
 import hashlib
@@ -7,7 +7,6 @@ import threading
 import time
 
 # ===== FIX #10: Database persistence for online hosting (e.g. Render) =====
-# ===== FIX: Database persistence for online hosting (e.g. Render) =====
 def get_db_dir():
     env_dir = os.environ.get('MEDISENSE_DATA_DIR', '').strip()
     if env_dir:
@@ -34,9 +33,7 @@ def get_db_connection():
 
 def init_database():
     """Initialize the database with required tables"""
-    # ===== FIX #10: use DB_PATH =====
     conn = get_db_connection()
-    # ===== END FIX #10 =====
     cursor = conn.cursor()
 
     cursor.execute('''
@@ -64,7 +61,7 @@ def init_database():
 
     cursor.execute("PRAGMA table_info(users)")
     existing_columns = [col[1] for col in cursor.fetchall()]
-    
+
     if 'age' not in existing_columns:
         cursor.execute("ALTER TABLE users ADD COLUMN age INTEGER DEFAULT 30")
     if 'health_conditions' not in existing_columns:
@@ -92,14 +89,14 @@ def init_database():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     ''')
-    
+
     cursor.execute("PRAGMA table_info(appointments)")
     appt_columns = [col[1] for col in cursor.fetchall()]
     if 'booked_by' not in appt_columns:
         cursor.execute("ALTER TABLE appointments ADD COLUMN booked_by TEXT DEFAULT 'patient'")
     if 'reminder_sent' not in appt_columns:
         cursor.execute("ALTER TABLE appointments ADD COLUMN reminder_sent INTEGER DEFAULT 0")
-    
+
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS unavailable_slots (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -112,7 +109,7 @@ def init_database():
         UNIQUE(clinic_name, appointment_date, appointment_time)
     )
     ''')
-    
+
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS symptom_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -124,7 +121,7 @@ def init_database():
         FOREIGN KEY (user_id) REFERENCES users(id)
     )
     ''')
-    
+
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS health_journal (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -136,7 +133,7 @@ def init_database():
         FOREIGN KEY (user_id) REFERENCES users(id)
     )
     ''')
-    
+
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS roles (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -144,7 +141,7 @@ def init_database():
         permissions TEXT
     )
     ''')
-    
+
     cursor.execute("SELECT COUNT(*) FROM roles")
     if cursor.fetchone()[0] == 0:
         roles = [
@@ -155,7 +152,7 @@ def init_database():
         ]
         cursor.executemany("INSERT INTO roles (role_name, permissions) VALUES (?, ?)", roles)
         print("Default roles created")
-    
+
     cursor.execute("SELECT COUNT(*) FROM users WHERE email = 'admin@medisense.com'")
     if cursor.fetchone()[0] == 0:
         password_hash = hashlib.sha256("Admin123!".encode()).hexdigest()
@@ -164,7 +161,7 @@ def init_database():
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', ('admin@medisense.com', password_hash, 'System Administrator', '0821234567', 'admin', 'ADMIN2026', 1, 40, '', 'Johannesburg', '', 'en'))
         print("Admin user created")
-    
+
     cursor.execute("SELECT COUNT(*) FROM users WHERE email = 'patient@medisense.com'")
     if cursor.fetchone()[0] == 0:
         password_hash = hashlib.sha256("Patient123!".encode()).hexdigest()
@@ -173,7 +170,7 @@ def init_database():
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', ('patient@medisense.com', password_hash, 'Test Patient', '0823456789', 'patient', '', 1, 35, 'Hypertension, Diabetes', 'Empangeni', '', 'en'))
         print("Patient user created")
-    
+
     cursor.execute("SELECT COUNT(*) FROM users WHERE email = 'nurse@medisense.com'")
     if cursor.fetchone()[0] == 0:
         password_hash = hashlib.sha256("Nurse123!".encode()).hexdigest()
@@ -182,7 +179,7 @@ def init_database():
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', ('nurse@medisense.com', password_hash, 'Sarah Mkhize', '0822345678', 'nurse', 'NURSE2026', 1, 28, '', 'Empangeni', 'Empangeni Clinic', 'en'))
         print("Nurse user created at Empangeni Clinic")
-    
+
     cursor.execute("SELECT COUNT(*) FROM users WHERE email = 'staff@medisense.com'")
     if cursor.fetchone()[0] == 0:
         password_hash = hashlib.sha256("Staff123!".encode()).hexdigest()
@@ -191,7 +188,7 @@ def init_database():
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', ('staff@medisense.com', password_hash, 'John Staff', '0824567890', 'staff', 'STAFF2026', 1, 30, '', 'Ngwelezane', 'Ngwelezane Clinic', 'en'))
         print("Staff user created at Ngwelezane Clinic")
-    
+
     today = datetime.now().strftime('%Y-%m-%d')
     cursor.execute("SELECT COUNT(*) FROM appointments WHERE appointment_date = ?", (today,))
     if cursor.fetchone()[0] == 0:
@@ -208,7 +205,7 @@ def init_database():
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ''', ('patient@medisense.com', 'Test Patient', '0823456789', 'Richards Bay Clinic', today, '14:00', 'Follow-up', 'Scheduled'))
         print("Sample appointments created")
-    
+
     conn.commit()
     conn.close()
     print("Database initialized successfully")
@@ -217,39 +214,37 @@ def check_expired_appointments():
     """Check for appointments that have passed 45 minutes and mark as No-Show"""
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
-    
-    # ===== FIX #10: use DB_PATH =====
+
     conn = get_db_connection()
-    # ===== END FIX #10 =====
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    
+
     cursor.execute('''
     SELECT id, patient_name, appointment_time
-    FROM appointments 
-    WHERE appointment_date = ? 
+    FROM appointments
+    WHERE appointment_date = ?
     AND status = 'Scheduled'
     ''', (today,))
-    
+
     appointments = cursor.fetchall()
     expired_count = 0
-    
+
     for appt in appointments:
         try:
             appt_datetime = datetime.strptime(f"{today} {appt['appointment_time']}", '%Y-%m-%d %H:%M')
             minutes_passed = (now - appt_datetime).total_seconds() / 60
-            
+
             if minutes_passed >= 45:
                 cursor.execute('''
-                UPDATE appointments SET status = 'No-Show' 
+                UPDATE appointments SET status = 'No-Show'
                 WHERE id = ?
                 ''', (appt['id'],))
                 conn.commit()
                 expired_count += 1
-                print(f"⏰ Auto No-Show: {appt['patient_name']} at {appt['appointment_time']} ({minutes_passed:.0f} mins passed)")
+                print(f"Auto No-Show: {appt['patient_name']} at {appt['appointment_time']} ({minutes_passed:.0f} mins passed)")
         except Exception as e:
             print(f"Error checking appointment {appt['id']}: {e}")
-    
+
     conn.close()
     return expired_count
 
@@ -268,15 +263,14 @@ def run_auto_checker():
 if __name__ == '__main__':
     print("Initializing database...")
     init_database()
-    
+
     print("Starting auto no-show checker...")
     checker_thread = threading.Thread(target=run_auto_checker, daemon=True)
     checker_thread.start()
-    
-    # ===== FIX: read PORT from environment (required for Render) =====
+
     PORT = int(os.environ.get('PORT', 5000))
     HOST = '0.0.0.0'
-    
+
     print("="*60)
     print("MEDISENSE SYSTEM")
     print("="*60)
@@ -290,6 +284,5 @@ if __name__ == '__main__':
     print("")
     print("Auto No-Show Checker: Running (checks every 5 minutes)")
     print("="*60)
-    
+
     app.run(debug=False, port=PORT, host=HOST)
-    # ===== END FIX =====

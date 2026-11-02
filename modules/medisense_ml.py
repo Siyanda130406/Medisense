@@ -382,13 +382,6 @@ def _build_qa_index(qa_rows):
     if vecs is None:
         return False
 
-    # Store as float16 — halves RAM usage, negligible accuracy loss
-    import numpy as np
-    try:
-        vecs = vecs.astype(np.float16)
-    except Exception:
-        pass
-
     _QA_EMBEDDINGS = vecs
     _QA_ROWS = qa_rows
     print(f"[medisense_ml] Q&A index built: {len(qa_rows)} rows")
@@ -411,13 +404,13 @@ def semantic_search_qa(query, top_k=3):
     if q_vec is None:
         return []
 
-    sims = _cosine_sim_matrix(q_vec[0].astype('float32'), _QA_EMBEDDINGS.astype('float32'))
+    sims = _cosine_sim_matrix(q_vec[0], _QA_EMBEDDINGS)
     idx = np.argsort(-sims)[:top_k]
 
     results = []
     for i in idx:
         score = float(sims[i])
-        if score < 0.20:
+        if score < 0.10:
             continue
         row = _QA_ROWS[i]
         results.append({
@@ -474,7 +467,7 @@ def rank_clinics(clinics, location, limit=15):
       - Exact match on City/Area/Clinic_Name/Province  -> 100
       - Substring match                                -> 60
       - Token overlap                                  -> up to 40
-      - Clinic type priority (Hospital > CHC > Clinic) -> 0-5
+      - Clinic type priority (Hospital > CHC > Clinic) -> only if location matched
 
     Returns a new list of clinic dicts, best match first, each with
     an added 'match_score' field.
@@ -485,8 +478,6 @@ def rank_clinics(clinics, location, limit=15):
     loc_tokens = _tokenize_place(location)
 
     def _clinic_score(c):
-        # The clinic dict is from pandas .to_dict('records'), so keys
-        # are the column names. We are defensive about missing keys.
         name = str(c.get('Clinic_Name', '')).lower()
         city = str(c.get('City', '')).lower()
         area = str(c.get('Area', '')).lower()
@@ -495,10 +486,7 @@ def rank_clinics(clinics, location, limit=15):
 
         score = 0.0
 
-        if not location:
-            # No filter — just use clinic type priority
-            pass
-        else:
+        if location:
             loc_low = location.lower().strip()
             for field in (city, area, name, prov):
                 if not field:
@@ -515,13 +503,14 @@ def rank_clinics(clinics, location, limit=15):
                 if overlap:
                     score = max(score, 20 + overlap * 10)
 
-        # Clinic type priority
-        if 'hospital' in ctype:
-            score += 5
-        elif 'chc' in ctype or 'community health' in ctype:
-            score += 3
-        elif 'clinic' in ctype:
-            score += 1
+        # Clinic type priority — ONLY applies when there is already a location match
+        if score > 0:
+            if 'hospital' in ctype:
+                score += 5
+            elif 'chc' in ctype or 'community health' in ctype:
+                score += 3
+            elif 'clinic' in ctype:
+                score += 1
 
         return score
 
@@ -531,7 +520,6 @@ def rank_clinics(clinics, location, limit=15):
         c_copy['match_score'] = _clinic_score(c)
         scored.append(c_copy)
 
-    # Sort highest first, then by name for stable ordering
     scored.sort(key=lambda x: (-x['match_score'], str(x.get('Clinic_Name', ''))))
     return scored[:limit]
 
@@ -762,10 +750,13 @@ def initialize_ml(df_symptom_descriptions=None,
                 spell_terms.add(word)
     build_spell_dictionary(list(spell_terms))
 
-    # --- Load the ST model (warms up the cache) ---
-    _get_st_model()
+    # --- Load the ST model (unless disabled) ---
+    if os.environ.get('DISABLE_SENTENCE_TRANSFORMERS', 'false').lower() != 'true':
+        _get_st_model()
+    else:
+        print("[medisense_ml] Sentence-transformers DISABLED (env flag set)")
 
-    # --- Build Q&A index (chatbot_qa only — skip 32K MedQuAD rows to save RAM) ---
+    # --- Build Q&A index (chatbot_qa first, then medical_qa/MedQuAD) ---
     qa_rows = []
     try:
         if df_chatbot_qa is not None and len(df_chatbot_qa) > 0:
@@ -775,6 +766,14 @@ def initialize_ml(df_symptom_descriptions=None,
                     'answer': str(row.get('answer', '')),
                     'tags': str(row.get('tags', '')),
                     'source': 'MediSense Guide',
+                })
+        if df_medical_qa is not None and len(df_medical_qa) > 0:
+            for _, row in df_medical_qa.iterrows():
+                qa_rows.append({
+                    'question': str(row.get('question', '')),
+                    'answer': str(row.get('answer', '')),
+                    'tags': '',
+                    'source': str(row.get('source', 'Medical Q&A')),
                 })
     except Exception as e:
         print(f"[medisense_ml] Q&A row build error: {e}")
