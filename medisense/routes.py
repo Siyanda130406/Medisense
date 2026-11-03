@@ -3322,7 +3322,7 @@ def staff_profile_setup():
         flash('Clinic already selected', 'info')
         return redirect('/staff/dashboard')
 
-        if request.method == 'POST':
+    if request.method == 'POST':
         clinic = request.form.get('clinic', '').strip()
 
         if not clinic:
@@ -3333,21 +3333,18 @@ def staff_profile_setup():
                                    clinics=get_clinics_list(),
                                    lang=lang, translate_text=translate_text)
 
-        # Save to DB with error checking
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute('UPDATE users SET staff_clinic = ? WHERE id = ?',
                            (clinic, session['user_id']))
             conn.commit()
-            
-            # Verify it actually saved!
             cursor.execute('SELECT staff_clinic FROM users WHERE id = ?', (session['user_id'],))
             saved_clinic = cursor.fetchone()
             conn.close()
 
             if not saved_clinic or not saved_clinic[0]:
-                flash('Database error: Clinic was not saved. Please try again.', 'error')
+                flash('Database error: Clinic was not saved.', 'error')
                 lang = session.get('language', 'en')
                 return render_template('staff_profile_setup.html',
                                        user=session,
@@ -3369,22 +3366,12 @@ def staff_profile_setup():
         flash(f'Clinic set to {clinic}', 'success')
         return redirect('/staff/dashboard')
 
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('UPDATE users SET staff_clinic = ? WHERE id = ?',
-                       (clinic, session['user_id']))
-        conn.commit()
-        conn.close()
-
-        session['staff_clinic'] = clinic
-        flash(f'Clinic set to {clinic}', 'success')
-        return redirect('/staff/dashboard')
-
     lang = session.get('language', 'en')
     return render_template('staff_profile_setup.html',
                            user=session,
                            clinics=get_clinics_list(),
                            lang=lang, translate_text=translate_text)
+                           
 
 
 # ============================================================
